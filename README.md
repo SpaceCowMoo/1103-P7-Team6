@@ -11,13 +11,25 @@ git clone https://github.com/SpaceCowMoo/1103-P7-Team6.git
 cd 1103-P7-Team6
 ```
 
-2. **Build the Docker image:**
+2. **Set up the Environment Variables:**
+
+Windows (PowerShell):
+```bash
+Copy-Item .env.example .env
+```
+
+macOS / Linux / Git Bash:
+```bash
+cp .env.example .env
+```
+
+3. **Build the Docker image:**
 
 ```bash
 docker build -t opportunity-fit .
 ```
 
-3. **Run the Application:**
+4. **Run the Application:**
 
 Windows (PowerShell):
 ```bash

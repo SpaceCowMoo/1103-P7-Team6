@@ -5,6 +5,10 @@ WORKDIR /app/OpportunityFit
 # Create the folder for CSV to be saved
 RUN mkdir -p /app/OpportunityFit/data
 
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy all project files into the container
 COPY . .
 

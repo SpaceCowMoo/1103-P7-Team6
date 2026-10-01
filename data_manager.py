@@ -1,15 +1,25 @@
 import csv
 import os
 
-INTERNSHIP_DATA = "/app/OpportunityFit/data"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Full path to the internship CSV file with default
+INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA", "/app/OpportunityFit/data/internships.csv")
+
+# Directory where CSV files are saved/created with default
+DATA_DIR = os.getenv("DATA_DIR", "/app/OpportunityFit/data")
 
 def get_file_path(filename):
     """Ensure file exists and return file path"""
     try:
-        os.makedirs(INTERNSHIP_DATA, exist_ok=True)
-        return os.path.join(INTERNSHIP_DATA, filename)
+        os.makedirs(DATA_DIR, exist_ok=True)
+        if filename == os.path.basename(INTERNSHIP_DATA):
+            return INTERNSHIP_DATA
+        return os.path.join(DATA_DIR, filename)
     except Exception as e:
-        print(f"[Error] Failed to access directory {INTERNSHIP_DATA}: {e}")
+        print(f"[Error] Failed to access directory {DATA_DIR}: {e}")
         return None
 
 def load_csv(filename):
