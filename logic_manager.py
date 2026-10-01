@@ -1,5 +1,5 @@
 #Imports
-import data_manager
+from data_manager import load_csv, save_csv
 import io_manager
 import ai_manager
 
