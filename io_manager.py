@@ -3,70 +3,93 @@ import re
 from datetime import datetime
 
 
-
-
 def UserResponseidMaker():
     return 0
 
-def course_of_study_menu():
-    print ("""
-Singapore Institute of Technology (SIT) Full Course List 2026
+#Menu output styles
+def menuDisplayType(typeofmenu):
+    match typeofmenu:
+        case "Starting":
+            print("---------------------")
+            print("----Intern Link------")
+            print("---------------------")
 
-Infocomm Technology
-1: Applied Artificial Intelligence
-2: Applied Computing (Fintech)
-3: Applied Computing Degree (via CSM Pathway)
-4: Computer Engineering
-5: Computer Science in Interactive Media and Game Development
-6: Computer Science in Real-Time Interactive Simulation
-7: Computing Science
-8: Digital Art and Animation
-9: Information and Communications Technology (Information Security)
-10: Information and Communications Technology (Software Engineering)
-11: User Experience and Game Design
+        case "CourseDisplay":
+            print ("""
+            Singapore Institute of Technology (SIT) Full Course List 2026
+            
+            Infocomm Technology
+            1: Applied Artificial Intelligence
+            2: Applied Computing (Fintech)
+            3: Applied Computing Degree (via CSM Pathway)
+            4: Computer Engineering
+            5: Computer Science in Interactive Media and Game Development
+            6: Computer Science in Real-Time Interactive Simulation
+            7: Computing Science
+            8: Digital Art and Animation
+            9: Information and Communications Technology (Information Security)
+            10: Information and Communications Technology (Software Engineering)
+            11: User Experience and Game Design
+            
+            Engineering
+            12: Aircraft Systems Engineering
+            13: Chemical Engineering
+            14: Civil Engineering
+            15: Digital Supply Chain
+            16: Electrical and Electronic Engineering
+            17: Electrical and Electronic Engineering Degree (via CSM Pathway)
+            18: Electrical Power Engineering
+            19: Electronics and Data Engineering
+            20: Engineering Systems
+            21: Infrastructure and Systems Engineering Degree (via CSM Pathway)
+            22: Mechanical Design and Manufacturing Engineering
+            23: Mechanical Engineering
+            24: Naval Architecture and Marine Engineering
+            25: Robotics Systems
+            26: Sustainable Built Environment
+            
+            Business, Communication and Design
+            27: Accountancy
+            28: Aviation Management
+            29: Business and Infocomm Technology
+            30: Communication and Digital Media
+            31: Hospitality and Tourism Management
+            32: Integrated Studies in Technology and Management
+            33: Integrated Studies in Technology and Management with Specialisation in Supply Chain
+            
+            Food, Chemical and Biotechnology
+            34: Dietetics and Nutrition
+            35: Food Business Management (Baking and Pastry Arts)
+            36: Food Business Management (Culinary Arts)
+            37: Food Technology
+            38: Pharmaceutical Engineering
+            
+            Health and Social Sciences
+            39: Diagnostic Radiography
+            40: Nursing
+            41: Nursing (Pre-registration and Specialty Training)
+            42: Occupational Therapy
+            43: Physiotherapy
+            44: Radiation Therapy
+            45: Speech and Language Therapy
+            """)
 
-Engineering
-12: Aircraft Systems Engineering
-13: Chemical Engineering
-14: Civil Engineering
-15: Digital Supply Chain
-16: Electrical and Electronic Engineering
-17: Electrical and Electronic Engineering Degree (via CSM Pathway)
-18: Electrical Power Engineering
-19: Electronics and Data Engineering
-20: Engineering Systems
-21: Infrastructure and Systems Engineering Degree (via CSM Pathway)
-22: Mechanical Design and Manufacturing Engineering
-23: Mechanical Engineering
-24: Naval Architecture and Marine Engineering
-25: Robotics Systems
-26: Sustainable Built Environment
+        case _:
+            print("Insert a proper display type")
 
-Business, Communication and Design
-27: Accountancy
-28: Aviation Management
-29: Business and Infocomm Technology
-30: Communication and Digital Media
-31: Hospitality and Tourism Management
-32: Integrated Studies in Technology and Management
-33: Integrated Studies in Technology and Management with Specialisation in Supply Chain
+#User input functions
+def quitMenu():
+    print("Exiting application")
 
-Food, Chemical and Biotechnology
-34: Dietetics and Nutrition
-35: Food Business Management (Baking and Pastry Arts)
-36: Food Business Management (Culinary Arts)
-37: Food Technology
-38: Pharmaceutical Engineering
+#Input validation/correction functions
 
-Health and Social Sciences
-39: Diagnostic Radiography
-40: Nursing
-41: Nursing (Pre-registration and Specialty Training)
-42: Occupational Therapy
-43: Physiotherapy
-44: Radiation Therapy
-45: Speech and Language Therapy
-""")
+def course_of_study_input(courseofStudy):
+    is_valid = validate_Cource_of_Study(courseofStudy)
+    while is_valid == False:
+        #course_of_study_menu()
+        courseofStudy = input("Please enter your course of study(1-46): ")
+        is_valid = validate_Cource_of_Study(courseofStudy)
+    return courseofStudy
 
 def validate_Cource_of_Study(cource):
     if not cource:
@@ -80,13 +103,15 @@ def validate_Cource_of_Study(cource):
         return False
     return True
 
-def course_of_study_input(courseofStudy):
-    is_valid = validate_Cource_of_Study(courseofStudy)
-    while is_valid == False:
-        #course_of_study_menu()
-        courseofStudy = input("Please enter your course of study(1-46): ")
-        is_valid = validate_Cource_of_Study(courseofStudy)
-    return courseofStudy
+def validate_Year_of_Study(year):
+    while re.match(r"Year\s*[1-6]\s*,\s*(?:Semester|Semester|Trimester|Trimesters)\s*[1-3]", year) is None:
+        print("Invalid input. Please enter your year of study in the format 'Year X, Semester/Trimester Y' where X is between 1 and 6 and Y is between 1 and 3.")
+        year = input("Please enter your year of study(Year 1-6 , Trimesters 1-3 ): ")
+    years_Trimesters = year.lower().strip().split(",")
+    year = years_Trimesters[0].strip().split(" ")
+    Trimesters = years_Trimesters[1].strip().split(" ") 
+    yearfinal, Trimestersfinal = Spacing_Year_of_Study_String(year,Trimesters)
+    return yearfinal, Trimestersfinal
 
 def Spacing_Year_of_Study_String(year,Trimesters):
     yearfinal = ""
@@ -97,16 +122,6 @@ def Spacing_Year_of_Study_String(year,Trimesters):
     for i in Trimesters:
         if i.isdigit() == True:
             Trimestersfinal += i
-    return yearfinal, Trimestersfinal
-
-def validate_Year_of_Study(year):
-    while re.match(r"Year\s*[1-6]\s*,\s*(?:Semester|Semester|Trimester|Trimesters)\s*[1-3]", year) is None:
-        print("Invalid input. Please enter your year of study in the format 'Year X, Semester/Trimester Y' where X is between 1 and 6 and Y is between 1 and 3.")
-        year = input("Please enter your year of study(Year 1-6 , Trimesters 1-3 ): ")
-    years_Trimesters = year.lower().strip().split(",")
-    year = years_Trimesters[0].strip().split(" ")
-    Trimesters = years_Trimesters[1].strip().split(" ") 
-    yearfinal, Trimestersfinal = Spacing_Year_of_Study_String(year,Trimesters)
     return yearfinal, Trimestersfinal
 
 def check_Internship_Duration_format(internshipDuration):
@@ -142,7 +157,7 @@ def Get_User_Input():
         "P1001": {
             "Course_of_Study": "Applied Artificial Intelligence",
             "Year_of_Study": "Year 1, Semester 1",
-            "Internship_Duration": "01/11/2023 - 30/11/2023"
+            "Internship_Duration": "01/11/2027 - 30/11/2027"
 
 
         }
@@ -150,18 +165,53 @@ def Get_User_Input():
     loopmanger = True
     while loopmanger:
 
+        #Mandatory Fields
+        menuDisplayType("Starting")
+
         #Cource of Study Input
-        course_of_study_menu()
-        courseofStudy = course_of_study_input(input("Please enter your course of study(1-45): "))
+        menuDisplayType("CourseDisplay")
+        userCourse = input("Please enter your course of study(1-45): ")
+        courseOfStudyID = course_of_study_input(userCourse)
 
         # Year of Study Input
-        yearOfStudy = input("Please enter your year of study(Year 1-6 , Trimesters 1-3 )(Enter all the details including spaces and commas): ")
-        year, Trimesters = validate_Year_of_Study(yearOfStudy)
-
+        yearOfStudy = input("Please enter your study period in the format 'Year X, Trimester Y' (e.g., Year 2, Trimester 1): ")
+        userYear, userTrimester = validate_Year_of_Study(yearOfStudy)
 
         #Avaliable internships duration input
         internshipDuration = input("Please enter the duration of your available internships (Example: 01/11/2023 - 30/11/2023 ): ")
         startingdate, endingdate = internship_duration_checker(internshipDuration)
 
-        #prefered Starrt month
-        preferedstartedmonth = input(f"Please enter the prefer starting month of your internships between {startingdate} to {endingdate}")
+        #prefered Start month
+        preferedstartedmonth = input(f"Please enter the prefer starting month of your internships between {startingdate} to {endingdate}: ")
+
+        #User Skills
+        userSkills = input("Please input in relevent skills that you have: ")
+
+        #Optional inputs
+        #Preferred Roles
+        preferedRoles = input("(OPTIONAL) Please enter your prefered internship role: ")
+
+        #Expected Salaray
+        expectedSalary = input("(OPTIONAL) Please enter your expected monthly salary: ")
+
+        #Industry Interests
+        industryInterest = input("(OPTIONAL) Please enter your prefered industry: ")
+
+        #Previous experience
+        perviousExperience = input("(OPTIONAL) If you have any experiences/projects that are relevant to your course please input them here: ")
+        break
+
+    #Return to other managers the user input
+    return {
+        "course_of_study_id": courseOfStudyID,
+        "year": userYear,
+        "trimester": userTrimester,
+        "internship_start": startingdate,
+        "internship_end": endingdate,
+        "preferred_start_month": preferedstartedmonth,
+        "skills": userSkills,
+        "preferred_roles": preferedRoles,
+        "expected_salary": expectedSalary,
+        "industry_interest": industryInterest,
+        "previous_experience": perviousExperience
+    }
