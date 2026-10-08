@@ -189,7 +189,7 @@ def check_Internship_Duration_format(internshipDuration):
         endingdate =datetime.strptime(internshipDuration[1].strip(), "%d/%m/%Y")
         if startingdate < datetime.now() or endingdate< datetime.now():
             print("Sorry Can't Set Date in the past for internship ")
-            return "Invalid","Invalid","Invalid","Invalid",False
+            return "Invalid","Invalid",False
         if startingdate>endingdate or endingdate<startingdate:
             print("Sorry can't process look like you set the date wrong ")
             return "Invalid","Invalid",False
@@ -291,13 +291,13 @@ def Get_User_Input():
         userYear, userTrimester = validate_Year_of_Study(yearOfStudy)
 
         #Avaliable internships duration input
-        internshipDuration = input("Please enter the duration of your available internships (Example: 01/11/2023 - 30/11/2023 ): ")
+        internshipDuration = input("Please enter the duration of your available internships (Example: 01/11/2026 - 30/11/2026 ): ")
         startingdate, endingdate = internship_duration_checker(internshipDuration)
 
         #prefered Start month
         valid_months = valid_month_preferrance(startingdate,endingdate)
         preferedstartedmonth = validate_month_preferrance(startingdate,endingdate,input(f"Please enter the prefer starting month of your internships between {valid_months} , Example Febuary:"))
-
+        print(preferedstartedmonth)
 
         #skills
         Skills = input("Please enter your skills (type exit to exit): ")
