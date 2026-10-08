@@ -3,6 +3,18 @@ import json
 
 import data_manager
 
+EXPECTED_AI_OUTPUT = {
+    "job_id": None,
+    "SkillsMatch": None,
+    "RoleMatch": None,
+    "IndustryInterestMatch": None,
+    "ExperienceMatch": None,
+    "SalaryMatch": None,
+    "WorkArrangementMatch": None,
+    "LocationMatch": None,
+    "CompanyPreferenceMatch": None
+}
+
 def get_latest_profile(filename):
     latest_profile = None
 
@@ -105,6 +117,27 @@ SCORING RULES:
 - Do not rank internships.
 - Do not apply business rules or flags.
 - Do not provide individual internship explanations.
+
+JSON RESPONSE INSTRUCTIONS:
+
+Return ONLY a valid JSON object.
+
+- Do not include Markdown code fences.
+- Do not include text outside the JSON object.
+- Use exactly the field names shown below.
+- All match scores must be integers from 0 to 100.
+- Return null when an optional criterion cannot be assessed.
+- Do not invent missing preferences.
+- Return the original job_id unchanged.
+- Do not include overall scores, rankings or explanations.
+
+EXPECTED JSON STRUCTURE:
+
+{json.dumps(EXPECTED_AI_OUTPUT, indent=2)}
+
+Replace the null placeholders with actual scores where
+sufficient information is available.
+Keep null for criteria that cannot be assessed.
 """
 
     return prompt
