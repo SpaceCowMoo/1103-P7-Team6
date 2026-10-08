@@ -82,14 +82,55 @@ def quitMenu():
     print("Exiting application")
 
 #Input validation/correction functions
-
-def course_of_study_input(courseofStudy):
-    is_valid = validate_Cource_of_Study(courseofStudy)
-    while is_valid == False:
-        #course_of_study_menu()
-        courseofStudy = input("Please enter your course of study(1-46): ")
-        is_valid = validate_Cource_of_Study(courseofStudy)
-    return courseofStudy
+def course_of_study_words(course_of_study_id):
+    courses = [
+    "Applied Artificial Intelligence",
+    "Applied Computing (Fintech)",
+    "Applied Computing Degree (via CSM Pathway)",
+    "Computer Engineering",
+    "Computer Science in Interactive Media and Game Development",
+    "Computer Science in Real-Time Interactive Simulation",
+    "Computing Science",
+    "Digital Art and Animation",
+    "Information and Communications Technology (Information Security)",
+    "Information and Communications Technology (Software Engineering)",
+    "User Experience and Game Design",
+    "Aircraft Systems Engineering",
+    "Chemical Engineering",
+    "Civil Engineering",
+    "Digital Supply Chain",
+    "Electrical and Electronic Engineering",
+    "Electrical and Electronic Engineering Degree (via CSM Pathway)",
+    "Electrical Power Engineering",
+    "Electronics and Data Engineering",
+    "Engineering Systems",
+    "Infrastructure and Systems Engineering Degree (via CSM Pathway)",
+    "Mechanical Design and Manufacturing Engineering",
+    "Mechanical Engineering",
+    "Naval Architecture and Marine Engineering",
+    "Robotics Systems",
+    "Sustainable Built Environment",
+    "Accountancy",
+    "Aviation Management",
+    "Business and Infocomm Technology",
+    "Communication and Digital Media",
+    "Hospitality and Tourism Management",
+    "Integrated Studies in Technology and Management",
+    "Integrated Studies in Technology and Management with Specialisation in Supply Chain",
+    "Dietetics and Nutrition",
+    "Food Business Management (Baking and Pastry Arts)",
+    "Food Business Management (Culinary Arts)",
+    "Food Technology",
+    "Pharmaceutical Engineering",
+    "Diagnostic Radiography",
+    "Nursing",
+    "Nursing (Pre-registration and Specialty Training)",
+    "Occupational Therapy",
+    "Physiotherapy",
+    "Radiation Therapy",
+    "Speech and Language Therapy"
+]
+    return courses[course_of_study_id-1]
 
 def validate_Cource_of_Study(cource):
     if not cource:
@@ -103,6 +144,16 @@ def validate_Cource_of_Study(cource):
         return False
     return True
 
+def course_of_study_input(courseofStudy):
+    is_valid = validate_Cource_of_Study(courseofStudy)
+    while is_valid == False:
+        #course_of_study_menu()
+        courseofStudy = input("Please enter your course of study(1-45): ")
+        is_valid = validate_Cource_of_Study(courseofStudy)
+    return course_of_study_words(int(courseofStudy))
+
+
+
 def validate_Year_of_Study(year):
     while re.match(r"Year\s*[1-6]\s*,\s*(?:Semester|Semester|Trimester|Trimesters)\s*[1-3]", year) is None:
         print("Invalid input. Please enter your year of study in the format 'Year X, Semester/Trimester Y' where X is between 1 and 6 and Y is between 1 and 3.")
@@ -112,6 +163,10 @@ def validate_Year_of_Study(year):
     Trimesters = years_Trimesters[1].strip().split(" ") 
     yearfinal, Trimestersfinal = Spacing_Year_of_Study_String(year,Trimesters)
     return yearfinal, Trimestersfinal
+
+
+    
+
 
 def Spacing_Year_of_Study_String(year,Trimesters):
     yearfinal = ""
@@ -229,7 +284,7 @@ def Get_User_Input():
         #Cource of Study Input
         menuDisplayType("CourseDisplay")
         userCourse = input("Please enter your course of study(1-45): ")
-        courseOfStudyID = course_of_study_input(userCourse)
+        courseOfStudy = course_of_study_input(userCourse)
 
         # Year of Study Input
         yearOfStudy = input("Please enter your study period in the format 'Year X, Trimester Y' (e.g., Year 2, Trimester 1): ")
@@ -248,23 +303,45 @@ def Get_User_Input():
         Skills = input("Please enter your skills (type exit to exit): ")
 
 
+        #optional Input
+
         #Preferred roles (e.g Marketing Assistant, Data Analyst), 
-        
+        preferedroles = input("Enter your preferred role :")
         
         
     
         # Minimum expected monthly salary, 
-        
+        Minimummonthsalary = input("Enter your expected monthly salary :")
         
         
         # Preferred location, 
-        
+        preferedlocation = input("Enter your preferred location :")
     
         
         # Industry interests (e.g fintech, cybersecurity), 
-        
+        Industry_interest = input("Enter your Industry Interest :")
     
         # Company preference (e.g start-up, MNCs), 
-    
+        Company_preference = input("Enter your company preference :")
 
         # Past experience (e.g previous SWE internship)
+        past_experience  = input("Enter your past experience :")
+
+        #Input id 
+        input_id = "PD001"
+        user_input = {
+            input_id:{
+                "Cource_of_Study":courseOfStudy,
+                "Year_of_Study":f'{userYear},{userTrimester}',
+                "Avaliable_Intership_date":f'{startingdate}-{endingdate}',
+                "Preferred_month":preferedstartedmonth,
+                "Skills":Skills,
+                "Preferred_Roles":preferedroles,
+                "Minimum_monthly_Salary":Minimummonthsalary,
+                "Preferred_location":preferedlocation,
+                "Industry_interest":Industry_interest,
+                "Company_preference":Company_preference,
+                "past_experience":past_experience,
+            }
+        }
+        return user_input
