@@ -46,6 +46,69 @@ def get_ai_input(profile):
 def get_test_internship(conn, job_id):
     return data_manager.get_internship(conn, job_id)
 
+def build_prompt(student_profile, internship):
+
+    prompt = f"""
+You are an AI internship matching assistant for InternLink.
+
+Analyse how well the student matches the internship listing.
+
+STUDENT PROFILE:
+{json.dumps(student_profile, indent=2)}
+
+INTERNSHIP LISTING:
+{json.dumps(internship, indent=2)}
+
+MATCHING CRITERIA:
+
+1. SkillsMatch:
+Evaluate how well the student's skills match the
+internship's required skills.
+
+2. RoleMatch:
+Evaluate whether the internship role aligns with
+the student's preferred roles.
+
+3. IndustryInterestMatch:
+Evaluate whether the internship industry aligns
+with the student's industry interests.
+
+4. ExperienceMatch:
+Evaluate whether the student's past experience is
+relevant to the internship responsibilities.
+
+5. SalaryMatch:
+Evaluate the internship allowance against the
+student's minimum expected monthly salary.
+
+6. WorkArrangementMatch:
+Evaluate whether the internship's work arrangement
+matches the student's preference, if provided.
+
+7. LocationMatch:
+Evaluate whether the internship location aligns
+with the student's preferred location.
+
+8. CompanyPreferenceMatch:
+Evaluate whether the company aligns with the
+student's preferred company type.
+
+SCORING RULES:
+
+- Assess each criterion independently.
+- Give each criterion a score from 0 to 100.
+- 0 means no alignment.
+- 100 means excellent alignment.
+- Use only the provided student and internship information.
+- If an optional preference is missing, do not invent it.
+- Do not calculate an overall match score.
+- Do not rank internships.
+- Do not apply business rules or flags.
+- Do not provide individual internship explanations.
+"""
+
+    return prompt
+
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
@@ -79,8 +142,6 @@ if __name__ == "__main__":
     finally:
         conn.close()
 
-    print("Student Profile:")
-    print(ai_input)
+    prompt = build_prompt(ai_input, internship)
 
-    print("\nInternship:")
-    print(internship)
+    print(prompt)
