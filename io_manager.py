@@ -256,8 +256,8 @@ def Get_User_Input():
             "Minimum_monthly_salary":500,
             "Preferred_location":["Chua Chu kang"],
             "Industry_interests":["Artifical Intelligence"],
-            "Company preference":"MNC",
-            "Past experience":
+            "Company_preference":"MNC",
+            "Past_experience":
             {
                 "Ict Intern":{
                     "Date":"11/06/2024 - 24/06/2025",
