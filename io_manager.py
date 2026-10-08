@@ -155,7 +155,7 @@ def course_of_study_input(courseofStudy):
 
 
 def validate_Year_of_Study(year):
-    while re.match(r"Year\s*[1-6]\s*,\s*(?:Semester|Semester|Trimester|Trimesters)\s*[1-3]", year) is None:
+    while re.match(r"Year\s*[1-6]\s*,\s*(?:Semester|Trimester|Trimesters)\s*[1-3]", year, re.IGNORECASE) is None:
         print("Invalid input. Please enter your year of study in the format 'Year X, Semester/Trimester Y' where X is between 1 and 6 and Y is between 1 and 3.")
         year = input("Please enter your year of study(Year 1-6 , Trimesters 1-3 ): ")
     years_Trimesters = year.lower().strip().split(",")
@@ -243,7 +243,35 @@ def validate_month_preferrance(startingdate,endingdate,inputedmonth):
         valid_input,inputresult = validating_month(inputedmonth)
     return inputresult
         
+def skill_validation(skillsinput):
+    if not skillsinput:
+        return False
+    elif skillsinput.isdigit()==True:
+        areusure = input("Are u sure what u click in Correct, Example (Y/N): ")
+        if areusure.strip().lower() == 'y':
+            return True
+        elif areusure.strip().lower() == 'n':
+            return False
+    return True
 
+def skill_validate(skillsinput):
+    is_valid = skill_validation(skillsinput)
+    while is_valid == False:
+        skillsinput = input("Please enter your skills (type exit to exit):")
+        is_valid = skill_validation(skillsinput)
+    return skillsinput , is_valid
+
+def continuousloopskills(skillsinput):
+    firsttime = 1
+    skillslist = []
+    skillinput , isvalid = skill_validate(skillsinput)
+    skillslist.append(skillinput)
+    while ((firsttime == 1)or (isvalid == True and skillinput.strip().lower() != "exit")):
+        firsttime = firsttime+1
+        skillsinput = input("Please enter your skills (type exit to exit):")
+        skillinput , isvalid = skill_validate(skillsinput)
+        skillslist.append(skillinput)
+    return skillslist
 
 def Get_User_Input():
     sampleinput = {
@@ -297,10 +325,9 @@ def Get_User_Input():
         #prefered Start month
         valid_months = valid_month_preferrance(startingdate,endingdate)
         preferedstartedmonth = validate_month_preferrance(startingdate,endingdate,input(f"Please enter the prefer starting month of your internships between {valid_months} , Example Febuary:"))
-        print(preferedstartedmonth)
 
         #skills
-        Skills = input("Please enter your skills (type exit to exit): ")
+        Skills = continuousloopskills(input("Please enter your skills: "))
 
 
         #optional Input
