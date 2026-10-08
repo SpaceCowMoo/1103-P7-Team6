@@ -152,12 +152,70 @@ def internship_duration_checker(internshipDuration):
         Startingdate,endingdate,is_valid = check_Internship_Duration_format(internshipDuration)
     return Startingdate, endingdate
 
+def valid_month_preferrance(startingdate , endingdate):
+    startingmonth = startingdate.month
+    startingyear = startingdate.year
+    endingmonth = endingdate.month
+    endingyear = endingdate.year
+
+    return f'{startingmonth}/{startingyear} - {endingmonth}/{endingyear}'
+
+def validating_month(inputmonth):
+    if not inputmonth:
+        return False , "Invalid"
+    inputmonth = inputmonth.strip()
+    if inputmonth.isdigit():
+        month_number = int(inputmonth)
+        if not 1 <= month_number <= 12:
+            print("Enter a month from 1 to 12.")
+            return False,"Invalid"
+        month_name = datetime.strptime(f"{month_number:02d}", "%m").strftime("%B")
+        return True, month_name
+    else:
+        try:
+            month_name = datetime.strptime(inputmonth, "%B").strftime("%B")
+            return True, month_name
+        except ValueError:
+            print("Enter a month number or full month name.")
+            return False,"Invalid"
+
+
+def validate_month_preferrance(startingdate,endingdate,inputedmonth):
+    valid_input,inputresult = validating_month(inputedmonth)
+    while valid_input == False:
+        valid_months = valid_month_preferrance(startingdate,endingdate)
+        inputedmonth = input(f"Please enter the prefer starting month of your internships between {valid_months} , Example Febuary:")
+        valid_input,inputresult = validating_month(inputedmonth)
+    return inputresult
+        
+
+
 def Get_User_Input():
     sampleinput = {
         "P1001": {
             "Course_of_Study": "Applied Artificial Intelligence",
             "Year_of_Study": "Year 1, Semester 1",
-            "Internship_Duration": "01/11/2027 - 30/11/2027"
+            "Internship_Duration": "01/11/2023 - 30/11/2023",
+            "Prefer_month":"February",
+            "Skills":["C Programming","Python Programming", "Artifical Intelligence programming"],
+            "Prefer_Role":["Ict Intern"],
+            "Minimum_monthly_salary":500,
+            "Preferred_location":["Chua Chu kang"],
+            "Industry_interests":["Artifical Intelligence"],
+            "Company preference":"MNC",
+            "Past experience":
+            {
+                "Ict Intern":{
+                    "Date":"11/06/2024 - 24/06/2025",
+                    "Job Decription":"It a work about a program"
+
+
+
+                }
+
+            }
+
+
 
 
         }
@@ -182,36 +240,31 @@ def Get_User_Input():
         startingdate, endingdate = internship_duration_checker(internshipDuration)
 
         #prefered Start month
-        preferedstartedmonth = input(f"Please enter the prefer starting month of your internships between {startingdate} to {endingdate}: ")
+        valid_months = valid_month_preferrance(startingdate,endingdate)
+        preferedstartedmonth = validate_month_preferrance(startingdate,endingdate,input(f"Please enter the prefer starting month of your internships between {valid_months} , Example Febuary:"))
 
-        #User Skills
-        userSkills = input("Please input in relevent skills that you have: ")
 
-        #Optional inputs
-        #Preferred Roles
-        preferedRoles = input("(OPTIONAL) Please enter your prefered internship role: ")
+        #skills
+        Skills = input("Please enter your skills (type exit to exit): ")
 
-        #Expected Salaray
-        expectedSalary = input("(OPTIONAL) Please enter your expected monthly salary: ")
 
-        #Industry Interests
-        industryInterest = input("(OPTIONAL) Please enter your prefered industry: ")
+        #Preferred roles (e.g Marketing Assistant, Data Analyst), 
+        
+        
+        
+    
+        # Minimum expected monthly salary, 
+        
+        
+        
+        # Preferred location, 
+        
+    
+        
+        # Industry interests (e.g fintech, cybersecurity), 
+        
+    
+        # Company preference (e.g start-up, MNCs), 
+    
 
-        #Previous experience
-        perviousExperience = input("(OPTIONAL) If you have any experiences/projects that are relevant to your course please input them here: ")
-        break
-
-    #Return to other managers the user input
-    return {
-        "course_of_study_id": courseOfStudyID,
-        "year": userYear,
-        "trimester": userTrimester,
-        "internship_start": startingdate,
-        "internship_end": endingdate,
-        "preferred_start_month": preferedstartedmonth,
-        "skills": userSkills,
-        "preferred_roles": preferedRoles,
-        "expected_salary": expectedSalary,
-        "industry_interest": industryInterest,
-        "previous_experience": perviousExperience
-    }
+        # Past experience (e.g previous SWE internship)
