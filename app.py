@@ -7,6 +7,7 @@ load_dotenv()
 
 import io_manager
 import data_manager
+import logic_manager
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
 STUDENT_DATA = os.getenv("STUDENT_DATA")
@@ -84,10 +85,13 @@ def demo(conn):
 
 def main():
     conn = setup()
-    demo(conn)
     
+    #demo(conn)
+    # testAIOutput = {1: {"InternshipID": 1, "SkillsMatch": 30, "RoleMatch": 50, "IndustryInterestMatch": 50, "ExperienceMatch": 50, "SalaryMatch": 50, "WorkArrangementMatch": 50, "LocationMatch": 50, "CompanyPreferenceMatch": 50, "NextAction": "Apply for the internship"}}
+    # testUserProfile = {"CourseOfStudy": "Applied Artificial Intelligence", "YearOfStudy": "Year 1, Semester 1", "InternshipDuration": "01/11/2023 - 30/11/2023", "PreferMonth": "February", "Skills": ["C Programming", "Python Programming", "Artificial Intelligence programming"], "PreferRole": ["Ict Intern"], "Minimum_monthly_salary": 500, "Preferred_location": ["Chua Chu kang"], "Industry_interests": ["Artificial Intelligence"], "Company_preference": "MNC", "Past_experience": {"Ict Intern": {"Date": "11/06/2024 - 24/06/2025", "Job Decription": "It is a work about a program"}}}
+    # logic_manager.evaluateInternship(conn, testAIOutput, testUserProfile)
     userinput = io_manager.Get_User_Input()
-
+    
     conn.close()
 
 if __name__ == "__main__": main()
