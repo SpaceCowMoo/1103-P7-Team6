@@ -1,6 +1,8 @@
 import csv
 import json
-
+import os
+from dotenv import load_dotenv
+from google import genai
 import data_manager
 
 EXPECTED_AI_OUTPUT = {
@@ -14,6 +16,18 @@ EXPECTED_AI_OUTPUT = {
     "LocationMatch": None,
     "CompanyPreferenceMatch": None
 }
+
+def configure_gemini():
+    load_dotenv()
+
+    api_key = os.getenv("GEMINI_API_KEY")
+
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is missing from .env")
+
+    client = genai.Client(api_key=api_key)
+
+    return client
 
 def get_latest_profile(filename):
     latest_profile = None
@@ -49,8 +63,8 @@ def get_ai_input(profile):
         ),
         "preferred_location": convert_value(profile["Preferred_location"]),
         "industry_interests": convert_value(profile["Industry_interests"]),
-        "company_preference": convert_value(profile["Company preference"]),
-        "past_experience": convert_value(profile["Past experience"])
+        "company_preference": convert_value(profile["Company_preference"]),
+        "past_experience": convert_value(profile["Past_experience"])
     }
 
     return ai_input
@@ -143,10 +157,8 @@ Keep null for criteria that cannot be assessed.
     return prompt
 
 if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
-
-    load_dotenv()
+    client = configure_gemini()
+    print("Gemini client configured successfully!")
 
     profile = get_latest_profile("data/student_profiles.csv")
 
@@ -166,8 +178,8 @@ if __name__ == "__main__":
         data_manager.init_db(conn)
 
         # Load internship CSV if database is empty
-        if data_manager.is_empty(conn):
-            data_manager.load_csv(conn, csv_path)
+        if data_manager.is_empty(conn, "internships"):
+            data_manager.load_internships_csv(conn, csv_path)
 
         # Retrieve internship with job_id = 1
         internship = get_test_internship(conn, 1)
