@@ -1,56 +1,56 @@
 #Imports
 import io_manager
 import ai_manager
+import data_manager
 
-#variables
-
-#AI returns individual match scores for each of the following criteria
-#AI filters listings based on mandatory fields
-#Overall match score is calculated from the optional fields below:
-internshipName = ""
-companyName = ""
-SkillsMatch = 0
-RoleMatch = 0
-IndustryInterestMatch = 0
-ExperienceMatch = 0
-SalaryMatch = 0
-WorkArrangementMatch = 0
-LocationMatch = 0
-CompanyPreferenceMatch = 0
-#They will follow the weightage using this formula:
-OverallMatchScore = (SkillsMatch * 0.25) + (RoleMatch * 0.25) + (IndustryInterestMatch * 0.125) + (ExperienceMatch * 0.125) + (SalaryMatch * 0.075) + (WorkArrangementMatch * 0.075) + (LocationMatch * 0.05) + (CompanyPreferenceMatch * 0.05)
-#If an optional field is left empty, its weightage will be redistributed proportionally among the remaining fields
-#Sum up the weightage of fields that have non-empty values, divide OverallMatchScore by the sum to get final score
-
-#Flags
-salaryFlag = False
-avaliabilityFlag = False
-experienceFlag = False
-
-#At least one multi-condition rule that uses two or more fields from the AI response
 #functions
-def salaryCheck():
-    #If the user provided a minimum expected monthly salary and a listing's stated salary is below that by more than $200, Check it with a warning label
-    return
+# Take in internship data type and what the user provided in IO manager
 
-def userAvaliabilityCheck():
-    #If a listing's commitment duration does not match the student's availability, Check it as duration mismatch
-    return
+def addInternshipResultToDB(internshipResult):
+    #Add the internship result to the database
+    io_manager.addInternshipResult(internshipResult)
 
-def experienceCheck():
-    #If a listing explicitly requires prior internship experience and the student’s profile doesn't have relevant prior internship experience, Check as likely unsuitable
-    return
+def evaluateInternship(outputAI, userProfile):
+    score = calculateScore(outputAI)
+    flags = []
+    ResultID = 0
 
-def evaluate(record):
-    return 
+    #output to IO manager
+    InternshipResult = {
+        ResultID:{
+        "UserID": 0,
+        "InternshipID": 0,
+        "OverallMatchScore": 0,
+        "Advice": ""
+        }
+    }
 
-def score(record):
-    return
+    internshipData = data_manager.get_internship(outputAI["InternshipID"])
 
-def route(record):
-    return
+    if (internshipData["monthly_allowance"] < (userProfile["expected_salary"] - 200)):
+        #If the user provided a minimum expected monthly salary and a listing's stated salary is below that by more than $200
+        flags.append("Salary below expected minimum")
+    if (internshipData["duration"] != userProfile["availability"]):
+        #If a listing's commitment duration does not match the student's availability
+        flags.append("Duration mismatch")
+    if (internshipData["required_skills"] != userProfile["skills"]):
+        flags.append("Skills mismatch")
+    if (internshipData["required_experience"] == "Yes" and userProfile["prior_experience"] == "No"):
+        #If a listing explicitly requires prior internship experience and the student’s profile doesn't have relevant prior internship experience
+        flags.append("Likely unsuitable")
+
+    #Get AI generated advice based on the internship data, user profile, and any flags that were raised
+    reccomendedActions = ai_manager.generateUserAdvice(internshipData, userProfile, flags)
+
+    #Create internship recomendation result
+    InternshipResult["InternshipID"] = internshipData["InternshipID"]
+    InternshipResult["OverallMatchScore"] = score
+    InternshipResult["Advice"] = reccomendedActions
+
+    addInternshipResultToDB(InternshipResult)
+    return InternshipResult
 
 #check if output to user is a single value or all the ratings (Pending)
-def finalScore():
-    return
-
+def calculateScore(aiOutput):
+    OverallMatchScore = (aiOutput["SkillsMatch"] * 0.25) + (aiOutput["RoleMatch"] * 0.25) + (aiOutput["IndustryInterestMatch"] * 0.125) + (aiOutput["ExperienceMatch"] * 0.125) + (aiOutput["SalaryMatch"] * 0.075) + (aiOutput["WorkArrangementMatch"] * 0.075) + (aiOutput["LocationMatch"] * 0.05) + (aiOutput["CompanyPreferenceMatch"] * 0.05)
+    return OverallMatchScore
