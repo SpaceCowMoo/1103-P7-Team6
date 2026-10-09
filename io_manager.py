@@ -1,7 +1,10 @@
 import csv
+import json
 from pathlib import Path
 import re
 from datetime import datetime
+
+STUDENT_PROFILES_CSV = Path(__file__).resolve().parent / "data" / "student_profiles.csv"
 
 
 def UserResponseidMaker():
@@ -14,6 +17,18 @@ def menuDisplayType(typeofmenu):
             print("---------------------")
             print("----Intern Link------")
             print("---------------------")
+            print("Welcome to Intern Link and please enter your your user profile")
+
+        case "SecondTime":
+            print("---------------------")
+            print("----Intern Link------")
+            print("---------------------")
+            print("1:Update Profile")
+            print("2:View Past Listing")
+            print("3:Search for new internship")
+            print("4:exit")
+
+
 
         case "CourseDisplay":
             print ("""
@@ -143,7 +158,7 @@ def menuDisplayType(typeofmenu):
             print(singapore_areas_numbered_string)
 
         case "company_preference":
-            """
+            print("""
             1.Start-ups
             2.Scale-ups
             3.Multi-National Corporations(MNCs) 
@@ -155,7 +170,7 @@ def menuDisplayType(typeofmenu):
 
 
 
-            """
+            """)
 
         case _:
             print("Insert a proper display type")
@@ -558,26 +573,22 @@ def validate_Industry_interest(Industrial_intrest):
     elif len(Industrial_intrest)==1:
         print("you enter a character")
         return Confirming_input(input("Are u sure , what u enter (Enter Y/N):"))
+    return True
 
 def Industrial_input_checker(industrial_interest):
     is_valid = validate_Industry_interest(industrial_interest)
     while is_valid == False:
         industrial_interest = input("Enter your Industry Interest (Enter exit to continue):")
-        is_valid = validate_Industry_interest
+        is_valid = validate_Industry_interest(industrial_interest)
     return industrial_interest,is_valid
 
 def industrial_input_list_adder(industrial_interest):
     industrial_interestlist = []
-    firsttime = 1
     industrial_interest,is_valid = Industrial_input_checker(industrial_interest)
-    if industrial_interest.lower().strip()=="exit":
-        return industrial_interestlist
-    industrial_interestlist.append(industrial_interest)
-    while firsttime == 1 or (is_valid==True and industrial_interest.lower().strip()!="exit" ):
-        industrial_interest,is_valid = Industrial_input_checker(industrial_interest)
-        if industrial_interest.lower().strip()=="exit":
-            return industrial_interestlist
+    while industrial_interest.strip().lower() != "exit":
         industrial_interestlist.append(industrial_interest)
+        industrial_interest = input("Enter another Industry Interest (or enter exit to continue):")
+        industrial_interest,is_valid = Industrial_input_checker(industrial_interest)
     return industrial_interestlist
 
 
@@ -680,18 +691,21 @@ def looping_pass_experience(pass_experience_input):
 
     return arrange_pass_experiences(experiences)
 
-def Profile_id_maker():
-    csv_path = Path(__file__).resolve().parent / "data" / "student_profiles.csv"
+def Profile_id_maker(student_profilelist):
+    if not student_profilelist:
+        return "P1000" 
+    else:
+        with open(STUDENT_PROFILES_CSV, newline="", encoding="utf-8-sig") as file:
+            profile_ids = [row["Input_ID"] for row in csv.DictReader(file)]
 
-    with open(csv_path, newline="", encoding="utf-8-sig") as file:
-        profile_ids = [row["Input_ID"] for row in csv.DictReader(file)]
-
-    lastprofileid = profile_ids[-1]
-    newprofileid = f"P{int(lastprofileid[1:]) + 1:04d}"
-    return newprofileid
+        if not profile_ids:
+            return "P1000"
+        lastprofileid = profile_ids[-1]
+        newprofileid = f"P{int(lastprofileid[1:]) + 1:04d}"
+        return newprofileid
         
     
-def Get_User_Input():
+def Get_User_Input(student_profile_list):
     sampleinput = {
         "P1001": {
             "Course_of_Study": "Applied Artificial Intelligence",
@@ -725,7 +739,7 @@ def Get_User_Input():
     while loopmanger:
 
         #Mandatory Fields
-        menuDisplayType("Starting")
+        
 
         #Cource of Study Input
         menuDisplayType("CourseDisplay")
@@ -777,7 +791,7 @@ def Get_User_Input():
         )
 
         #Input id
-        input_id = Profile_id_maker()
+        input_id = Profile_id_maker(student_profile_list)
 
         user_input = {
             input_id:{
@@ -796,4 +810,102 @@ def Get_User_Input():
                 "past_experience":past_experience,
             }
         }
-        return user_input
+        return user_input,input_id
+
+def upload_input_confirmer(userinput_id):
+    with open(STUDENT_PROFILES_CSV, newline="", encoding="utf-8-sig") as file:
+        profile_ids = [row["Input_ID"] for row in csv.DictReader(file)]
+
+    if profile_ids and profile_ids[-1] == userinput_id:
+        return "Successfully appended to CSV!", True
+    return "The appending failed", False
+
+
+def upload_input_csv(user_input, user_id):
+  STUDENT_PROFILES_CSV.parent.mkdir(parents=True, exist_ok=True)
+  needs_header = (
+      not STUDENT_PROFILES_CSV.exists()
+      or STUDENT_PROFILES_CSV.stat().st_size == 0
+  )
+  with open(STUDENT_PROFILES_CSV, mode="a", newline="", encoding="utf-8") as file:
+    input_id_key = list(user_input.keys())[0]
+    inner_data = user_input[input_id_key]
+
+    # Map keys to your CSV headers and convert lists/dicts to JSON strings
+    row_to_write = {
+        "Input_ID": input_id_key,
+        "Course_of_Study": inner_data["Cource_of_Study"],
+        "Year_of_Study": inner_data["Year_of_Study"],
+        "Internship_Duration": inner_data["Avaliable_Intership_date"],
+        "Prefer_month": inner_data["Preferred_month"],
+        "Skills": json.dumps(inner_data["Skills"]),
+        "Prefer_Role": json.dumps(inner_data["Preferred_Roles"]),
+        "Minimum_monthly_salary": inner_data["Minimum_monthly_Salary"],
+        "Preferred_location": json.dumps(inner_data["Preferred_location"]),
+        "Industry_interests": json.dumps(inner_data["Industry_interest"]),
+        "Company_preference": inner_data["Company_preference"],
+        "Past_experience": json.dumps(inner_data["past_experience"]),
+    }
+
+    fieldnames = [
+        "Input_ID",
+        "Course_of_Study",
+        "Year_of_Study",
+        "Internship_Duration",
+        "Prefer_month",
+        "Skills",
+        "Prefer_Role",
+        "Minimum_monthly_salary",
+        "Preferred_location",
+        "Industry_interests",
+        "Company_preference",
+        "Past_experience",
+    ]
+
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    if needs_header:
+      writer.writeheader()
+    writer.writerow(row_to_write)
+  message, result = upload_input_confirmer(user_id)
+  return message , result
+
+def input_result_checker(message,result):
+    if result == True :
+        print(message)
+        return False
+    elif result == False:
+        print(message)
+        return True
+    else:
+        print(message)
+        return True
+
+def load_csv_student_profile():
+    try:
+        with open(STUDENT_PROFILES_CSV, mode="r", newline="", encoding="utf-8-sig") as file:
+            all_records = list(csv.DictReader(file))
+    except FileNotFoundError:
+        print("student_profile_csv does not exist in the system")
+        return [], True
+    return all_records, True
+                
+    
+
+
+def starting_menu():
+    student_profile_list, file_loaded = load_csv_student_profile()
+    if not file_loaded:
+        return [], False, ""
+
+    if student_profile_list:
+        menuDisplayType("SecondTime")
+        menu_flag = "secondtime"
+    else:
+        menuDisplayType("Starting")
+        menu_flag = "starting"
+    return student_profile_list, True, menu_flag
+                
+            
+
+def add_internship_result(intershipresult):
+    return intershipresult

@@ -65,10 +65,16 @@ def demo(conn):
 
 def main():
     conn = setup()
-    demo(conn)
-    
-    userinput = io_manager.Get_User_Input()
-
-    conn.close()
+    try:
+        demo(conn)
+        student_profile_list,starting,menuflag = io_manager.starting_menu()
+        if menuflag == "starting":
+            userinput,user_id = io_manager.Get_User_Input(student_profile_list)
+            message,result = io_manager.upload_input_csv(userinput,user_id)
+            io_manager.input_result_checker(message,result)
+        elif menuflag == "secondtime":
+            print("Under Contruction")
+    finally:
+        conn.close()
 
 main()
