@@ -52,5 +52,18 @@ def evaluateInternship(outputAI, userProfile):
 
 #check if output to user is a single value or all the ratings (Pending)
 def calculateScore(aiOutput):
-    OverallMatchScore = (aiOutput["SkillsMatch"] * 0.25) + (aiOutput["RoleMatch"] * 0.25) + (aiOutput["IndustryInterestMatch"] * 0.125) + (aiOutput["ExperienceMatch"] * 0.125) + (aiOutput["SalaryMatch"] * 0.075) + (aiOutput["WorkArrangementMatch"] * 0.075) + (aiOutput["LocationMatch"] * 0.05) + (aiOutput["CompanyPreferenceMatch"] * 0.05)
-    return OverallMatchScore
+    #TotalScore tracks the weightage of fields used
+    TotalScore = 0
+    weightage = {"SkillsMatch": 0.25, "RoleMatch": 0.25, "IndustryInterestMatch": 0.125, "ExperienceMatch": 0.125, "SalaryMatch": 0.075, "WorkArrangementMatch": 0.075, "LocationMatch": 0.05, "CompanyPreferenceMatch": 0.05}
+    for key, value in aiOutput.items():
+        if value == None:
+            #change NULL value to 0 to prevent TypeError during MatchScore calculation
+            aiOutput[key] = 0
+        else:
+            #if an optional field has been filled in, add its weightage to TotalScore
+            TotalScore += weightage[key]
+
+    OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["SalaryMatch"] * weightage["SalaryMatch"]) + (aiOutput["WorkArrangementMatch"] * weightage["WorkArrangementMatch"]) + (aiOutput["LocationMatch"] * weightage["LocationMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
+    return OverallMatchScore/TotalScore
+    #divide OverallScore over TotalScore to get final score out of 100%
+
