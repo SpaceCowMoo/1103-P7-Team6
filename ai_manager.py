@@ -29,6 +29,14 @@ def configure_gemini():
 
     return client
 
+def call_gemini(client, prompt):
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    return response.text
+
 def get_latest_profile(filename):
     latest_profile = None
 
@@ -189,4 +197,8 @@ if __name__ == "__main__":
 
     prompt = build_prompt(ai_input, internship)
 
-    print(prompt)
+    # Send prompt to Gemini
+    response = call_gemini(client, prompt)
+
+    print("Gemini Response:")
+    print(response)
