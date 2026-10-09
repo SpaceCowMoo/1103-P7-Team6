@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -8,24 +9,42 @@ import io_manager
 import data_manager
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
+STUDENT_DATA = os.getenv("STUDENT_DATA")
 DB_PATH = os.getenv("INTERNSHIP_DB")
 
 def setup():
     """Open the database, create the table, and load the CSV the first time"""
-    if not INTERNSHIP_DATA or not DB_PATH:
-        sys.exit("Please set INTERNSHIP_DATA and INTERNSHIP_DB in your .env file")
+    if not INTERNSHIP_DATA or not STUDENT_DATA or not DB_PATH:
+        sys.exit("Please set INTERNSHIP_DATA, STUDENT_DATA and INTERNSHIP_DB in your .env file")
 
+    print("Starting up...")
+
+    print("Checking for CSV files...")
+    for path in (INTERNSHIP_DATA, STUDENT_DATA):
+        if os.path.exists(path):
+            print(f"  Found: {path}")
+        else:
+            sys.exit(f"  Missing: {path}")
+
+    print(f"Opening database: {DB_PATH}")
     conn = data_manager.get_conn(DB_PATH)
+    print("Creating tables (if they don't exist)...")
     data_manager.init_db(conn)
- 
-    if data_manager.is_empty(conn):  # only load once, so CRUD changes are kept
-        try:
-            count = data_manager.load_csv(conn, INTERNSHIP_DATA)
-            print(f"Loaded {count} internships")
-        except FileNotFoundError as e:
-            conn.close()
-            sys.exit(str(e))
- 
+
+    if data_manager.is_empty(conn, "internships"):  # only load once, so CRUD changes are kept
+        count = data_manager.load_internships_csv(conn, INTERNSHIP_DATA)
+        print(f"Loaded {count} internships")
+    else:
+        print("Internships already in database, skipping CSV load")
+
+    if data_manager.is_empty(conn, "student_profiles"):
+        count = data_manager.load_students_csv(conn, STUDENT_DATA)
+        print(f"Loaded {count} students")
+    else:
+        print("Student profiles already in database, skipping CSV load")
+
+    print("Setup complete!\n")
+    time.sleep(1)
     return conn
 
 def demo(conn):
@@ -77,4 +96,4 @@ def main():
     finally:
         conn.close()
 
-main()
+if __name__ == "__main__": main()
