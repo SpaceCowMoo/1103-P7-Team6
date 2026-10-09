@@ -37,6 +37,39 @@ def call_gemini(client, prompt):
 
     return response.text
 
+def parse_gemini_response(response_text):
+    try:
+        result = json.loads(response_text)
+    except (json.JSONDecodeError, TypeError):
+        raise ValueError("Gemini returned invalid JSON")
+
+    return result
+
+def validate_gemini_response(result, job_id):
+    if not isinstance(result, dict):
+        raise ValueError("Gemini response must be a dictionary")
+
+    if set(result.keys()) != set(EXPECTED_AI_OUTPUT.keys()):
+        raise ValueError("Gemini response has incorrect fields")
+
+    if result["job_id"] != job_id:
+        raise ValueError("Gemini returned an incorrect job_id")
+
+    for key, value in result.items():
+        if key == "job_id":
+            continue
+
+        if value is None:
+            continue
+
+        if type(value) is not int:
+            raise ValueError(f"{key} must be an integer or null")
+
+        if not 0 <= value <= 100:
+            raise ValueError(f"{key} must be between 0 and 100")
+
+    return result
+
 def get_latest_profile(filename):
     latest_profile = None
 
@@ -197,8 +230,14 @@ if __name__ == "__main__":
 
     prompt = build_prompt(ai_input, internship)
 
-    # Send prompt to Gemini
     response = call_gemini(client, prompt)
 
-    print("Gemini Response:")
-    print(response)
+    parsed_response = parse_gemini_response(response)
+
+    validated_response = validate_gemini_response(
+        parsed_response,
+        internship["job_id"]
+    )
+
+    print("Validated Gemini Response:")
+    print(json.dumps(validated_response, indent=2))
