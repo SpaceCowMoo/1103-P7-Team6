@@ -11,7 +11,7 @@ INTERNSHIP_COLUMNS = [
 ]
 
 STUDENT_COLUMNS = [
-    "user_id", "course_of_study", "year_of_study", "internship_duration",
+    "input_id", "course_of_study", "year_of_study", "internship_duration",
     "prefer_month", "skills", "prefer_role", "min_monthly_salary",
     "preferred_location", "industry_interests", "company_preference",
     "past_experience",
@@ -19,7 +19,7 @@ STUDENT_COLUMNS = [
 
 # Temp: clean student csv headers
 STUDENT_CSV_HEADERS = {
-    "User_ID": "user_id",
+    "Input_ID": "input_id",
     "Course_of_Study": "course_of_study",
     "Year_of_Study": "year_of_study",
     "Internship_Duration": "internship_duration",
@@ -57,7 +57,7 @@ def init_db(conn):
     # Lists like skills / roles are stored as text, e.g. '["Python", "Java"]'
     conn.execute("""
         CREATE TABLE IF NOT EXISTS student_profiles (
-            user_id              TEXT PRIMARY KEY,
+            input_id             TEXT PRIMARY KEY,
             course_of_study      TEXT NOT NULL,
             year_of_study        TEXT NOT NULL,
             internship_duration  TEXT NOT NULL,
@@ -75,7 +75,7 @@ def init_db(conn):
 
 def is_empty(conn, table):
     """True if the table has no rows (i.e. CSV has not been loaded yet)"""
-    return conn.execute("SELECT COUNT(*) FROM internships").fetchone()[0] == 0
+    return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
 
 # ---------- loading CSV files ----------
 
@@ -177,19 +177,19 @@ def delete_internship(conn, job_id: int):
 # ---------- student profiles CRUD ----------
  
 def create_student(conn, data: dict):
-    """Insert a new student. data must include user_id (e.g. "P1005")"""
+    """Insert a new student input profile"""
     _insert(conn, "student_profiles", STUDENT_COLUMNS, data)
-    return data["user_id"]
+    return data["input_id"]
  
-def get_student(conn, user_id: str):
-    return _get(conn, "student_profiles", "user_id", user_id)
+def get_student(conn, input_id: str):
+    return _get(conn, "student_profiles", "input_id", input_id)
  
 def list_students(conn, limit=50, **filters):
     """Example: list_students(conn, company_preference="MNC")"""
     return _list(conn, "student_profiles", STUDENT_COLUMNS, filters, limit)
  
-def update_student(conn, user_id: str, changes: dict):
-    return _update(conn, "student_profiles", STUDENT_COLUMNS, "user_id", user_id, changes)
+def update_student(conn, input_id: str, changes: dict):
+    return _update(conn, "student_profiles", STUDENT_COLUMNS, "input_id", input_id, changes)
  
-def delete_student(conn, user_id: str):
-    return _delete(conn, "student_profiles", "user_id", user_id)
+def delete_student(conn, input_id: str):
+    return _delete(conn, "student_profiles", "input_id", input_id)
