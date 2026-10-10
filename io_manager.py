@@ -889,13 +889,23 @@ def student_profile_load_checker(Fileloaded):
     fileloadingchecker = 1
     while (not Fileloaded and fileloadingchecker <=3):
         loadingScreenMenu(fileloadingchecker,"loadingScreenMenu")
-        Student_profile_dict,Fileloaded = get_student_profile_json()
+        Fileloaded,booleanloader = get_student_profile_json()
         fileloadingchecker = fileloadingchecker+1
-    if (fileloadingchecker>3):
+    if (fileloadingchecker>3 and booleanloader == False):
         loadingScreenMenu(fileloadingchecker,"FalseToLoadMessage")
-        return False
+        return False,Fileloaded
     if Fileloaded:
-        return True
+        return True,Fileloaded
+
+def student_profile_load_check_linker(Booleanoffileloaded,Fileloaded):
+    BooleanFileloaded = True
+    if Booleanoffileloaded == False:
+        BooleanFileloaded , Fileloaded = student_profile_load_checker(Fileloaded)
+        return BooleanFileloaded,Fileloaded
+    else:
+        return BooleanFileloaded,Fileloaded
+
+
 
 def menuprinter(student_profile):
     if not student_profile:

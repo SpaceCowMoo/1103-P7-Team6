@@ -86,8 +86,13 @@ def demo(conn):
 def main():
     conn = setup()
     demo(conn)
-    
-    userinput = io_manager.Get_User_Input()
+
+    loopmain = True
+    while loopmain:
+        student_profile,loopedboolean = io_manager.get_student_profile_json()
+        loopmain,student_profile = io_manager.student_profile_load_check_linker(loopedboolean,student_profile)
+        menutype_numerica = io_manager.menuprinter(student_profile)
+        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica)
 
     conn.close()
 
