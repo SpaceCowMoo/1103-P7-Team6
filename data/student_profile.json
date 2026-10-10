@@ -1,0 +1,24 @@
+{
+    "Student_Profile": {
+        "Cource_of_Study": "Speech and Language Therapy",
+        "Year_of_Study": "1,2",
+        "Avaliable_Intership_date": "01/11/2026 - 30/11/2026",
+        "Preferred_month": "May",
+        "Skills": [
+            "Python",
+            "Programming"
+        ],
+        "Preferred_Roles": [
+            "Business analyst"
+        ],
+        "Minimum_monthly_Salary": "1000.00",
+        "Preferred_location": [
+            "Remote"
+        ],
+        "Industry_interest": [
+            "Business"
+        ],
+        "Company_preference": "Statutory Boards",
+        "past_experience": {}
+    }
+}

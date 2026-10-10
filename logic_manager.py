@@ -10,47 +10,65 @@ def addInternshipResultToDB(internshipResult):
     #Add the internship result to the database
     io_manager.addInternshipResult(internshipResult)
 
-def evaluateInternship(outputAI, userProfile):
-    score = calculateScore(outputAI)
-    flags = []
-    ResultID = 0
+# OutputAI
+# Example format: {1: {"SkillsMatch": 100, "RoleMatch": 100, ...}}
+# UserProfile
+# Example format: {"CourseOfStudy": "Applied Artificial Intelligence", "YearOfStudy": "Year 1, Semester 1", "InternshipDuration": "01/11/2023 - 30/11/2023", "PreferMonth": "February", "Skills": ["C Programming", "Python Programming", "Artificial Intelligence programming"], "PreferRole": ["Ict Intern"], "MinMonthlySalary": 500, "PreferredLocation": ["Chua Chu kang"], "IndustryInterests": ["Artificial Intelligence"], "CompanyPreference": "MNC", "PastExperience": {"Ict Intern": {"Date": "11/06/2024 - 24/06/2025", "JobDescription": "It is a work about a program"}}}
 
-    #output to IO manager
-    InternshipResult = {
-        ResultID:{
-        "UserID": 0,
-        "InternshipID": 0,
-        "OverallMatchScore": 0,
-        "Advice": ""
+#output to IO manager
+def evaluateInternship(DBReference,outputAI,userProfile):
+    
+    for key in outputAI:
+        flags = []
+        ResultID = 1
+        finalScore = calculateScore(**outputAI[key])
+        # A row in the internship database
+        internshipData = data_manager.get_internship(DBReference, outputAI[key]["InternshipID"])
+        reccomendedActions = outputAI[key]["NextAction"]
+
+        # if (internshipData["monthly_allowance"] < (userProfile["Minimum_monthly_salary"] - 200)):
+        #     #If the user provided a minimum expected monthly salary and a listing's stated salary is below that by more than $200
+        #     flags.append("Salary below expected minimum")
+        # if (internshipData["duration"] != userProfile["Internship_Duration"]):
+        #     #If a listing's commitment duration does not match the student's availability
+        #     flags.append("Duration mismatch")
+        # if (internshipData["required_skills"] != userProfile["Skills"]):
+        #     flags.append("Skills mismatch")
+        # if (internshipData["required_experience"] == "Yes" and userProfile["Past_experience"] == "No"):
+        #     #If a listing explicitly requires prior internship experience and the student’s profile doesn't have relevant prior internship experience
+        #     flags.append("Likely unsuitable")
+
+        InternshipResult = {
+            ResultID:{
+            "InternshipID": 0,
+            "OverallMatchScore": 0,
+            "Advice": ""
+            }
         }
-    }
 
-    internshipData = data_manager.get_internship(outputAI["InternshipID"])
+        
+        InternshipResult[ResultID]["InternshipID"] = internshipData["job_id"]
+        InternshipResult[ResultID]["OverallMatchScore"] = finalScore
+        InternshipResult[ResultID]["Advice"] = reccomendedActions
+        ResultID += 1
 
-    if (internshipData["monthly_allowance"] < (userProfile["expected_salary"] - 200)):
-        #If the user provided a minimum expected monthly salary and a listing's stated salary is below that by more than $200
-        flags.append("Salary below expected minimum")
-    if (internshipData["duration"] != userProfile["availability"]):
-        #If a listing's commitment duration does not match the student's availability
-        flags.append("Duration mismatch")
-    if (internshipData["required_skills"] != userProfile["skills"]):
-        flags.append("Skills mismatch")
-    if (internshipData["required_experience"] == "Yes" and userProfile["prior_experience"] == "No"):
-        #If a listing explicitly requires prior internship experience and the student’s profile doesn't have relevant prior internship experience
-        flags.append("Likely unsuitable")
-
-    #Get AI generated advice based on the internship data, user profile, and any flags that were raised
-    reccomendedActions = ai_manager.generateUserAdvice(internshipData, userProfile, flags)
-
-    #Create internship recomendation result
-    InternshipResult["InternshipID"] = internshipData["InternshipID"]
-    InternshipResult["OverallMatchScore"] = score
-    InternshipResult["Advice"] = reccomendedActions
-
-    addInternshipResultToDB(InternshipResult)
+    print("Internship Result:", InternshipResult)
     return InternshipResult
 
 #check if output to user is a single value or all the ratings (Pending)
 def calculateScore(aiOutput):
-    OverallMatchScore = (aiOutput["SkillsMatch"] * 0.25) + (aiOutput["RoleMatch"] * 0.25) + (aiOutput["IndustryInterestMatch"] * 0.125) + (aiOutput["ExperienceMatch"] * 0.125) + (aiOutput["SalaryMatch"] * 0.075) + (aiOutput["WorkArrangementMatch"] * 0.075) + (aiOutput["LocationMatch"] * 0.05) + (aiOutput["CompanyPreferenceMatch"] * 0.05)
-    return OverallMatchScore
+    #TotalScore tracks the weightage of fields used
+    TotalScore = 0
+    weightage = {"SkillsMatch": 0.25, "RoleMatch": 0.25, "IndustryInterestMatch": 0.125, "ExperienceMatch": 0.125, "SalaryMatch": 0.075, "WorkArrangementMatch": 0.075, "LocationMatch": 0.05, "CompanyPreferenceMatch": 0.05}
+    for key, value in aiOutput.items():
+        if value == None:
+            #change NULL value to 0 to prevent TypeError during MatchScore calculation
+            aiOutput[key] = 0
+        else:
+            #if an optional field has been filled in, add its weightage to TotalScore
+            TotalScore += weightage[key]
+
+    OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["SalaryMatch"] * weightage["SalaryMatch"]) + (aiOutput["WorkArrangementMatch"] * weightage["WorkArrangementMatch"]) + (aiOutput["LocationMatch"] * weightage["LocationMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
+    return OverallMatchScore/TotalScore
+    #divide OverallScore over TotalScore to get final score out of 100%
+
