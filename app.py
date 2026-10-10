@@ -7,6 +7,7 @@ load_dotenv()
 
 import io_manager
 import data_manager
+import logic_manager
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
 STUDENT_DATA = os.getenv("STUDENT_DATA")
@@ -84,16 +85,10 @@ def demo(conn):
 
 def main():
     conn = setup()
-    try:
-        demo(conn)
+    demo(conn)
+    
+    userinput = io_manager.Get_User_Input()
 
-        #TempSetup for demo
-        Student_profile_dict,FileLoaded = io_manager.get_student_profile_json()
-        loadboolan = io_manager.student_profile_load_checker(FileLoaded)
-        while loadboolan:
-            menutypenumerical = io_manager.menuprinter(Student_profile_dict)
-            Student_profile_dict,loadboolan = io_manager.menu_function_call_general(menutypenumerical)
-    finally:
-        conn.close()
+    conn.close()
 
 if __name__ == "__main__": main()
