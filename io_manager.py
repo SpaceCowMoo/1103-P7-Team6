@@ -1,17 +1,16 @@
-import csv
 import json
 from pathlib import Path
 import re
 from datetime import datetime
 
-STUDENT_PROFILES_CSV = Path(__file__).resolve().parent / "data" / "student_profiles.csv"
+STUDENT_PROFILE_JSON = Path(__file__).resolve().parent / "data" / "student_profile.json"
 
 
 def UserResponseidMaker():
     return 0
 
 #Menu output styles
-def menuDisplayType(typeofmenu):
+def menuDisplayType(typeofmenu,studentprofile={}):
     match typeofmenu:
         case "Starting":
             print("---------------------")
@@ -172,12 +171,54 @@ def menuDisplayType(typeofmenu):
 
             """)
 
+        case "update_display":
+            profile = studentprofile
+            display_student_profile(profile)
         case _:
             print("Insert a proper display type")
 
 #User input functions
 def quitMenu():
     print("Exiting application")
+
+def format_list(item):
+    if isinstance(item, list) and item:
+        return ", ".join(item)
+    return "None specified"
+
+# 2. Define a function to display the profile nicely
+def display_student_profile(profile):
+    # Format the Year of Study ("1,2" -> "Year 1, Semester 2")
+    raw_year = profile.get("Year_of_Study", "")
+    year_parts = raw_year.split(",")
+    if len(year_parts) == 2:
+        formatted_year = f"Year {year_parts[0].strip()} , Semester {year_parts[1].strip()}"
+    else:
+        formatted_year = raw_year
+
+    # Handle past_experience if it's an empty dictionary
+    past_exp = profile.get("past_experience", {})
+    exp_text = "None recorded" if not past_exp else str(past_exp)
+
+    # Print the UI box
+    print("\n" + "=" * 55)
+    print(f"{'✨ YOUR STUDENT PROFILE ✨':^55}")
+    print("=" * 55)
+
+    w = 28
+    print(f"{'Course of Study:':<{w}} {profile.get('Cource_of_Study', 'N/A')}")
+    print(f"{'Year of Study:':<{w}} {formatted_year}")
+    print(f"{'Available Internship:':<{w}} {profile.get('Avaliable_Intership_date', 'N/A')}")
+    print(f"{'Preferred Month:':<{w}} {profile.get('Preferred_month', 'N/A')}")
+    print(f"{'Skills:':<{w}} {format_list(profile.get('Skills', []))}")
+    print(f"{'Preferred Roles:':<{w}} {format_list(profile.get('Preferred_Roles', []))}")
+    print(f"{'Minimum Monthly Salary:':<{w}} ${profile.get('Minimum_monthly_Salary', '0.00')}")
+    print(f"{'Preferred Location:':<{w}} {format_list(profile.get('Preferred_location', []))}")
+    print(f"{'Industry Interest:':<{w}} {format_list(profile.get('Industry_interest', []))}")
+    print(f"{'Company Preference:':<{w}} {profile.get('Company_preference', 'N/A')}")
+    print(f"{'Past Experience:':<{w}} {exp_text}")
+    print("=" * 55 + "\n")
+
 
 #Input validation/correction functions
 def course_of_study_words(course_of_study_id):
@@ -237,7 +278,7 @@ def validate_Cource_of_Study(cource):
     elif cource.isdigit()!= True:
         print("Invalid input. Please enter a number corresponding to your course of study.")
         return False 
-    elif int(cource) < 1 or int(cource) > 46:
+    elif int(cource) < 1 or int(cource) > 45:
         print("Invalid input. Please enter a number between 1 and 45.")
         return False
     return True
@@ -345,6 +386,14 @@ def validate_month_preferrance(startingdate,endingdate,inputedmonth):
 def Confirming_input(confirmation):
     return confirmation.strip().lower() == "y"
 
+def append_unique_value(values, value, field_name):
+    normalized_value = value.strip().casefold()
+    if any(existing.strip().casefold() == normalized_value for existing in values):
+        print(f"{field_name} already added; duplicates are not allowed.")
+        return False
+    values.append(value.strip())
+    return True
+
 def skill_validation(skillsinput):
     areusure = True
     if not skillsinput:
@@ -370,18 +419,14 @@ def skill_validate(skillsinput):
 
 
 def continuousloopskills(skillsinput):
-    firsttime = 1
     skillslist = []
-    skillinput , isvalid = skill_validate(skillsinput)
-    skillslist.append(skillinput)
-    while ((firsttime == 1)or (isvalid == True and skillinput.strip().lower() != "exit")):
-        firsttime = firsttime+1
-        skillsinput = input("Please enter your skills (type exit to continue to next input):")
-        skillinput , isvalid = skill_validate(skillsinput)
-        if skillsinput.lower().strip() == "exit":
+    while True:
+        skillinput, _ = skill_validate(skillsinput)
+        skillinput = skillinput.strip()
+        if skillinput.casefold() == "exit":
             return skillslist
-        skillslist.append(skillinput)
-    return skillslist
+        append_unique_value(skillslist, skillinput, "Skill")
+        skillsinput = input("Please enter your skills (type exit to continue to next input):")
 
 def validate_Preferred_role(preferred_role):
     areusure = True 
@@ -410,19 +455,16 @@ def checking_Preferred_role_input(Preferred_role):
 
 def continoous_Preferred_role(Preferred_role):
     Preferred_rolelist = []
-    firsttime = 1
     is_valid,Preferred_role = checking_Preferred_role_input(Preferred_role)
     if Preferred_role.strip().lower() == "exit":
         return Preferred_rolelist
-    Preferred_rolelist.append(Preferred_role)
-    while ((firsttime == 1)or (is_valid == True and Preferred_role.strip().lower() != "exit")):
-        firsttime = firsttime +1
+    append_unique_value(Preferred_rolelist, Preferred_role, "Preferred role")
+    while True:
         Preferred_role = input("Enter your preferred role (enter exit to continue):")
-        is_valid , Preferred_role = checking_Preferred_role_input(Preferred_role)
+        _, Preferred_role = checking_Preferred_role_input(Preferred_role)
         if Preferred_role.lower().strip() == "exit":
             return Preferred_rolelist
-        Preferred_rolelist.append(Preferred_role)
-    return Preferred_rolelist
+        append_unique_value(Preferred_rolelist, Preferred_role, "Preferred role")
 
 def validating_minimum_monthly_salary(minimum_month_salary):
     if not minimum_month_salary:
@@ -466,7 +508,7 @@ def validating_preferred_locations(preferredlocations):
         print("Enter Value is not a number")
         return False
     preferredlocations = int(preferredlocations)
-    if preferredlocations<0 or preferredlocations>57:
+    if preferredlocations<0 or preferredlocations>56:
         print("The number is incorrect")
         return False
     else:
@@ -548,18 +590,13 @@ def preferredlocations_number_to_string(preferredlocationnumber):
 
 def preferredlocation_listadder(preferredlocations):
     preferredlocationslist = []
-    firsttime = 1 
-    preferredlocations,is_valid = validating_perferred_location_input(preferredlocations)
-    if(preferredlocations.isdigit()==False and preferredlocations.lower().strip()=="exit"):
-        return preferredlocationslist
-    preferredlocationslist.append(preferredlocations_number_to_string(preferredlocations))
-    while (firsttime == 1) or (is_valid == True and preferredlocations.strip().lower() != "exit"):
-        firsttime = firsttime +1 
-        preferredlocations = input("Enter your preferred location (1-56)(Enter exit to continue):")
-        preferredlocations,is_valid = validating_perferred_location_input(preferredlocations)
-        if(preferredlocations.isdigit()==False and preferredlocations.lower().strip()=="exit"):
+    while True:
+        preferredlocations, _ = validating_perferred_location_input(preferredlocations)
+        if preferredlocations.strip().casefold() == "exit":
             return preferredlocationslist
-        preferredlocationslist.append(preferredlocations_number_to_string(preferredlocations))
+        location = preferredlocations_number_to_string(preferredlocations)
+        append_unique_value(preferredlocationslist, location, "Preferred location")
+        preferredlocations = input("Enter your preferred location (1-56)(Enter exit to continue):")
         
 def validate_Industry_interest(Industrial_intrest):
     if not Industrial_intrest:
@@ -584,12 +621,12 @@ def Industrial_input_checker(industrial_interest):
 
 def industrial_input_list_adder(industrial_interest):
     industrial_interestlist = []
-    industrial_interest,is_valid = Industrial_input_checker(industrial_interest)
-    while industrial_interest.strip().lower() != "exit":
-        industrial_interestlist.append(industrial_interest)
+    while True:
+        industrial_interest, _ = Industrial_input_checker(industrial_interest)
+        if industrial_interest.strip().casefold() == "exit":
+            return industrial_interestlist
+        append_unique_value(industrial_interestlist, industrial_interest, "Industry interest")
         industrial_interest = input("Enter another Industry Interest (or enter exit to continue):")
-        industrial_interest,is_valid = Industrial_input_checker(industrial_interest)
-    return industrial_interestlist
 
 
 def validate_company_preference(company_perference):
@@ -676,6 +713,9 @@ def looping_pass_experience(pass_experience_input):
 
     while response == "have":
         job_title = input("Enter your job title: ")
+        while any(existing.casefold() == job_title.strip().casefold() for existing in experiences):
+            print("That job title has already been added; enter a different title.")
+            job_title = input("Enter your job title: ")
         dateofhiring = input("Enter the period you worked (DD/MM/YYYY - DD/MM/YYYY): ")
         jobdiscription = input("Enter your job description: ")
         job_title, dateofhiring, jobdiscription = validate_pass_experience(
@@ -691,21 +731,10 @@ def looping_pass_experience(pass_experience_input):
 
     return arrange_pass_experiences(experiences)
 
-def Profile_id_maker(student_profilelist):
-    if not student_profilelist:
-        return "P1000" 
-    else:
-        with open(STUDENT_PROFILES_CSV, newline="", encoding="utf-8-sig") as file:
-            profile_ids = [row["Input_ID"] for row in csv.DictReader(file)]
 
-        if not profile_ids:
-            return "P1000"
-        lastprofileid = profile_ids[-1]
-        newprofileid = f"P{int(lastprofileid[1:]) + 1:04d}"
-        return newprofileid
         
     
-def Get_User_Input(student_profile_list):
+def Get_User_Input():
     sampleinput = {
         "P1001": {
             "Course_of_Study": "Applied Artificial Intelligence",
@@ -790,11 +819,10 @@ def Get_User_Input(student_profile_list):
             input("Do you have past work experience? (Have/Exit): ")
         )
 
-        #Input id
-        input_id = Profile_id_maker(student_profile_list)
+        
 
         user_input = {
-            input_id:{
+            "Student_Profile":{
                 "Cource_of_Study":courseOfStudy,
                 "Year_of_Study":f'{userYear},{userTrimester}',
                 "Avaliable_Intership_date":(
@@ -810,102 +838,165 @@ def Get_User_Input(student_profile_list):
                 "past_experience":past_experience,
             }
         }
-        return user_input,input_id
+        return user_input
 
-def upload_input_confirmer(userinput_id):
-    with open(STUDENT_PROFILES_CSV, newline="", encoding="utf-8-sig") as file:
-        profile_ids = [row["Input_ID"] for row in csv.DictReader(file)]
+def initialize_student_profile_Json():
+    STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
 
-    if profile_ids and profile_ids[-1] == userinput_id:
-        return "Successfully appended to CSV!", True
-    return "The appending failed", False
-
-
-def upload_input_csv(user_input, user_id):
-  STUDENT_PROFILES_CSV.parent.mkdir(parents=True, exist_ok=True)
-  needs_header = (
-      not STUDENT_PROFILES_CSV.exists()
-      or STUDENT_PROFILES_CSV.stat().st_size == 0
-  )
-  with open(STUDENT_PROFILES_CSV, mode="a", newline="", encoding="utf-8") as file:
-    input_id_key = list(user_input.keys())[0]
-    inner_data = user_input[input_id_key]
-
-    # Map keys to your CSV headers and convert lists/dicts to JSON strings
-    row_to_write = {
-        "Input_ID": input_id_key,
-        "Course_of_Study": inner_data["Cource_of_Study"],
-        "Year_of_Study": inner_data["Year_of_Study"],
-        "Internship_Duration": inner_data["Avaliable_Intership_date"],
-        "Prefer_month": inner_data["Preferred_month"],
-        "Skills": json.dumps(inner_data["Skills"]),
-        "Prefer_Role": json.dumps(inner_data["Preferred_Roles"]),
-        "Minimum_monthly_salary": inner_data["Minimum_monthly_Salary"],
-        "Preferred_location": json.dumps(inner_data["Preferred_location"]),
-        "Industry_interests": json.dumps(inner_data["Industry_interest"]),
-        "Company_preference": inner_data["Company_preference"],
-        "Past_experience": json.dumps(inner_data["past_experience"]),
-    }
-
-    fieldnames = [
-        "Input_ID",
-        "Course_of_Study",
-        "Year_of_Study",
-        "Internship_Duration",
-        "Prefer_month",
-        "Skills",
-        "Prefer_Role",
-        "Minimum_monthly_salary",
-        "Preferred_location",
-        "Industry_interests",
-        "Company_preference",
-        "Past_experience",
-    ]
-
-    writer = csv.DictWriter(file, fieldnames=fieldnames)
-    if needs_header:
-      writer.writeheader()
-    writer.writerow(row_to_write)
-  message, result = upload_input_confirmer(user_id)
-  return message , result
-
-def input_result_checker(message,result):
-    if result == True :
-        print(message)
-        return False
-    elif result == False:
-        print(message)
-        return True
-    else:
-        print(message)
-        return True
-
-def load_csv_student_profile():
     try:
-        with open(STUDENT_PROFILES_CSV, mode="r", newline="", encoding="utf-8-sig") as file:
-            all_records = list(csv.DictReader(file))
-    except FileNotFoundError:
-        print("student_profile_csv does not exist in the system")
-        return [], True
-    return all_records, True
-                
+        with open(STUDENT_PROFILE_JSON, "r", encoding="utf-8") as file:
+            print(f'Student_Profile_Json,loaded Sucessfully')
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+            print(f'Student_Profile_Json,Failed to load')
+            return {}
+
+def check_student_profile_json(User_profile):
+    if not User_profile:
+        return False
+    else:
+        return True
+
+def create_a_student_profile_json():
+    STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
+    if not STUDENT_PROFILE_JSON.is_file():
+        with open(STUDENT_PROFILE_JSON, "w", encoding="utf-8") as file:
+            json.dump({}, file)
     
 
-
-def starting_menu():
-    student_profile_list, file_loaded = load_csv_student_profile()
-    if not file_loaded:
-        return [], False, ""
-
-    if student_profile_list:
-        menuDisplayType("SecondTime")
-        menu_flag = "secondtime"
+def get_student_profile_json():
+    student_profile = initialize_student_profile_Json()
+    if check_student_profile_json(student_profile)==False:
+        print("Creating a new student_profile_json")
+        create_a_student_profile_json()
+        student_profile = initialize_student_profile_Json()
+        if STUDENT_PROFILE_JSON.is_file():
+            print("Student_profile.json create sucessfully")
+            return student_profile,True
+        else:
+            print("Unknown error occur attempting to retry")
+            return student_profile,False
     else:
-        menuDisplayType("Starting")
-        menu_flag = "starting"
-    return student_profile_list, True, menu_flag
-                
-            
+        return student_profile,True
 
-def add_internship_result(intershipresult):
-    return intershipresult
+def loadingScreenMenu(fileloadingchecker,menutype):
+    if menutype == "loadingScreenMenu":
+        print(f'The program is attempting to reload the student_profile please the system would try at least 3 times before stopping: this is the {fileloadingchecker}')
+    elif menutype =="FalseToLoadMessage":
+        print(f'Could not load the student_profile.json ,please check file integrity')
+
+def student_profile_load_checker(Fileloaded):
+    fileloadingchecker = 1
+    while (not Fileloaded and fileloadingchecker <=3):
+        loadingScreenMenu(fileloadingchecker,"loadingScreenMenu")
+        Student_profile_dict,Fileloaded = get_student_profile_json()
+        fileloadingchecker = fileloadingchecker+1
+    if (fileloadingchecker>3):
+        loadingScreenMenu(fileloadingchecker,"FalseToLoadMessage")
+        return False
+    if Fileloaded:
+        return True
+
+def menuprinter(student_profile):
+    if not student_profile:
+        menuDisplayType("Starting")
+        return "1001"
+    else:
+        menuDisplayType("SecondTime")
+        return "1002"
+
+def input_validator():
+    studentprofile,inputboolean = get_student_profile_json()
+    if inputboolean == True:
+        print("User Input Added Sucessfully")
+        return studentprofile,True
+    else:
+        print("User Input Failed to add")
+        return studentprofile,False
+
+def add_student_profile_json(student_profile):
+    STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
+    with open(STUDENT_PROFILE_JSON, "w", encoding="utf-8") as file:
+        json.dump(student_profile, file, indent=4)
+
+def menu_function_caller_first_time():
+    inputed = False
+    while not inputed:
+        Userinput = Get_User_Input()
+        add_student_profile_json(Userinput)
+        studentprofile,inputed = input_validator()
+    return studentprofile
+
+def update_student_profile_json(studentprofile):
+    if not isinstance(studentprofile, dict) or not isinstance(
+        studentprofile.get("Student_Profile"), dict
+    ):
+        raise ValueError("studentprofile must contain a Student_Profile dictionary")
+
+    profile = studentprofile["Student_Profile"]
+    print("Current student profile:")
+    menuDisplayType("update_display",profile)
+    print("Please answer the questions again to update your profile.")
+
+    updated_profile = Get_User_Input()
+    updated_studentprofile = studentprofile.copy()
+    updated_studentprofile["Student_Profile"] = updated_profile["Student_Profile"]
+    add_student_profile_json(updated_studentprofile)
+    print("Student profile updated successfully.")
+    return updated_studentprofile
+
+def input_validator_option(functionnumber):
+    if functionnumber.isdigit()==False:
+        print("Your input is not a integer , try again")
+        return False
+    functionnumber = int(functionnumber)
+    if(functionnumber<1):
+        print("Your input is incorrect please Try again")
+        return False
+    elif (functionnumber >4):
+        print("Your input is incorrect please Try again")
+        return False
+    return True
+
+def inputlooper(functionnumber):
+    Trueorfalse = input_validator_option(functionnumber)
+    while not Trueorfalse :
+        functionnumber = input("Enter the option you choose :")
+        Trueorfalse = input_validator_option(functionnumber)
+    return int(functionnumber)
+
+def inputmenucaller_1002(functionnumber,studentprofile={}):
+    if functionnumber == 1:
+        student_profile = update_student_profile_json(studentprofile)
+        return True,student_profile
+    elif functionnumber == 2:
+        return True,student_profile
+    elif functionnumber == 3:
+        return True,student_profile
+    elif functionnumber == 4:
+        add_student_profile_json(studentprofile)
+        print("Have a good day , Thanks")
+        return False,studentprofile
+
+def menu_caller_loop_1102(student_profile):
+    continues = True
+    while continues:
+        menutypenumerical = menuprinter(student_profile)
+        functionnumber = inputlooper(input("Enter the option you choose :"))
+        continues,student_profile = inputmenucaller_1002(int(functionnumber),student_profile)
+    return student_profile,continues
+
+def menu_function_call_general(menutypenumerical):
+    if menutypenumerical == "1001":
+        student_profile = menu_function_caller_first_time()
+        menutypenumerical = menuprinter(student_profile)
+        return student_profile,True
+    if menutypenumerical == "1002":
+        student_profile,trueorfalse = get_student_profile_json()
+        student_profile,continues = menu_caller_loop_1102(student_profile)
+        return student_profile,continues
+
+        
+        
+
+    

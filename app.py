@@ -86,13 +86,13 @@ def main():
     conn = setup()
     try:
         demo(conn)
-        student_profile_list,starting,menuflag = io_manager.starting_menu()
-        if menuflag == "starting":
-            userinput,user_id = io_manager.Get_User_Input(student_profile_list)
-            message,result = io_manager.upload_input_csv(userinput,user_id)
-            io_manager.input_result_checker(message,result)
-        elif menuflag == "secondtime":
-            print("Under Contruction")
+
+        #TempSetup for demo
+        Student_profile_dict,FileLoaded = io_manager.get_student_profile_json()
+        loadboolan = io_manager.student_profile_load_checker(FileLoaded)
+        while loadboolan:
+            menutypenumerical = io_manager.menuprinter(Student_profile_dict)
+            Student_profile_dict,loadboolan = io_manager.menu_function_call_general(menutypenumerical)
     finally:
         conn.close()
 
