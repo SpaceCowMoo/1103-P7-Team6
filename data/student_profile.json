@@ -2,23 +2,23 @@
     "Student_Profile": {
         "Cource_of_Study": "Speech and Language Therapy",
         "Year_of_Study": "1,2",
-        "Avaliable_Intership_date": "01/11/2026 - 30/11/2026",
-        "Preferred_month": "May",
+        "Avaliable_Intership_date": "11/11/2026 - 11/12/2026",
+        "Preferred_month": "February",
         "Skills": [
             "Python",
-            "Programming"
+            "Dotnet"
         ],
         "Preferred_Roles": [
-            "Business analyst"
+            "data_analyst"
         ],
-        "Minimum_monthly_Salary": "1000.00",
+        "Minimum_monthly_Salary": "1500.00",
+        "Preferred_Work_Arrangement": "On-site",
         "Preferred_location": [
-            "Remote"
+            "Woodlands",
+            "Sembawang"
         ],
-        "Industry_interest": [
-            "Business"
-        ],
-        "Company_preference": "Statutory Boards",
+        "Industry_interest": [],
+        "Company_preference": "Big Tech Companies",
         "past_experience": {}
     }
 }

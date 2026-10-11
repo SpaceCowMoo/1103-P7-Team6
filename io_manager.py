@@ -1,11 +1,18 @@
+import os
 import json
 from pathlib import Path
 import re
 from datetime import datetime
+import textwrap
 
 import data_manager
 
-STUDENT_PROFILE_JSON = Path(__file__).resolve().parent / "data" / "student_profile.json"
+STUDENT_PROFILE_JSON = Path(
+    os.getenv(
+        "STUDENT_PROFILE_JSON",
+        str(Path(__file__).resolve().parent / "data" / "student_profile.json"),
+    )
+)
 
 
 def UserResponseidMaker():
@@ -107,28 +114,18 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             print("\n" + "=" * width)
 
         case "locationdisplay":
-            singapore_areas_list = [
-                "Woodlands", "Yishun", "Sembawang", "Mandai",
-                "Sungei Kadut", "Lim Chu Kang", "Simpang",
-                "Central Water Catchment", "Ang Mo Kio", "Hougang",
-                "Punggol", "Sengkang", "Serangoon", "Seletar",
-                "Paya Lebar", "North-Eastern Islands", "Bedok",
-                "Tampines", "Pasir Ris", "Changi", "Changi Bay",
-                "Jurong East", "Jurong West", "Clementi", "Bukit Batok",
-                "Bukit Panjang", "Choa Chu Kang", "Tengah", "Boon Lay",
-                "Pioneer", "Tuas", "Western Islands",
-                "Western Water Catchment", "Downtown Core", "Marina East",
-                "Marina South", "Orchard", "Newton", "Novena",
-                "River Valley", "Rochor", "Singapore River", "Outram",
-                "Museum", "Straits View", "Bishan", "Bukit Merah",
-                "Bukit Timah", "Geylang", "Kallang", "Marine Parade",
-                "Queenstown", "Toa Payoh", "Southern Islands", "Tanglin",
-                "Remote",
-            ]
+            singapore_areas_list = ["North","East","South","West","Central"]
             print_heading("PREFERRED LOCATIONS")
             for number, area in enumerate(singapore_areas_list, 1):
                 print(f"  {number:>2}. {area}")
             print("=" * width)
+
+        case "Preferred_Word_Arrangement":
+            Preferred_word_arragement = ["On-site","Hybrid","No Preference"]
+            print_heading("PREFERRED WORK ARRANGEMENT")
+            for number, word_arrangement in enumerate(Preferred_word_arragement, 1):
+                print(f"  {number}. {word_arrangement}")
+
 
         case "company_preference":
             company_preferences = [
@@ -145,6 +142,9 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             for number, preference in enumerate(company_preferences, 1):
                 print(f"  {number}. {preference}")
             print("=" * width)
+
+   
+
 
         case "update_display":
             print_heading("YOUR STUDENT PROFILE")
@@ -188,6 +188,7 @@ def display_student_profile(profile):
     print(f"{'Skills:':<{w}} {format_list(profile.get('Skills', []))}")
     print(f"{'Preferred Roles:':<{w}} {format_list(profile.get('Preferred_Roles', []))}")
     print(f"{'Minimum Monthly Salary:':<{w}} ${profile.get('Minimum_monthly_Salary', '0.00')}")
+    print(f"{'Preferred Work Arrangement:':<{w}} {profile.get('Preferred_Work_Arrangement', 'N/A')}")
     print(f"{'Preferred Location:':<{w}} {format_list(profile.get('Preferred_location', []))}")
     print(f"{'Industry Interest:':<{w}} {format_list(profile.get('Industry_interest', []))}")
     print(f"{'Company Preference:':<{w}} {profile.get('Company_preference', 'N/A')}")
@@ -477,6 +478,44 @@ def minimum_monthly_salary_checker(minimum_monthly_salary):
     else:
         return ""
 
+def validating_preferred_work_location(preferred_work_locations):
+    if not preferred_work_locations:
+        print("invalid value")
+        return False
+    elif preferred_work_locations.lower().strip() == "exit":
+        return True
+    elif preferred_work_locations.isdigit() == False:
+        print("Enter Value is not a number")
+        return False
+    preferred_work_locations = int(preferred_work_locations)
+    if preferred_work_locations<0 or preferred_work_locations>3:
+        print("The number is incorrect")
+        return False
+    else:
+        return True
+
+def validating_perferred_work_location_input(preferred_work_locations):
+    is_valid = validating_preferred_work_location(preferred_work_locations)
+    while is_valid == False:
+        preferred_work_locations = prompt_input("Enter a preferred work arrangement (1-3,type exit to skip)")
+        is_valid = validating_preferred_work_location(preferred_work_locations)
+    return preferred_work_locations,is_valid
+
+def num_to_string_work_location(preferred_work_locations):
+    Preferred_word_arragement = ["On-site","Hybrid","No Preference"]
+    preferred_work_locations = int(preferred_work_locations)
+    return Preferred_word_arragement[(preferred_work_locations-1)]
+
+
+def pre_work_location_input_validation(preferred_work_locations):
+    preferred_work_locations,isvalid = validating_perferred_work_location_input(preferred_work_locations)
+    if preferred_work_locations.strip().lower()=="exit":
+        return ""
+    if isvalid != False:
+        preferred_work_locations = int(preferred_work_locations)
+        preferred_work_locations = num_to_string_work_location(preferred_work_locations)
+    return preferred_work_locations
+
 def validating_preferred_locations(preferredlocations):
     if not preferredlocations:
         print("invalid value")
@@ -487,83 +526,21 @@ def validating_preferred_locations(preferredlocations):
         print("Enter Value is not a number")
         return False
     preferredlocations = int(preferredlocations)
-    if preferredlocations<0 or preferredlocations>56:
+    if preferredlocations<0 or preferredlocations>5:
         print("The number is incorrect")
         return False
     else:
         return True
-    
+
 def validating_perferred_location_input(preferredlocations):
     is_valid = validating_preferred_locations(preferredlocations)
     while is_valid == False:
-        preferredlocations = prompt_input("Choose a preferred location (1-56, or type 'exit' to finish):")
+        preferredlocations = prompt_input("Choose a preferred location (1-5, or type 'exit' to finish):")
         is_valid = validating_preferred_locations(preferredlocations)
     return preferredlocations,is_valid
 
 def preferredlocations_number_to_string(preferredlocationnumber):
-    singapore_areas_list = [
-                    # North Region
-                    "Woodlands",
-                    "Yishun",
-                    "Sembawang",
-                    "Mandai",
-                    "Sungei Kadut",
-                    "Lim Chu Kang",
-                    "Simpang",
-                    "Central Water Catchment",
-                    # North-East Region
-                    "Ang Mo Kio",
-                    "Hougang",
-                    "Punggol",
-                    "Sengkang",
-                    "Serangoon",
-                    "Seletar",
-                    "Paya Lebar",
-                    "North-Eastern Islands",
-                    # East Region
-                    "Bedok",
-                    "Tampines",
-                    "Pasir Ris",
-                    "Changi",
-                    "Changi Bay",
-                    # West Region
-                    "Jurong East",
-                    "Jurong West",
-                    "Clementi",
-                    "Bukit Batok",
-                    "Bukit Panjang",
-                    "Choa Chu Kang",
-                    "Tengah",
-                    "Boon Lay",
-                    "Pioneer",
-                    "Tuas",
-                    "Western Islands",
-                    "Western Water Catchment",
-                    # Central Region
-                    "Downtown Core",
-                    "Marina East",
-                    "Marina South",
-                    "Orchard",
-                    "Newton",
-                    "Novena",
-                    "River Valley",
-                    "Rochor",
-                    "Singapore River",
-                    "Outram",
-                    "Museum",
-                    "Straits View",
-                    "Bishan",
-                    "Bukit Merah",
-                    "Bukit Timah",
-                    "Geylang",
-                    "Kallang",
-                    "Marine Parade",
-                    "Queenstown",
-                    "Toa Payoh",
-                    "Southern Islands",
-                    "Tanglin",
-                    "Remote",
-                ]
+    singapore_areas_list = ["North","East","South","West","Central"]
     preferredlocationnumber = int(preferredlocationnumber)
     return singapore_areas_list[(preferredlocationnumber-1)]
 
@@ -723,6 +700,7 @@ def Get_User_Input():
             "Skills":["C Programming","Python Programming", "Artifical Intelligence programming"],
             "Prefer_Role":["Ict Intern"],
             "Minimum_monthly_salary":500,
+            "Preferred_Work_Arrangement":"On-Site",
             "Preferred_location":["Chua Chu kang"],
             "Industry_interests":["Artifical Intelligence"],
             "Company_preference":"MNC",
@@ -796,9 +774,13 @@ def Get_User_Input():
         
         
         # Preferred location, 
+
+        menuDisplayType("Preferred_Word_Arrangement")
+        preferred_work_arrangement = pre_work_location_input_validation(input("Enter a preferred work arrangement (1-3,type exit to skip)"))
+
         menuDisplayType("locationdisplay")
         preferedlocation = preferredlocation_listadder(
-            prompt_input("Choose a preferred location (1-56, or type 'exit' to skip):")
+            prompt_input("Choose a preferred location (1-5, or type 'exit' to skip):")
         )
     
         
@@ -831,6 +813,7 @@ def Get_User_Input():
                 "Skills":Skills,
                 "Preferred_Roles":preferedroles,
                 "Minimum_monthly_Salary":Minimummonthsalary,
+                "Preferred_Work_Arrangement":preferred_work_arrangement,
                 "Preferred_location":preferedlocation,
                 "Industry_interest":Industry_interest,
                 "Company_preference":Company_preference,
@@ -844,17 +827,14 @@ def initialize_student_profile_Json():
 
     try:
         with open(STUDENT_PROFILE_JSON, "r", encoding="utf-8") as file:
-            print(f'Student_Profile_Json,loaded Sucessfully')
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-            print(f'Student_Profile_Json,Failed to load')
-            return {}
+            student_profile = json.load(file)
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            f"Invalid JSON in student profile {STUDENT_PROFILE_JSON}: {error}"
+        ) from error
 
-def check_student_profile_json(User_profile):
-    if not User_profile:
-        return False
-    else:
-        return True
+    print("Student profile loaded successfully")
+    return student_profile
 
 def create_a_student_profile_json():
     STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
@@ -864,19 +844,14 @@ def create_a_student_profile_json():
     
 
 def get_student_profile_json():
-    student_profile = initialize_student_profile_Json()
-    if check_student_profile_json(student_profile)==False:
-        print("Creating a new student_profile_json")
+    try:
+        student_profile = initialize_student_profile_Json()
+    except FileNotFoundError:
+        print("Student profile file not found; creating a new profile")
         create_a_student_profile_json()
         student_profile = initialize_student_profile_Json()
-        if STUDENT_PROFILE_JSON.is_file():
-            print("Student_profile.json create sucessfully")
-            return student_profile,True
-        else:
-            print("Unknown error occur attempting to retry")
-            return student_profile,False
-    else:
-        return student_profile,True
+        print("Student profile created successfully")
+    return student_profile, True
 
 def loadingScreenMenu(fileloadingchecker,menutype):
     if menutype == "loadingScreenMenu":
@@ -991,24 +966,140 @@ def inputlooper(functionnumber):
 # Option 2 and 3: simple lookups by id
 def id_input(message):
     profile_id = prompt_input(message)
-    while profile_id.isdigit() == False:
-        print("Please enter a number")
+    while True:
+        try:
+            return int(profile_id)
+        except ValueError:
+            print("Please enter an integer")
         profile_id = prompt_input(message)
-    return int(profile_id)
+
+def continueorno():
+    response = input("View the next listing? (Y/N): ").strip().lower()
+    while response not in {"y", "n"}:
+        response = input("Please enter Y or N: ").strip().lower()
+    return response == "y"
+
+def print_card(title, fields, width=60):
+    print("\n" + "=" * width)
+    print(f"{title:^{width}}")
+    print("=" * width)
+    for label, value in fields:
+        if value is None or value == "":
+            value = "Not specified"
+        value_lines = str(value).splitlines() or ["Not specified"]
+        prefix = f"{label}: "
+        continuation = " " * len(prefix)
+        print(textwrap.fill(
+            f"{prefix}{value_lines[0]}",
+            width=width,
+            subsequent_indent=continuation,
+        ))
+        for value_line in value_lines[1:]:
+            print(textwrap.fill(
+                value_line,
+                width=width,
+                initial_indent=continuation,
+                subsequent_indent=continuation,
+            ))
+    print("=" * width)
+
+def display_internship(internship):
+    print_card("INTERNSHIP LISTING", [
+        ("ID", internship.get("job_id")),
+        ("Company", internship.get("company_name")),
+        ("Company Type", internship.get("company_type")),
+        ("Role", internship.get("job_title")),
+        ("Industry", internship.get("industry")),
+        ("Relevant Course", internship.get("relevant_course")),
+        ("Monthly Allowance", f"${internship['monthly_allowance']}" if internship.get("monthly_allowance") is not None else None),
+        ("Work Arrangement", internship.get("work_mode")),
+        ("Duration", f"{internship['duration_months']} months" if internship.get("duration_months") is not None else None),
+        ("Required Skills", internship.get("required_skills")),
+        ("Location", internship.get("location_district")),
+        ("Description", internship.get("job_description")),
+    ])
+
+def display_run_summary(run):
+    print_card("PAST RECOMMENDATION RUN", [
+        ("Run ID", run.get("run_id")),
+        ("Created", run.get("created_at")),
+        ("Match Count", run.get("match_count", len(run.get("matches", [])))),
+        ("Feedback", run.get("overall_feedback")),
+    ])
+
+def display_run_details(run):
+    display_run_summary(run)
+    if "profile" in run:
+        print_card("PROFILE SNAPSHOT", [
+            ("Profile", json.dumps(run["profile"], indent=2, ensure_ascii=False)),
+        ])
+    for match in run.get("matches", []):
+        print_card(f"INTERNSHIP MATCH - JOB {match.get('job_id', 'N/A')}", [
+            ("Overall Score", match.get("overall_match_score")),
+            ("Skills", match.get("skills_match")),
+            ("Role", match.get("role_match")),
+            ("Industry Interest", match.get("industry_interest_match")),
+            ("Experience", match.get("experience_match")),
+            ("Salary", match.get("salary_match")),
+            ("Work Arrangement", match.get("work_arrangement_match")),
+            ("Location", match.get("location_match")),
+            ("Company Preference", match.get("company_preference_match")),
+            ("Advice", match.get("advice")),
+        ])
+
+def print_listing_pages(listings, display_listing):
+    if not listings:
+        print("No listings found")
+        return
+
+    for index, listing in enumerate(listings):
+        display_listing(listing)
+        if index < len(listings) - 1 and not continueorno():
+            break
+
+def list_all_Listing(conn):
+    past_runs = data_manager.list_runs(conn, limit=-1)
+    print_listing_pages(past_runs, display_run_summary)
+
+def get_latest_one(conn):
+    latest_runs = data_manager.list_runs(conn, limit=1)
+    latest_run = data_manager.get_run(conn, latest_runs[0]["run_id"]) if latest_runs else None
+    if latest_run is None:
+        print("No past listing found")
+        return None
+    display_run_details(latest_run)
+    return latest_run
 
 def view_past_listing(conn):
-    run = data_manager.get_run(conn, id_input("Enter a run id to view:"))
-    if run is None:
-        print("No past listing found with that id")
+    run_id = id_input("Enter a run id to view, type -1 to view latest ,type -2 to view one by one:")
+    if run_id == -1:
+        get_latest_one(conn)
+    elif run_id == -2:
+        list_all_Listing(conn)
     else:
-        print(run)
+        run = data_manager.get_run(conn, run_id)
+        if run is None:
+            print("No past listing found with that id")
+        else:
+            display_run_details(run)
+
+def list_all_internship(conn):
+    internships = data_manager.list_internships(conn, limit=-1)
+    print_listing_pages(internships, display_internship)
+    return internships
+
 
 def search_internship(conn):
-    internship = data_manager.get_internship(conn, id_input("Enter an internship id to search:"))
-    if internship is None:
-        print("No internship found with that id")
+    input_id = id_input("Enter an internship id to search(Enter Either a specific id or -1 to show one by one):")
+    if input_id != -1:
+        internship = data_manager.get_internship(conn, input_id)
+        if internship is None:
+            print("No internship found with that id")
+        else:
+            display_internship(internship)
     else:
-        print(internship)
+        internship = list_all_internship(conn)
+    
 
 def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
     if functionnumber == 1:
