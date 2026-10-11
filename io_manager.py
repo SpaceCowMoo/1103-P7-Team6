@@ -4,12 +4,9 @@ from pathlib import Path
 import re
 from datetime import datetime
 
-STUDENT_PROFILE_JSON = Path(
-    os.getenv(
-        "STUDENT_PROFILE_JSON",
-        str(Path(__file__).resolve().parent / "data" / "student_profile.json"),
-    )
-)
+import data_manager
+
+STUDENT_PROFILE_JSON = Path(__file__).resolve().parent / "data" / "student_profile.json"
 
 
 def UserResponseidMaker():
@@ -960,35 +957,59 @@ def inputlooper(functionnumber):
         Trueorfalse = input_validator_option(functionnumber)
     return int(functionnumber)
 
-def inputmenucaller_1002(functionnumber,studentprofile={}):
+# Option 2 and 3: simple lookups by id
+def id_input(message):
+    profile_id = prompt_input(message)
+    while profile_id.isdigit() == False:
+        print("Please enter a number")
+        profile_id = prompt_input(message)
+    return int(profile_id)
+
+def view_past_listing(conn):
+    run = data_manager.get_run(conn, id_input("Enter a run id to view:"))
+    if run is None:
+        print("No past listing found with that id")
+    else:
+        print(run)
+
+def search_internship(conn):
+    internship = data_manager.get_internship(conn, id_input("Enter an internship id to search:"))
+    if internship is None:
+        print("No internship found with that id")
+    else:
+        print(internship)
+
+def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
     if functionnumber == 1:
         student_profile = update_user_menu(studentprofile)
         return True,student_profile
     elif functionnumber == 2:
+        view_past_listing(conn)
         return True,studentprofile
     elif functionnumber == 3:
+        search_internship(conn)
         return True,studentprofile
     elif functionnumber == 4:
         add_student_profile_json(studentprofile)
         print("Have a good day , Thanks")
         return False,studentprofile
 
-def menu_caller_loop_1102(student_profile):
+def menu_caller_loop_1102(student_profile,conn):
     continues = True
     while continues:
         menutypenumerical = menuprinter(student_profile)
         functionnumber = inputlooper(prompt_input("Choose an option (1-4):"))
-        continues,student_profile = inputmenucaller_1002(int(functionnumber),student_profile)
+        continues,student_profile = inputmenucaller_1002(int(functionnumber),conn,student_profile)
     return student_profile,continues
 
-def menu_function_call_general(menutypenumerical):
+def menu_function_call_general(menutypenumerical,conn):
     if menutypenumerical == "1001":
         student_profile = menu_function_caller_first_time()
         menutypenumerical = menuprinter(student_profile)
         return student_profile,True
     if menutypenumerical == "1002":
         student_profile,trueorfalse = get_student_profile_json()
-        student_profile,continues = menu_caller_loop_1102(student_profile)
+        student_profile,continues = menu_caller_loop_1102(student_profile,conn)
         return student_profile,continues
 
         
