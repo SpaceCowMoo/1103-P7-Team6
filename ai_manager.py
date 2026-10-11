@@ -104,6 +104,32 @@ def validate_gemini_response(result, job_id):
 
     return result
 
+def evaluate_internship(client, student_profile, internship):
+    max_attempts = 3
+
+    prompt = build_prompt(student_profile, internship)
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = call_gemini(client, prompt)
+
+            parsed_response = parse_gemini_response(response)
+
+            validated_response = validate_gemini_response(
+                parsed_response,
+                internship["job_id"]
+            )
+
+            return validated_response
+
+        except ValueError as e:
+            if attempt == max_attempts:
+                raise RuntimeError(
+                    f"Gemini returned invalid data after {max_attempts} attempts"
+                ) from e
+
+    raise RuntimeError("Gemini evaluation failed")
+
 def get_latest_profile(filename):
     with open(filename, "r", encoding="utf-8") as file:
         data = json.load(file)
@@ -358,15 +384,10 @@ if __name__ == "__main__":
     # TEST 1: Internship Matching
     # ----------------------------------
 
-    prompt = build_prompt(ai_input, internship)
-
-    response = call_gemini(client, prompt)
-
-    parsed_response = parse_gemini_response(response)
-
-    validated_response = validate_gemini_response(
-        parsed_response,
-        internship["job_id"]
+    validated_response = evaluate_internship(
+        client,
+        ai_input,
+        internship
     )
 
     print("\nValidated Gemini Response:")
