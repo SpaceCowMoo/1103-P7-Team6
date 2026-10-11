@@ -6,9 +6,9 @@ import data_manager
 #functions
 # Take in internship data type and what the user provided in IO manager
 
-def addInternshipResultToDB(internshipResult):
-    #Add the internship result to the database
-    io_manager.addInternshipResult(internshipResult)
+def addInternshipResultToDB(conn, profile, internship_result, ai_output=None, overall_feedback=None):
+    #Save one AI run (profile, internship result, AI output) to the database. Returns the new run_id
+    return data_manager.save_run(conn, profile, internship_result, ai_output, overall_feedback)
 
 # OutputAI
 # Example format: {1: {"SkillsMatch": 100, "RoleMatch": 100, ...}}

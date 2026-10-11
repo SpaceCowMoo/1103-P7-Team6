@@ -29,12 +29,11 @@ def setup():
     print("Checking for input files...")
     for path in (INTERNSHIP_DATA, STUDENT_PROFILE_JSON):
         if os.path.exists(path):
-            print(f"  Found: {path}")
+            print(f"    Found: {path}")
         else:
-            sys.exit(f"  Missing: {path}")
+            sys.exit(f"     Missing: {path}")
 
     print(f"Opening database: {DB_PATH}")
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = data_manager.get_conn(DB_PATH)
 
     print("Creating tables (if they don't exist)...")
@@ -51,10 +50,13 @@ def setup():
     return conn
 
 def demo(conn):
+    """Quick showcase of the database: internship CRUD, then saving and reading an AI run"""
+    print("===== Internship CRUD demo =====")
     # CREATE
     # will return new job id
     new_id = data_manager.create_internship(conn, {
         "company_name": "Test Co",
+        "company_type": "Start-ups",
         "industry": "Test",
         "job_title": "Demo Intern",
         "relevant_course": "ICT",
@@ -81,9 +83,23 @@ def demo(conn):
     # LIST (with a filter)
     print("\nRemote jobs:", data_manager.list_internships(conn, work_mode="Remote"))
 
-    # DELETE
+    print("\n===== AI run demo =====")
+    # SAVE an AI run (goes through logic_manager, like the real AI flow will)
+    # Example data in the same format as ai_manager / logic_manager.evaluateInternship
+    demo_profile = {"Student_Profile": {"Cource_of_Study": "ICT", "Skills": ["Python"]}}
+    demo_ai_output = {1: {"InternshipID": new_id, "SkillsMatch": 90, "RoleMatch": 80, "Advice": "Apply now"}}
+    demo_result = {1: {"InternshipID": new_id, "OverallMatchScore": 85.0, "Advice": "Apply now"}}
+    run_id = logic_manager.addInternshipResultToDB(conn, demo_profile, demo_result, demo_ai_output, "Demo run")
+    print("Saved run_id:", run_id)
+
+    # READ the run back (profile snapshot + match results)
+    print("\nRun:", data_manager.get_run(conn, run_id))
+    print("\nPast runs:", data_manager.list_runs(conn, limit=3))
+
+    # DELETE the internship: its past AI results are kept
     data_manager.delete_internship(conn, new_id)
     print("\nDeleted:", data_manager.get_internship(conn, new_id))  # None
+    print("Run still has", len(data_manager.get_run(conn, run_id)["matches"]), "match result(s)\n")
 
 def main():
     conn = setup()
@@ -94,7 +110,7 @@ def main():
         student_profile,loopedboolean = io_manager.get_student_profile_json()
         loopmain,student_profile = io_manager.student_profile_load_check_linker(loopedboolean,student_profile)
         menutype_numerica = io_manager.menuprinter(student_profile)
-        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica)
+        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica,conn)
 
     conn.close()
 
