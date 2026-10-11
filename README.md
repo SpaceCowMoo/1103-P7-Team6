@@ -1,6 +1,6 @@
 # 1103-P7-Team6
 
-# OpportunityFit
+# INTERNLINK
 
 ## Installation
 
@@ -26,17 +26,17 @@ cp .env.example .env
 3. **Build the Docker image:**
 
 ```bash
-docker build -t opportunity-fit .
+docker build -t internlink .
 ```
 
 4. **Run the Application:**
 
 Windows (PowerShell):
 ```bash
-docker run --rm -it -v "${PWD}/data:/app/OpportunityFit/data" opportunity-fit
+docker run --rm -it -v "${PWD}/data:/app/internlink/data" internlink
 ```
 
 macOS / Linux / Git Bash:
 ```bash
-docker run --rm -it -v "$(pwd)/data:/app/OpportunityFit/data" opportunity-fit
+docker run --rm -it -v "$(pwd)/data:/app/internlink/data" internlink
 ```

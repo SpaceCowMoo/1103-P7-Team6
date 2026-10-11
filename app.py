@@ -10,25 +10,33 @@ import data_manager
 import logic_manager
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
-STUDENT_DATA = os.getenv("STUDENT_DATA")
+STUDENT_PROFILE_JSON = os.getenv("STUDENT_PROFILE_JSON")
 DB_PATH = os.getenv("INTERNSHIP_DB")
 
 def setup():
-    """Open the database, create the table, and load the CSV the first time"""
-    if not INTERNSHIP_DATA or not STUDENT_DATA or not DB_PATH:
-        sys.exit("Please set INTERNSHIP_DATA, STUDENT_DATA and INTERNSHIP_DB in your .env file")
+    """Open the database, create the tables, and load the internships CSV for the first time"""
+    required = {
+        "INTERNSHIP_DATA": INTERNSHIP_DATA,
+        "STUDENT_PROFILE_JSON": STUDENT_PROFILE_JSON,
+        "INTERNSHIP_DB": DB_PATH,
+    }
+    missing = [name for name, value in required.items() if not value]
+    if missing:
+        sys.exit(f"Please set {', '.join(missing)} in your .env file")
 
     print("Starting up...")
 
-    print("Checking for CSV files...")
-    for path in (INTERNSHIP_DATA, STUDENT_DATA):
+    print("Checking for input files...")
+    for path in (INTERNSHIP_DATA, STUDENT_PROFILE_JSON):
         if os.path.exists(path):
             print(f"  Found: {path}")
         else:
             sys.exit(f"  Missing: {path}")
 
     print(f"Opening database: {DB_PATH}")
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = data_manager.get_conn(DB_PATH)
+
     print("Creating tables (if they don't exist)...")
     data_manager.init_db(conn)
 
@@ -37,12 +45,6 @@ def setup():
         print(f"Loaded {count} internships")
     else:
         print("Internships already in database, skipping CSV load")
-
-    if data_manager.is_empty(conn, "student_profiles"):
-        count = data_manager.load_students_csv(conn, STUDENT_DATA)
-        print(f"Loaded {count} students")
-    else:
-        print("Student profiles already in database, skipping CSV load")
 
     print("Setup complete!\n")
     time.sleep(1)

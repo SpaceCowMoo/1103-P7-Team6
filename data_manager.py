@@ -1,4 +1,5 @@
 import csv
+import json
 import sqlite3
 import os
 
@@ -10,27 +11,34 @@ INTERNSHIP_COLUMNS = [
     "location_district", "job_description",
 ]
 
-STUDENT_COLUMNS = [
-    "user_id", "course_of_study", "year_of_study", "internship_duration",
-    "prefer_month", "skills", "prefer_role", "min_monthly_salary",
-    "preferred_location", "industry_interests", "company_preference",
-    "past_experience",
-]
+# top-level key in the student profile JSON; it is stripped before saving
+PROFILE_WRAPPER_KEY = "Student_Profile"
 
-# Temp: clean student csv headers
-STUDENT_CSV_HEADERS = {
-    "Input_ID": "user_id",
-    "Course_of_Study": "course_of_study",
+# fix typos
+PROFILE_KEY_FIXES = {
+    "Cource_of_Study": "course_of_study",
     "Year_of_Study": "year_of_study",
-    "Internship_Duration": "internship_duration",
-    "Prefer_month": "prefer_month",
+    "Avaliable_Intership_date": "available_internship_date",
+    "Preferred_month": "preferred_month",
     "Skills": "skills",
-    "Prefer_Role": "prefer_role",
-    "Minimum_monthly_salary": "min_monthly_salary",
-    "Preferred_location": "preferred_location",
-    "Industry_interests": "industry_interests",
-    "Company_preference": "company_preference",
-    "Past_experience": "past_experience",
+    "Preferred_Roles": "preferred_roles",
+    "Minimum_monthly_Salary": "minimum_monthly_salary",
+    "preferred_location": "preferred_location",
+    "industry_interest": "industry_interest",
+    "company_preference": "company_preference",
+    "past_experience": "past_experience",
+}
+
+# AI output key -> database column
+MATCH_FIELDS = {
+    "SkillsMatch": "skills_match",
+    "RoleMatch": "role_match",
+    "IndustryInterestMatch": "industry_interest_match",
+    "ExperienceMatch": "experience_match",
+    "SalaryMatch": "salary_match",
+    "WorkArrangementMatch": "work_arrangement_match",
+    "LocationMatch": "location_match",
+    "CompanyPreferenceMatch": "company_preference_match",
 }
 
 def get_conn(db_path):
@@ -54,21 +62,37 @@ def init_db(conn):
             job_description    TEXT NOT NULL
         )
     """)
-    # Lists like skills / roles are stored as text, e.g. '["Python", "Java"]'
+
+    # One row per time the AI is run for a student.
+    # student_profile is a JSON copy of the profile at that moment.
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS student_profiles (
-            user_id              TEXT PRIMARY KEY,
-            course_of_study      TEXT NOT NULL,
-            year_of_study        TEXT NOT NULL,
-            internship_duration  TEXT NOT NULL,
-            prefer_month         TEXT NOT NULL,
-            skills               TEXT NOT NULL,
-            prefer_role          TEXT NOT NULL,
-            min_monthly_salary   INTEGER NOT NULL,
-            preferred_location   TEXT NOT NULL,
-            industry_interests   TEXT NOT NULL,
-            company_preference   TEXT NOT NULL,
-            past_experience      TEXT NOT NULL
+        CREATE TABLE IF NOT EXISTS recommendation_runs (
+            run_id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at        TEXT DEFAULT CURRENT_TIMESTAMP,
+            student_profile   TEXT NOT NULL,
+            overall_feedback  TEXT
+        )
+    """)
+
+    # One row per internship scored in a run.
+    # Match columns allow NULL = not enough info to assess that factor.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS match_results (
+            result_id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id                    INTEGER NOT NULL
+                                      REFERENCES recommendation_runs(run_id) ON DELETE CASCADE,
+            job_id                    INTEGER NOT NULL
+                                      REFERENCES internships(job_id),
+            skills_match              INTEGER,
+            role_match                INTEGER,
+            industry_interest_match   INTEGER,
+            experience_match          INTEGER,
+            salary_match              INTEGER,
+            work_arrangement_match    INTEGER,
+            location_match            INTEGER,
+            company_preference_match  INTEGER,
+            overall_match_score       REAL,
+            advice                    TEXT
         )
     """)
     conn.commit()
@@ -77,58 +101,46 @@ def is_empty(conn, table):
     """True if the table has no rows (i.e. CSV has not been loaded yet)"""
     return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
 
-# ---------- loading CSV files ----------
-
-def read_csv(path):
-    """Read a CSV file and return a list of dicts (one per row)"""
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"CSV not found: {path}")
-    with open(path, newline="", encoding="utf-8-sig") as f:
-        return list(csv.DictReader(f))
+# ---------- loading the internships CSV ----------
 
 def load_internships_csv(conn, path):
     """Load the internships CSV. Returns how many rows were loaded"""
-    rows = read_csv(path)
-    for row in rows:
-        _insert(conn, "internships", INTERNSHIP_COLUMNS, row, replace=True)
-    return len(rows)
- 
- 
-def load_students_csv(conn, path):
-    """Load the student profiles CSV. Returns how many rows were loaded"""
-    rows = read_csv(path)
-    for row in rows:
-        # rename CSV headers to database column names
-        student = {STUDENT_CSV_HEADERS[h]: row[h] for h in STUDENT_CSV_HEADERS}
-        _insert(conn, "student_profiles", STUDENT_COLUMNS, student, replace=True)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"CSV not found: {path}")
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
+    with conn:
+        for row in rows:
+            _insert(conn, row, replace=True)
     return len(rows)
 
-# ---------- helpers used by the CRUD functions ----------
+# ---------- internships CRUD ----------
 
-def _insert(conn, table, allowed_columns, data, replace=False):
-    """Insert one row. Only keys in allowed_columns are used. Returns the new row id"""
-    data = {k: v for k, v in data.items() if k in allowed_columns}
+def _insert(conn, data, replace=False):
+    data = {k: v for k, v in data.items() if k in INTERNSHIP_COLUMNS}
     columns = ", ".join(data)
     marks = ", ".join(f":{k}" for k in data)
     verb = "INSERT OR REPLACE" if replace else "INSERT"
-    with conn:  # "with conn" saves (commits) automatically
-        cur = conn.execute(f"{verb} INTO {table} ({columns}) VALUES ({marks})", data)
-    return cur.lastrowid
- 
- 
-def _get(conn, table, key_column, key):
-    row = conn.execute(f"SELECT * FROM {table} WHERE {key_column} = ?", (key,)).fetchone()
+    return conn.execute(f"{verb} INTO internships ({columns}) VALUES ({marks})", data)
+
+def create_internship(conn, data: dict):
+    """Insert a new internship. Returns the new job_id"""
+    data = {k: v for k, v in data.items() if k != "job_id"}  # SQLite makes the id
+    with conn:
+        return _insert(conn, data).lastrowid
+
+def get_internship(conn, job_id: int):
+    row = conn.execute("SELECT * FROM internships WHERE job_id = ?", (job_id,)).fetchone()
     return dict(row) if row else None
- 
- 
-def _list(conn, table, allowed_columns, filters, limit):
-    """Return rows where every filter matches, e.g. filters={"work_mode": "Remote"}"""
-    query = f"SELECT * FROM {table} WHERE 1=1"
+
+def list_internships(conn, limit=50, **filters):
+    """Example: list_internships(conn, work_mode="Remote", industry="Software")"""
+    query = "SELECT * FROM internships WHERE 1=1"
     values = []
     for column, value in filters.items():
         if value is None:
-            continue  # no filter given for this column
-        if column not in allowed_columns:
+            continue
+        if column not in INTERNSHIP_COLUMNS:
             raise ValueError(f"Unknown column: {column}")
         query += f" AND {column} = ?"
         values.append(value)
@@ -136,60 +148,20 @@ def _list(conn, table, allowed_columns, filters, limit):
     values.append(limit)
     return [dict(r) for r in conn.execute(query, values).fetchall()]
  
- 
-def _update(conn, table, allowed_columns, key_column, key, changes):
+def update_internship(conn, job_id: int, changes: dict):
     """Update only the given fields. Returns True if a row was updated"""
-    changes = {k: v for k, v in changes.items() if k in allowed_columns and k != key_column}
+    changes = {k: v for k, v in changes.items() if k in INTERNSHIP_COLUMNS and k != "job_id"}
     if not changes:
         return False
     set_clause = ", ".join(f"{k} = ?" for k in changes)
-    values = list(changes.values()) + [key]
     with conn:
-        cur = conn.execute(f"UPDATE {table} SET {set_clause} WHERE {key_column} = ?", values)
+        cur = conn.execute(
+            f"UPDATE internships SET {set_clause} WHERE job_id = ?",
+            list(changes.values()) + [job_id],
+        )
     return cur.rowcount > 0
- 
- 
-def _delete(conn, table, key_column, key):
-    with conn:
-        cur = conn.execute(f"DELETE FROM {table} WHERE {key_column} = ?", (key,))
-    return cur.rowcount > 0
-
-# ---------- internships CRUD ----------
- 
-def create_internship(conn, data: dict):
-    """Insert a new internship. Returns the new job_id"""
-    data = {k: v for k, v in data.items() if k != "job_id"}  # SQLite makes the id
-    return _insert(conn, "internships", INTERNSHIP_COLUMNS, data)
- 
-def get_internship(conn, job_id: int):
-    return _get(conn, "internships", "job_id", job_id)
- 
-def list_internships(conn, limit=50, **filters):
-    """Example: list_internships(conn, work_mode="Remote", industry="Software")"""
-    return _list(conn, "internships", INTERNSHIP_COLUMNS, filters, limit)
- 
-def update_internship(conn, job_id: int, changes: dict):
-    return _update(conn, "internships", INTERNSHIP_COLUMNS, "job_id", job_id, changes)
  
 def delete_internship(conn, job_id: int):
-    return _delete(conn, "internships", "job_id", job_id)
-
-# ---------- student profiles CRUD ----------
- 
-def create_student(conn, data: dict):
-    """Insert a new student input profile"""
-    _insert(conn, "student_profiles", STUDENT_COLUMNS, data)
-    return data["user_id"]
- 
-def get_student(conn, user_id: str):
-    return _get(conn, "student_profiles", "user_id", user_id)
- 
-def list_students(conn, limit=50, **filters):
-    """Example: list_students(conn, company_preference="MNC")"""
-    return _list(conn, "student_profiles", STUDENT_COLUMNS, filters, limit)
- 
-def update_student(conn, user_id: str, changes: dict):
-    return _update(conn, "student_profiles", STUDENT_COLUMNS, "user_id", user_id, changes)
- 
-def delete_student(conn, user_id: str):
-    return _delete(conn, "student_profiles", "user_id", user_id)
+    with conn:
+        cur = conn.execute("DELETE FROM internships WHERE job_id = ?", (job_id,))
+    return cur.rowcount > 0
