@@ -1,4 +1,3 @@
-import csv
 import json
 import os
 from dotenv import load_dotenv
@@ -188,6 +187,7 @@ def get_ai_input(profile):
         "preferred_roles": profile.get("Preferred_Roles"),
         "minimum_monthly_salary": profile.get("Minimum_monthly_Salary"),
         "preferred_location": profile.get("Preferred_location"),
+        "preferred_work_arrangement": profile.get("Preferred_work_arrangement"),
         "industry_interests": profile.get("Industry_interest"),
         "company_preference": profile.get("Company_preference"),
         "past_experience": profile.get("past_experience")
@@ -214,45 +214,149 @@ INTERNSHIP LISTING:
 MATCHING CRITERIA:
 
 1. SkillsMatch:
-Evaluate how well the student's skills match the
-internship's required skills.
+Compare the student's existing skills with the
+internship's required_skills and job_description.
+
+- Give a high score when most required skills are covered.
+- Give a moderate score when some required skills are covered.
+- Give a low score when few required skills are covered.
+- Consider transferable and closely related skills.
+- Do not require exact keyword matches.
+- Use 0 only when there is no meaningful skill alignment.
+- Return null if the required skills cannot be assessed.
 
 2. RoleMatch:
-Evaluate whether the internship role aligns with
-the student's preferred roles.
+Compare the student's preferred_roles with the
+internship's job_title and job_description.
+
+- Give a high score for a direct role match.
+- Give a moderate score for a closely related role.
+- Give a low score for a role with limited overlap.
+- Consider similarities in actual responsibilities,
+  not just job titles.
+- Use 0 only when there is no meaningful role alignment.
+- Return null if the student has no preferred role
+  or the internship role cannot be assessed.
 
 3. IndustryInterestMatch:
-Evaluate whether the internship industry aligns
-with the student's industry interests.
+Compare the student's industry_interests with
+the internship's industry.
+
+- Give a high score for a direct industry match.
+- Give a moderate score for related industries.
+- Give a low score for industries with limited overlap.
+- Consider transferable interests across industries.
+- Use 0 only when there is no meaningful alignment.
+- Return null if industry information or the student's
+  industry preference is missing.
 
 4. ExperienceMatch:
-Evaluate whether the student's past experience is
-relevant to the internship responsibilities.
+Compare the student's past_experience with the
+internship's job_description and responsibilities.
+
+- Give a high score for directly relevant experience.
+- Give a moderate score for transferable experience.
+- Give a low score for limited relevant experience.
+- Consider responsibilities and transferable skills,
+  not just previous job titles.
+- Use 0 only when the provided experience has no
+  meaningful relevance.
+- Return null if past experience is missing or empty.
+- Do not assume that missing experience means the
+  student is unqualified.
 
 5. SalaryMatch:
-Evaluate the internship allowance against the
-student's minimum expected monthly salary.
+Compare the internship's monthly_allowance with
+the student's minimum_monthly_salary.
+
+- Give a high score when the allowance meets or
+  exceeds the student's minimum salary.
+- Give a moderate score when the allowance is
+  slightly below the student's expectation.
+- Give a low score when the allowance is
+  significantly below the expectation.
+- Use 0 only when the allowance is extremely far
+  below the student's stated minimum.
+- Return null if either salary value is missing.
+- Base the score on the actual salary difference.
 
 6. WorkArrangementMatch:
-Evaluate whether the internship's work arrangement
-matches the student's preference, if provided.
+Compare the student's preferred_work_arrangement
+with the internship's work_mode.
+
+- Give a high score for an exact match.
+- Give a moderate score for a partially compatible
+  arrangement, such as On-site versus Hybrid.
+- Give a low score when the arrangements have
+  limited compatibility.
+- Use 0 only when there is no meaningful alignment.
+- Return null if the student selected No preference
+  or the preference is missing.
+- Return null if the internship work_mode is missing.
+- Do not infer work arrangement from preferred_location.
 
 7. LocationMatch:
-Evaluate whether the internship location aligns
-with the student's preferred location.
+Compare the student's preferred_location with
+the internship's location_district.
+
+- Give a high score for an exact location match.
+- Give a moderate score for nearby or reasonably
+  accessible locations.
+- Give a low score for distant or inconvenient
+  locations.
+- Use 0 only when there is no meaningful alignment.
+- Return null if either location is missing.
+- Do not invent travel times or distances.
+- Treat "Remote" as a work arrangement preference,
+  not a physical district.
 
 8. CompanyPreferenceMatch:
-Evaluate whether the company aligns with the
-student's preferred company type.
+Compare the student's company_preference with
+the internship's company_type.
+
+- Give a high score for a direct company type match.
+- Give a moderate score for related company types.
+- Give a low score for weak alignment.
+- Use 0 only when there is no meaningful alignment.
+- Return null if the student has no company preference.
+- Return null if company_type is missing or unknown.
+- Do not guess company type from the company name alone.
 
 SCORING RULES:
 
-- Assess each criterion independently.
-- Give each criterion a score from 0 to 100.
-- 0 means no alignment.
-- 100 means excellent alignment.
-- Use only the provided student and internship information.
-- If an optional preference is missing, do not invent it.
+- Assess all eight criteria independently.
+- Give each assessable criterion an integer score
+  from 0 to 100.
+
+SCORING GUIDELINES:
+
+90-100: Excellent alignment.
+70-89: Strong alignment.
+40-69: Moderate alignment.
+1-39: Weak alignment.
+0: No meaningful alignment.
+null: Insufficient information to assess the criterion.
+
+IMPORTANT SCORING PRINCIPLES:
+
+- A partial match must receive an appropriate
+  non-zero score.
+- Do not automatically assign 0 simply because
+  the student's profile and internship differ.
+- Consider transferable skills, related roles
+  and partial alignment where appropriate.
+- Do not invent transferable skills or interests
+  without reasonable support from the provided data.
+- Use 0 only for a confirmed complete mismatch.
+- Use null when there is insufficient information.
+- Missing optional preferences must result in null,
+  not 0.
+- Do not give high scores merely because two fields
+  share a broad or generic keyword.
+- Scores should reflect actual alignment, not
+  artificial precision.
+- Scores do not need to be multiples of 5 or 10.
+- Use only the supplied student and internship data.
 - Do not calculate an overall match score.
 - Do not rank internships.
 - Do not apply business rules or flags.
@@ -265,19 +369,9 @@ Return ONLY a valid JSON object.
 - Do not include Markdown code fences.
 - Do not include text outside the JSON object.
 - Use exactly the field names shown below.
-- All match scores must be integers from 0 to 100.
-- Use the full integer range from 0 to 100.
-- Scores do not need to be multiples of 5 or 10.
-- Use specific scores such as 57, 73 or 86 when justified.
-- Base each score on the degree of alignment between the student's profile and internship requirements.
-- Do not add artificial precision when there is insufficient information.
-- Return null when an optional criterion cannot be assessed.
-- Do not invent missing preferences.
-- Do not assume missing internship information.
-- Return null if a criterion cannot be reliably assessed from the provided student profile and internship listing.
-- A score of 0 means confirmed lack of alignment, not missing information.
+- All scores must be integers from 0 to 100 or null.
 - Return the original job_id unchanged.
-- Do not include overall scores, rankings or explanations.
+- Do not include additional fields.
 
 EXPECTED JSON STRUCTURE:
 
