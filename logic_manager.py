@@ -16,10 +16,9 @@ from calendar import monthrange
 
 #functions
 
-# Take in internship data type and what the user provided in IO manager
-def addInternshipResultToDB(internshipResult):
-    #Add the internship result to the database
-    io_manager.addInternshipResult(internshipResult)
+def addInternshipResultToDB(conn, profile, internship_result, ai_output=None, overall_feedback=None):
+    #Save one AI run (profile, internship result, AI output) to the database. Returns the new run_id
+    return data_manager.save_run(conn, profile, internship_result, ai_output, overall_feedback)
 
 def salaryFlag(flags, internshipData, userProfile):
     #Check if the salary is below the user's expected minimum salary
@@ -109,20 +108,22 @@ def evaluateInternship(DBReference,aiScores, reccomendedActionsText, userProfile
     print("Internship Result:", InternshipResult)
     return InternshipResult
 
-#check if output to user is a single value or all the ratings (Pending)
+#returns overall match score of a listing
 def calculateScore(aiOutput):
-    weightage = {"SkillsMatch": 0.25, "RoleMatch": 0.25, "IndustryInterestMatch": 0.125, "ExperienceMatch": 0.125, "SalaryMatch": 0.075, "WorkArrangementMatch": 0.075, "LocationMatch": 0.05, "CompanyPreferenceMatch": 0.05}
-    totalWeight = 0
-    weightedScore = 0
+    TotalScore = 0  #TotalScore tracks the weightage of fields used
+    weightage = {
+        "SkillsMatch": 0.3, 
+        "RoleMatch": 0.3, 
+        "IndustryInterestMatch": 0.2, 
+        "ExperienceMatch": 0.15, 
+        "CompanyPreferenceMatch": 0.05
+        }
+    for key, value in aiOutput.items():
+        if value == None:
+            aiOutput[key] = 0   #change NULL value to 0 to prevent TypeError during MatchScore calculation
+        else:
+            TotalScore += weightage[key]    #if an optional field has been filled in, add its weightage to TotalScore
 
-    for key, weight in weightage.items():
-        score = aiOutput.get(key)
-        if score is not None:
-            weightedScore += score * weight
-            totalWeight += weight
-
-    if totalWeight == 0:
-        return 0
-
-    return weightedScore / totalWeight
+    OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
+    return OverallMatchScore/TotalScore   #divide OverallScore over TotalScore to get final score out of 100%
 
