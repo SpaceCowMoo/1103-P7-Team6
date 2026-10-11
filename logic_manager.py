@@ -2,6 +2,7 @@
 import io_manager
 import ai_manager
 import data_manager
+import pandas as pd
 
 #functions
 # Take in internship data type and what the user provided in IO manager
@@ -65,12 +66,19 @@ def calculateScore(aiOutput):
         "ExperienceMatch": 0.15, 
         "CompanyPreferenceMatch": 0.05
         }
+    
+    job_id = aiOutput.pop("job_id")
     for key, value in aiOutput.items():
         if value == None:
             aiOutput[key] = 0   #change NULL value to 0 to prevent TypeError during MatchScore calculation
         else:
             TotalScore += weightage[key]    #if an optional field has been filled in, add its weightage to TotalScore
 
-    OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
-    return OverallMatchScore/TotalScore   #divide OverallScore over TotalScore to get final score out of 100%
+    OverallMatchScore = ((aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])) / TotalScore    #divide OverallScore over TotalScore to get final score out of 100%
+    ListingScore = {"JobID": job_id, "OverallScore": OverallMatchScore}
+    return ListingScore
 
+#takes in a dict containing job_id and overall score, searches DB for listing details, apply flags accordingly and update listing score
+def applyFlags(listingScore):
+    file = pd.read_csv("internships.csv")
+    listing = file.loc[file["job_id"] == listingScore["JobID"]].iloc[0]
