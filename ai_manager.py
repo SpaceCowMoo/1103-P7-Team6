@@ -14,6 +14,12 @@ EXPECTED_AI_OUTPUT = {
     "CompanyPreferenceMatch": None
 }
 
+EXPECTED_TOP_FIVE_OUTPUT = {
+    "selected_internships": [
+        EXPECTED_AI_OUTPUT
+    ]
+}
+
 def configure_gemini():
     load_dotenv(override=True)
 
@@ -328,6 +334,142 @@ Keep null for criteria that cannot be assessed.
 """
 
     return prompt
+
+def build_top_five_prompt(student_profile, internships):
+    prompt = f"""
+You are the AI internship matching engine for InternLink.
+
+Your task is to analyse ALL the internship listings and
+select the FIVE most suitable internships for this student.
+
+STUDENT PROFILE:
+{json.dumps(student_profile, indent=2)}
+
+AVAILABLE INTERNSHIPS:
+{json.dumps(internships, indent=2)}
+
+MATCHING CRITERIA:
+
+1. SkillsMatch:
+Compare student skills with required_skills and job_description.
+Consider transferable skills and closely related technologies.
+
+2. RoleMatch:
+Compare preferred_roles with job_title and job_description.
+Consider the actual job responsibilities.
+
+3. IndustryInterestMatch:
+Compare industry_interests with the internship industry.
+Return null when the student has no industry preference.
+
+4. ExperienceMatch:
+Compare past_experience with job_description.
+Return null when past_experience is missing or empty.
+Do not penalise students for missing optional experience.
+
+5. CompanyPreferenceMatch:
+Compare company_preference with company_type.
+An exact company type match receives 100.
+Return null only when the preference or company type
+is missing, empty or unknown.
+
+SELECTION INSTRUCTIONS:
+
+- Consider every internship in the supplied dataset.
+- Select exactly five DISTINCT internships.
+- Prioritise suitability based on the five criteria.
+- Consider the student's course and year of study
+  when assessing internship suitability.
+- Treat missing optional preferences as neutral.
+- Do not invent qualifications, skills or job requirements.
+- Do not calculate weighted overall scores.
+- Do not assign final rankings.
+- Do not apply salary, location or work arrangement flags.
+- Return only job IDs that exist in the supplied dataset.
+
+SCORING INSTRUCTIONS:
+
+- Give each assessable criterion an integer from 0 to 100.
+- 90-100: Excellent alignment.
+- 70-89: Strong alignment.
+- 40-69: Moderate alignment.
+- 1-39: Weak alignment.
+- 0: No meaningful alignment.
+- null: Insufficient information or missing optional preference.
+- Consider partial matches and transferable skills.
+- Do not treat missing optional preferences as zero.
+- Do not provide individual explanations.
+
+JSON RESPONSE INSTRUCTIONS:
+
+Return ONLY a valid JSON object with this structure:
+
+{json.dumps(EXPECTED_TOP_FIVE_OUTPUT, indent=2)}
+
+- selected_internships must contain exactly five objects.
+- Each object must contain exactly the six fields shown.
+- Return the original job_id unchanged.
+- Do not include extra fields or text.
+"""
+    return prompt
+
+def validate_top_five_response(result, internships):
+    if not isinstance(result, dict):
+        raise ValueError("Top-five response must be a dictionary")
+
+    if set(result.keys()) != {"selected_internships"}:
+        raise ValueError("Incorrect top-five response fields")
+
+    selected = result["selected_internships"]
+
+    if not isinstance(selected, list) or len(selected) != 5:
+        raise ValueError("Gemini must select exactly five internships")
+
+    valid_job_ids = {
+        internship["job_id"] for internship in internships
+    }
+
+    seen_ids = set()
+
+    for entry in selected:
+        if not isinstance(entry, dict):
+            raise ValueError("Each selection must be a dictionary")
+
+        job_id = entry.get("job_id")
+
+        if type(job_id) is not int or job_id not in valid_job_ids:
+            raise ValueError(f"Invalid selected job_id: {job_id}")
+
+        if job_id in seen_ids:
+            raise ValueError(f"Duplicate selected job_id: {job_id}")
+
+        validate_gemini_response(entry, job_id)
+        seen_ids.add(job_id)
+
+    return selected
+
+def select_top_five_internships(client, student_profile, internships):
+    if len(internships) < 5:
+        raise ValueError("At least five internships are required")
+
+    prompt = build_top_five_prompt(student_profile, internships)
+
+    max_attempts = 3
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = call_gemini(client, prompt)
+            parsed = parse_gemini_response(response)
+
+            return validate_top_five_response(parsed, internships)
+
+        except ValueError as e:
+            if attempt == max_attempts:
+                raise RuntimeError(
+                    "Gemini failed to return a valid top-five selection"
+                ) from e
+
+    raise RuntimeError("Top-five selection failed")
 
 def build_skill_gap_prompt(student_profile, top_five):
 
