@@ -131,9 +131,12 @@ def evaluate_internship(client, student_profile, internship):
     raise RuntimeError("Gemini evaluation failed")
 
 def evaluate_multiple_internships(client, student_profile, internships):
-    results = []
+    successful = []
+    failed = []
 
     for internship in internships:
+        job_id = internship.get("job_id")
+
         try:
             result = evaluate_internship(
                 client,
@@ -141,13 +144,18 @@ def evaluate_multiple_internships(client, student_profile, internships):
                 internship
             )
 
-            results.append(result)
+            successful.append(result)
 
-        except RuntimeError:
-            # Skip internships that fail after retry attempts
-            continue
+        except (RuntimeError, ValueError, KeyError) as e:
+            failed.append({
+                "job_id": job_id,
+                "error": str(e)
+            })
 
-    return results
+    return {
+        "successful": successful,
+        "failed": failed
+    }
 
 def get_latest_profile(filename):
     with open(filename, "r", encoding="utf-8") as file:
@@ -400,15 +408,22 @@ if __name__ == "__main__":
     # TEST 1: Internship Matching
     # ----------------------------------
 
-    # Test multiple internship evaluations
     results = evaluate_multiple_internships(
         client,
         ai_input,
         internships
     )
 
-    print("\nValidated Gemini Responses:")
-    print(json.dumps(results, indent=2))
+    print("\nSuccessful Evaluations:")
+    print(json.dumps(results["successful"], indent=2))
+
+    print("\nFailed Evaluations:")
+    print(json.dumps(results["failed"], indent=2))
+
+    print("\nEvaluation Summary:")
+    print("Total internships:", len(internships))
+    print("Successful:", len(results["successful"]))
+    print("Failed:", len(results["failed"]))
 
     # # ----------------------------------
     # # TEST 2: Overall Skill-Gap Feedback
