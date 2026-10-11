@@ -23,6 +23,7 @@ PROFILE_KEY_FIXES = {
     "Skills": "skills",
     "Preferred_Roles": "preferred_roles",
     "Minimum_monthly_Salary": "minimum_monthly_salary",
+    "Preferred_Work_location":"preferred_work_location",
     "preferred_location": "preferred_location",
     "industry_interest": "industry_interest",
     "company_preference": "company_preference",
