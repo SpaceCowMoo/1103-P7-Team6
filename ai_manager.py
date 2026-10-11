@@ -546,6 +546,44 @@ def generate_skill_gap_feedback(client, student_profile, top_five):
 
     return feedback
 
+def run_ai_pipeline(client, student_profile, internships):
+    # Step 1: Select five internships and generate their scores
+    selected_scores = select_top_five_internships(
+        client,
+        student_profile,
+        internships
+    )
+
+    # Step 2: Match selected job IDs to their full internship records
+    internship_lookup = {
+        internship["job_id"]: internship
+        for internship in internships
+    }
+
+    top_five = []
+
+    for scores in selected_scores:
+        job_id = scores["job_id"]
+
+        internship = internship_lookup[job_id].copy()
+
+        # Combine internship details with the five AI scores
+        internship.update(scores)
+
+        top_five.append(internship)
+
+    # Step 3: Generate one overall skill-gap feedback paragraph
+    feedback = generate_skill_gap_feedback(
+        client,
+        student_profile,
+        top_five
+    )
+
+    # Step 4: Return results for the other managers
+    return {
+        "selected_internships": top_five,
+        "overall_feedback": feedback["overall_feedback"]
+    }
 
 if __name__ == "__main__":
     client = configure_gemini()
@@ -580,48 +618,32 @@ if __name__ == "__main__":
         if data_manager.is_empty(conn, "internships"):
             data_manager.load_internships_csv(conn, csv_path)
 
-        # Retrieve three internships for testing
-        internships = data_manager.list_internships(conn, limit=3)
+        # Retrieve all internships for AI selection
+        internships = data_manager.list_internships(conn, limit=-1)
 
     finally:
         conn.close()
 
     # ----------------------------------
-    # TEST 1: Internship Matching
+    # TEST: Complete AI Manager Pipeline
     # ----------------------------------
 
-    results = evaluate_multiple_internships(
-        client,
-        ai_input,
-        internships
-    )
+    try:
+        results = run_ai_pipeline(
+            client,
+            ai_input,
+            internships
+        )
 
-    print("\nSuccessful Evaluations:")
-    print(json.dumps(results["successful"], indent=2))
+        print("\nTop Five Selected Internships:")
+        print(json.dumps(results["selected_internships"], indent=2))
 
-    print("\nFailed Evaluations:")
-    print(json.dumps(results["failed"], indent=2))
+        print("\nOverall Skill-Gap Feedback:")
+        print(results["overall_feedback"])
 
-    print("\nEvaluation Summary:")
-    print("Total internships:", len(internships))
-    print("Successful:", len(results["successful"]))
-    print("Failed:", len(results["failed"]))
+        print("\nEvaluation Summary:")
+        print("Total available internships:", len(internships))
+        print("Selected internships:", len(results["selected_internships"]))
 
-    # # ----------------------------------
-    # # TEST 2: Overall Skill-Gap Feedback
-    # # ----------------------------------     
-
-    # # Temporary scores for testing only
-    # sample_scores = [35, 50, 42, 65, 28]
-
-    # for job, score in zip(top_five, sample_scores):
-    #     job["SkillsMatch"] = score
-
-    # feedback = generate_skill_gap_feedback(
-    #     client,
-    #     ai_input,
-    #     top_five
-    # )
-
-    # print("\nOverall Skill-Gap Feedback:")
-    # print(json.dumps(feedback, indent=2))
+    except (RuntimeError, ValueError) as e:
+        print("\nAI Manager failed:", e)
