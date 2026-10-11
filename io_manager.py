@@ -3,10 +3,16 @@ import json
 from pathlib import Path
 import re
 from datetime import datetime
+import textwrap
 
 import data_manager
 
-STUDENT_PROFILE_JSON = Path(__file__).resolve().parent / "data" / "student_profile.json"
+STUDENT_PROFILE_JSON = Path(
+    os.getenv(
+        "STUDENT_PROFILE_JSON",
+        str(Path(__file__).resolve().parent / "data" / "student_profile.json"),
+    )
+)
 
 
 def UserResponseidMaker():
@@ -960,24 +966,140 @@ def inputlooper(functionnumber):
 # Option 2 and 3: simple lookups by id
 def id_input(message):
     profile_id = prompt_input(message)
-    while profile_id.isdigit() == False:
-        print("Please enter a number")
+    while True:
+        try:
+            return int(profile_id)
+        except ValueError:
+            print("Please enter an integer")
         profile_id = prompt_input(message)
-    return int(profile_id)
+
+def continueorno():
+    response = input("View the next listing? (Y/N): ").strip().lower()
+    while response not in {"y", "n"}:
+        response = input("Please enter Y or N: ").strip().lower()
+    return response == "y"
+
+def print_card(title, fields, width=60):
+    print("\n" + "=" * width)
+    print(f"{title:^{width}}")
+    print("=" * width)
+    for label, value in fields:
+        if value is None or value == "":
+            value = "Not specified"
+        value_lines = str(value).splitlines() or ["Not specified"]
+        prefix = f"{label}: "
+        continuation = " " * len(prefix)
+        print(textwrap.fill(
+            f"{prefix}{value_lines[0]}",
+            width=width,
+            subsequent_indent=continuation,
+        ))
+        for value_line in value_lines[1:]:
+            print(textwrap.fill(
+                value_line,
+                width=width,
+                initial_indent=continuation,
+                subsequent_indent=continuation,
+            ))
+    print("=" * width)
+
+def display_internship(internship):
+    print_card("INTERNSHIP LISTING", [
+        ("ID", internship.get("job_id")),
+        ("Company", internship.get("company_name")),
+        ("Company Type", internship.get("company_type")),
+        ("Role", internship.get("job_title")),
+        ("Industry", internship.get("industry")),
+        ("Relevant Course", internship.get("relevant_course")),
+        ("Monthly Allowance", f"${internship['monthly_allowance']}" if internship.get("monthly_allowance") is not None else None),
+        ("Work Arrangement", internship.get("work_mode")),
+        ("Duration", f"{internship['duration_months']} months" if internship.get("duration_months") is not None else None),
+        ("Required Skills", internship.get("required_skills")),
+        ("Location", internship.get("location_district")),
+        ("Description", internship.get("job_description")),
+    ])
+
+def display_run_summary(run):
+    print_card("PAST RECOMMENDATION RUN", [
+        ("Run ID", run.get("run_id")),
+        ("Created", run.get("created_at")),
+        ("Match Count", run.get("match_count", len(run.get("matches", [])))),
+        ("Feedback", run.get("overall_feedback")),
+    ])
+
+def display_run_details(run):
+    display_run_summary(run)
+    if "profile" in run:
+        print_card("PROFILE SNAPSHOT", [
+            ("Profile", json.dumps(run["profile"], indent=2, ensure_ascii=False)),
+        ])
+    for match in run.get("matches", []):
+        print_card(f"INTERNSHIP MATCH - JOB {match.get('job_id', 'N/A')}", [
+            ("Overall Score", match.get("overall_match_score")),
+            ("Skills", match.get("skills_match")),
+            ("Role", match.get("role_match")),
+            ("Industry Interest", match.get("industry_interest_match")),
+            ("Experience", match.get("experience_match")),
+            ("Salary", match.get("salary_match")),
+            ("Work Arrangement", match.get("work_arrangement_match")),
+            ("Location", match.get("location_match")),
+            ("Company Preference", match.get("company_preference_match")),
+            ("Advice", match.get("advice")),
+        ])
+
+def print_listing_pages(listings, display_listing):
+    if not listings:
+        print("No listings found")
+        return
+
+    for index, listing in enumerate(listings):
+        display_listing(listing)
+        if index < len(listings) - 1 and not continueorno():
+            break
+
+def list_all_Listing(conn):
+    past_runs = data_manager.list_runs(conn, limit=-1)
+    print_listing_pages(past_runs, display_run_summary)
+
+def get_latest_one(conn):
+    latest_runs = data_manager.list_runs(conn, limit=1)
+    latest_run = data_manager.get_run(conn, latest_runs[0]["run_id"]) if latest_runs else None
+    if latest_run is None:
+        print("No past listing found")
+        return None
+    display_run_details(latest_run)
+    return latest_run
 
 def view_past_listing(conn):
-    run = data_manager.get_run(conn, id_input("Enter a run id to view:"))
-    if run is None:
-        print("No past listing found with that id")
+    run_id = id_input("Enter a run id to view, type -1 to view latest ,type -2 to view one by one:")
+    if run_id == -1:
+        get_latest_one(conn)
+    elif run_id == -2:
+        list_all_Listing(conn)
     else:
-        print(run)
+        run = data_manager.get_run(conn, run_id)
+        if run is None:
+            print("No past listing found with that id")
+        else:
+            display_run_details(run)
+
+def list_all_internship(conn):
+    internships = data_manager.list_internships(conn, limit=-1)
+    print_listing_pages(internships, display_internship)
+    return internships
+
 
 def search_internship(conn):
-    internship = data_manager.get_internship(conn, id_input("Enter an internship id to search:"))
-    if internship is None:
-        print("No internship found with that id")
+    input_id = id_input("Enter an internship id to search(Enter Either a specific id or -1 to show one by one):")
+    if input_id != -1:
+        internship = data_manager.get_internship(conn, input_id)
+        if internship is None:
+            print("No internship found with that id")
+        else:
+            display_internship(internship)
     else:
-        print(internship)
+        internship = list_all_internship(conn)
+    
 
 def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
     if functionnumber == 1:

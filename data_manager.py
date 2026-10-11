@@ -84,6 +84,15 @@ def get_conn(db_path):
 
 def init_db(conn):
     conn.executescript(SCHEMA_SQL)
+    internship_columns = {
+        row["name"] for row in conn.execute("PRAGMA table_info(internships)")
+    }
+    if "company_type" not in internship_columns:
+        conn.execute(
+            "ALTER TABLE internships "
+            "ADD COLUMN company_type TEXT NOT NULL DEFAULT 'Not specified'"
+        )
+        conn.commit()
 
 def is_empty(conn, table):
     """True if the table has no rows (i.e. CSV has not been loaded yet)"""
@@ -135,7 +144,7 @@ def list_internships(conn, limit=50, **filters):
             raise ValueError(f"Unknown column: {column}")
         query += f" AND {column} = ?"
         values.append(value)
-    query += " LIMIT ?"
+    query += " ORDER BY job_id ASC LIMIT ?"
     values.append(limit)
     return [dict(r) for r in conn.execute(query, values).fetchall()]
 
