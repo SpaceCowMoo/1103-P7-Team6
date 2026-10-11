@@ -87,15 +87,15 @@ def validate_gemini_response(result, job_id):
     return result
 
 def get_latest_profile(filename):
-    latest_profile = None
+    with open(filename, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
-    with open(filename, "r", newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
+    profile = data.get("Student_Profile")
 
-        for row in reader:
-            latest_profile = row
+    if not isinstance(profile, dict) or not profile:
+        raise ValueError("Student_Profile is missing or empty")
 
-    return latest_profile
+    return profile
 
 # Convert CSV values into Python data types
 def convert_value(value):
@@ -109,19 +109,17 @@ def convert_value(value):
 
 def get_ai_input(profile):
     ai_input = {
-        "course_of_study": profile["Course_of_Study"],
-        "year_of_study": profile["Year_of_Study"],
-        "internship_duration": profile["Internship_Duration"],
-        "preferred_month": profile["Prefer_month"],
-        "skills": convert_value(profile["Skills"]),
-        "preferred_roles": convert_value(profile["Prefer_Role"]),
-        "minimum_monthly_salary": convert_value(
-            profile["Minimum_monthly_salary"]
-        ),
-        "preferred_location": convert_value(profile["Preferred_location"]),
-        "industry_interests": convert_value(profile["Industry_interests"]),
-        "company_preference": convert_value(profile["Company_preference"]),
-        "past_experience": convert_value(profile["Past_experience"])
+        "course_of_study": profile.get("Cource_of_Study"),
+        "year_of_study": profile.get("Year_of_Study"),
+        "internship_duration": profile.get("Avaliable_Intership_date"),
+        "preferred_month": profile.get("Preferred_month"),
+        "skills": profile.get("Skills"),
+        "preferred_roles": profile.get("Preferred_Roles"),
+        "minimum_monthly_salary": profile.get("Minimum_monthly_Salary"),
+        "preferred_location": profile.get("Preferred_location"),
+        "industry_interests": profile.get("Industry_interest"),
+        "company_preference": profile.get("Company_preference"),
+        "past_experience": profile.get("past_experience")
     }
 
     return ai_input
@@ -301,12 +299,19 @@ if __name__ == "__main__":
     client = configure_gemini()
     print("Gemini client configured successfully!")
 
-    profile = get_latest_profile("data/student_profiles.csv")
+    profile_path = os.getenv(
+        "STUDENT_PROFILE_JSON",
+        "data/student_profile.json"
+    )
+
+    profile = get_latest_profile(profile_path)
 
     if profile is None:
         raise ValueError("No student profiles found.")
 
     ai_input = get_ai_input(profile)
+    print("Updated Student Profile:")
+    print(json.dumps(ai_input, indent=2))
 
     db_path = os.getenv("INTERNSHIP_DB", "data/internships.db")
     csv_path = os.getenv("INTERNSHIP_DATA", "data/internships.csv")
