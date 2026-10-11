@@ -3,6 +3,7 @@ import json
 import os
 from dotenv import load_dotenv
 from google import genai
+from google.genai import errors
 import data_manager
 
 EXPECTED_AI_OUTPUT = {
@@ -30,13 +31,30 @@ def configure_gemini():
     return client
 
 def call_gemini(client, prompt):
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json"
-        }
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json"
+            }
+        )
+
+    except errors.APIError as e:
+        raise RuntimeError(
+            f"Gemini API request failed: {e}"
+        ) from e
+
+    except (ConnectionError, TimeoutError) as e:
+        raise RuntimeError(
+            f"Unable to connect to Gemini: {e}"
+        ) from e
+
+    if not response.text or not response.text.strip():
+        raise RuntimeError(
+            "Gemini returned an empty response"
+        )
+
     return response.text
 
 def parse_gemini_response(response_text):
