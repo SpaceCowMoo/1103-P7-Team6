@@ -11,9 +11,6 @@ EXPECTED_AI_OUTPUT = {
     "RoleMatch": None,
     "IndustryInterestMatch": None,
     "ExperienceMatch": None,
-    "SalaryMatch": None,
-    "WorkArrangementMatch": None,
-    "LocationMatch": None,
     "CompanyPreferenceMatch": None
 }
 
@@ -187,7 +184,7 @@ def get_ai_input(profile):
         "preferred_roles": profile.get("Preferred_Roles"),
         "minimum_monthly_salary": profile.get("Minimum_monthly_Salary"),
         "preferred_location": profile.get("Preferred_location"),
-        "preferred_work_arrangement": profile.get("Preferred_work_arrangement"),
+        "preferred_work_arrangement": profile.get("Preferred_Work_Arrangement"),
         "industry_interests": profile.get("Industry_interest"),
         "company_preference": profile.get("Company_preference"),
         "past_experience": profile.get("past_experience")
@@ -265,52 +262,7 @@ internship's job_description and responsibilities.
 - Do not assume that missing experience means the
   student is unqualified.
 
-5. SalaryMatch:
-Compare the internship's monthly_allowance with
-the student's minimum_monthly_salary.
-
-- Give a high score when the allowance meets or
-  exceeds the student's minimum salary.
-- Give a moderate score when the allowance is
-  slightly below the student's expectation.
-- Give a low score when the allowance is
-  significantly below the expectation.
-- Use 0 only when the allowance is extremely far
-  below the student's stated minimum.
-- Return null if either salary value is missing.
-- Base the score on the actual salary difference.
-
-6. WorkArrangementMatch:
-Compare the student's preferred_work_arrangement
-with the internship's work_mode.
-
-- Give a high score for an exact match.
-- Give a moderate score for a partially compatible
-  arrangement, such as On-site versus Hybrid.
-- Give a low score when the arrangements have
-  limited compatibility.
-- Use 0 only when there is no meaningful alignment.
-- Return null if the student selected No preference
-  or the preference is missing.
-- Return null if the internship work_mode is missing.
-- Do not infer work arrangement from preferred_location.
-
-7. LocationMatch:
-Compare the student's preferred_location with
-the internship's location_district.
-
-- Give a high score for an exact location match.
-- Give a moderate score for nearby or reasonably
-  accessible locations.
-- Give a low score for distant or inconvenient
-  locations.
-- Use 0 only when there is no meaningful alignment.
-- Return null if either location is missing.
-- Do not invent travel times or distances.
-- Treat "Remote" as a work arrangement preference,
-  not a physical district.
-
-8. CompanyPreferenceMatch:
+5. CompanyPreferenceMatch:
 Compare the student's company_preference with
 the internship's company_type.
 
@@ -324,9 +276,12 @@ the internship's company_type.
 
 SCORING RULES:
 
-- Assess all eight criteria independently.
+- Assess all five criteria independently.
 - Give each assessable criterion an integer score
   from 0 to 100.
+- Salary, work arrangement and location are handled
+  separately by the Logic Manager.
+- Do not generate scores or flags for these fields.
 
 SCORING GUIDELINES:
 
