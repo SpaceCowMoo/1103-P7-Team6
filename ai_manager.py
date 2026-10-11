@@ -130,6 +130,25 @@ def evaluate_internship(client, student_profile, internship):
 
     raise RuntimeError("Gemini evaluation failed")
 
+def evaluate_multiple_internships(client, student_profile, internships):
+    results = []
+
+    for internship in internships:
+        try:
+            result = evaluate_internship(
+                client,
+                student_profile,
+                internship
+            )
+
+            results.append(result)
+
+        except RuntimeError:
+            # Skip internships that fail after retry attempts
+            continue
+
+    return results
+
 def get_latest_profile(filename):
     with open(filename, "r", encoding="utf-8") as file:
         data = json.load(file)
@@ -371,11 +390,8 @@ if __name__ == "__main__":
         if data_manager.is_empty(conn, "internships"):
             data_manager.load_internships_csv(conn, csv_path)
 
-        # Retrieve internship with job_id = 1
-        internship = get_test_internship(conn, 1)
-
-        # Retrieve five internships for feedback testing
-        top_five = data_manager.list_internships(conn, limit=5)
+        # Retrieve three internships for testing
+        internships = data_manager.list_internships(conn, limit=3)
 
     finally:
         conn.close()
@@ -384,30 +400,31 @@ if __name__ == "__main__":
     # TEST 1: Internship Matching
     # ----------------------------------
 
-    validated_response = evaluate_internship(
+    # Test multiple internship evaluations
+    results = evaluate_multiple_internships(
         client,
         ai_input,
-        internship
+        internships
     )
 
-    print("\nValidated Gemini Response:")
-    print(json.dumps(validated_response, indent=2))
+    print("\nValidated Gemini Responses:")
+    print(json.dumps(results, indent=2))
 
-    # ----------------------------------
-    # TEST 2: Overall Skill-Gap Feedback
-    # ----------------------------------
+    # # ----------------------------------
+    # # TEST 2: Overall Skill-Gap Feedback
+    # # ----------------------------------     
 
-    # Temporary scores for testing only
-    sample_scores = [35, 50, 42, 65, 28]
+    # # Temporary scores for testing only
+    # sample_scores = [35, 50, 42, 65, 28]
 
-    for job, score in zip(top_five, sample_scores):
-        job["SkillsMatch"] = score
+    # for job, score in zip(top_five, sample_scores):
+    #     job["SkillsMatch"] = score
 
-    feedback = generate_skill_gap_feedback(
-        client,
-        ai_input,
-        top_five
-    )
+    # feedback = generate_skill_gap_feedback(
+    #     client,
+    #     ai_input,
+    #     top_five
+    # )
 
-    print("\nOverall Skill-Gap Feedback:")
-    print(json.dumps(feedback, indent=2))
+    # print("\nOverall Skill-Gap Feedback:")
+    # print(json.dumps(feedback, indent=2))
