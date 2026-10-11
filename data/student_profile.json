@@ -1,24 +1,28 @@
 {
-    "Student_Profile": {
-        "Cource_of_Study": "Speech and Language Therapy",
-        "Year_of_Study": "1,2",
-        "Avaliable_Intership_date": "11/08/2026 - 11/12/2026",
-        "Preferred_month": "February",
-        "Skills": [
-            "Python",
-            "Dotnet"
-        ],
-        "Preferred_Roles": [
-            "data_analyst"
-        ],
-        "Minimum_monthly_Salary": "1500.00",
-        "Preferred_Work_Arrangement": "On-site",
-        "Preferred_location": [
-            "Woodlands",
-            "Sembawang"
-        ],
-        "Industry_interest": [],
-        "Company_preference": "Big Tech Companies",
-        "past_experience": {}
-    }
+  "Student_Profile": {
+    "Cource_of_Study": "Information Technology",
+    "Year_of_Study": "2",
+    "Avaliable_Intership_date": "11/08/2026 - 11/12/2026",
+    "Preferred_month": "August",
+    "Skills": [
+      "Python",
+      "SQL",
+      "Excel",
+      "Data Analysis"
+    ],
+    "Preferred_Roles": [
+      "data_analyst"
+    ],
+    "Minimum_monthly_Salary": "1500.00",
+    "Preferred_Work_Arrangement": "On-site",
+    "Preferred_location": [
+      "Woodlands",
+      "Sembawang"
+    ],
+    "Industry_interest": [
+      "Professional Services"
+    ],
+    "Company_preference": "Multi-National Corporations (MNCs)",
+    "past_experience": {}
+  }
 }

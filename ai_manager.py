@@ -15,7 +15,7 @@ EXPECTED_AI_OUTPUT = {
 }
 
 def configure_gemini():
-    load_dotenv()
+    load_dotenv(override=True)
 
     api_key = os.getenv("GEMINI_API_KEY")
 
@@ -29,7 +29,7 @@ def configure_gemini():
 def call_gemini(client, prompt):
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=prompt,
             config={
                 "response_mime_type": "application/json"
@@ -163,16 +163,6 @@ def get_latest_profile(filename):
         raise ValueError("Student_Profile is missing or empty")
 
     return profile
-
-# Convert CSV values into Python data types
-def convert_value(value):
-    if value is None or value.strip() == "":
-        return None
-
-    try:
-        return json.loads(value)
-    except (json.JSONDecodeError, TypeError):
-        return value
 
 def get_ai_input(profile):
     ai_input = {
@@ -434,6 +424,7 @@ if __name__ == "__main__":
     print(json.dumps(ai_input, indent=2))
 
     db_path = os.getenv("INTERNSHIP_DB", "data/internships.db")
+    print("Database being used:", os.path.abspath(db_path))
     csv_path = os.getenv("INTERNSHIP_DATA", "data/internships.csv")
 
     # Connect to database
