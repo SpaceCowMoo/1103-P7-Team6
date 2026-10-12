@@ -281,7 +281,7 @@ def validate_Year_of_Study(year):
 def check_Internship_Duration_format(internshipDuration):
     if not internshipDuration :
         print("Invalid input. Please enter the duration of your available internships in the format 'DD/MM/YYYY - DD/MM/YYYY'.")
-        return "Invalid","Invalid",False
+        return "Invalid","Invalid","Invalid",False
     internshipDuration = internshipDuration.split("-")
     try:
         startingdate = datetime.strptime(internshipDuration[0].strip(), "%d/%m/%Y")
@@ -301,7 +301,7 @@ def check_Internship_Duration_format(internshipDuration):
             return startingdate,endingdate,total_months,True
     except Exception:
         print("Invalid input. Please enter the duration of your available internships in the format 'DD/MM/YYYY - DD/MM/YYYY'.")
-        return "Invalid","Invalid",False
+        return "Invalid","Invalid","Invalid",False
 
 def internship_duration_checker(internshipDuration):
     starting_date,ending_date,Total_month,is_valid = check_Internship_Duration_format(internshipDuration)
@@ -405,13 +405,13 @@ def validating_minimum_monthly_salary(minimum_month_salary):
         return False
     minimum_month_salary = float(minimum_month_salary)
     if minimum_month_salary<0 :
-        print("The number cannot be negative.")
+        print("The number cannot be negative. Please input again")
         return False
     elif minimum_month_salary == 0:
-        print("The value you entered is 0.")
+        print("The value you entered is 0. Please input again.")
         return False
     elif minimum_month_salary>10000:
-        print("The value you entered is greater than 10,000.")
+        print("The value you entered is greater than 10,000. Please input again")
         return False
     else:
         return True
@@ -500,6 +500,7 @@ def validating_preferred_locations(preferredlocations):
         print("Please enter a valid number.")
         return False
     else:
+        
         return True
 
 def validating_perferred_location_input(preferredlocations):
@@ -507,7 +508,7 @@ def validating_perferred_location_input(preferredlocations):
     while is_valid == False:
         preferredlocations = prompt_input("Choose a preferred location (1-5, or type 'exit' to finish):")
         is_valid = validating_preferred_locations(preferredlocations)
-    return preferredlocations,is_valid
+    return preferredlocations
 
 def preferredlocations_number_to_string(preferredlocationnumber):
     singapore_areas_list = ["North","East","South","West","Central"]
@@ -523,12 +524,14 @@ def preferredlocation_listadder(preferredlocations):
         return locations
 
     while True:
-        response, _ = validating_perferred_location_input(response)
+        response = validating_perferred_location_input(response)
         if response.casefold() == "exit":
+            print("Selected locations:", ", ".join(selected) or "None")
             return selected
 
         location = preferredlocations_number_to_string(response)
         append_unique_value(selected, location, "Preferred location")
+        print("\nSelected locations:", ", ".join(selected))
         response = prompt_input(
             "Choose another preferred location (1-5, or type 'exit' to finish):"
         )
@@ -580,10 +583,11 @@ def validate_company_preference(company_perference):
 
 def company_preference_number_to_String(company_preference):
     company_preferenceslist = [
-    "Multi-National Corporations (MNCs)",
-    "Small-to-Medium Enterprises (SMEs)",
     "Start-ups",
+    "Multi-National Corporations (MNCs)",
     "Government",
+    "Statutory Boards",
+    "Small-to-Medium Enterprises (SMEs)"
 ]
     return company_preferenceslist[int(company_preference)-1] 
 
@@ -592,7 +596,7 @@ def company_preference_checker(company_preference):
     while is_valid == False:
         company_preference = prompt_input("Choose a company preference (1-5, or type 'exit' to skip):")
         is_valid = validate_company_preference(company_preference)
-    return company_preference,is_valid
+    return company_preference
 
 def company_preference_looper(company_preference):
     preferences = [
@@ -609,12 +613,13 @@ def company_preference_looper(company_preference):
         return preferences
 
     while True:
-        response, _ = company_preference_checker(response)
+        response = company_preference_checker(response)
         if response.casefold() == "exit":
             return selected
 
         preference = company_preference_number_to_String(response)
         append_unique_value(selected, preference, "Company preference")
+        print("\nSelected locations:", ", ".join(selected) or "None")
         response = prompt_input(
             "Choose another company preference (1-5, or type 'exit' to finish):"
         )
