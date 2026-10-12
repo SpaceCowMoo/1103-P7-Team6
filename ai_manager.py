@@ -616,18 +616,34 @@ SHORTLISTED INTERNSHIPS:
 TASK:
 Generate personalised skill-gap feedback for the student.
 
+
 INSTRUCTIONS:
-- Return 3 to 5 actionable feedback points.
-- Each point must be a short, clear sentence.
-- Identify important technical skills the student should improve.
-- Consider missing skills across the shortlisted internships.
-- Consider the student's preferred roles and industry interests.
-- Consider the student's past experience, including transferable skills.
-- Do not assume the student has skills not listed in their profile.
+
+- Return 3 to 5 personalised, actionable feedback points.
+- Each point must identify a relevant skill gap and
+  recommend a specific action to address it.
+- Compare the student's existing skills with the required_skills
+  and job_description of the shortlisted internships.
+- Prioritise skills that appear across multiple shortlisted
+  internships, especially those relevant to preferred roles.
+- Consider the student's course, year of study,
+  existing skills and past experience.
+- Build upon the student's existing knowledge rather
+  than recommending only unrelated advanced technologies.
+- Suggest practical learning activities such as small projects,
+  exercises, tutorials or portfolio development.
+- Recommend activities realistic for the student's current
+  academic level.
+- Where appropriate, explain how the activity helps prepare
+  the student for the shortlisted internship responsibilities.
+- Do not claim that the student lacks a skill if it is
+  already demonstrated in their profile.
+- Do not assume that the student has unlisted skills.
 - Do not invent internship requirements.
-- Avoid generic advice such as "work harder".
-- Do not repeat the same advice.
-- Do not recommend skills unrelated to the shortlisted internships.
+- Avoid generic advice such as "improve your skills"
+  or "gain more experience".
+- Avoid repeating the same recommendation.
+- Each point should be one concise, actionable sentence.
 - Do not calculate match scores or rank internships.
 
 OUTPUT FORMAT:
