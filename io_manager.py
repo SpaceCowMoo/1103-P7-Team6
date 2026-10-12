@@ -168,11 +168,18 @@ def display_student_profile(profile):
     raw_year = str(profile.get("year_of_study", "")).split(",", maxsplit=1)[0].strip()
     formatted_year = f"Year {raw_year}" if raw_year.isdigit() else raw_year
 
-    # Handle past_experience if it's an empty dictionary
     past_exp = profile.get("past_experience", {})
     exp_text = "None recorded" if not past_exp else str(past_exp)
+    work_arrangement = profile.get("preferred_work_arrangement", "N/A")
+    if (
+        isinstance(work_arrangement, list)
+        and {str(value).casefold() for value in work_arrangement}
+        == {"on-site", "hybrid"}
+    ):
+        work_arrangement = "No Preference"
+    else:
+        work_arrangement = format_list(work_arrangement)
 
-    # Print the UI box
     print("\n" + "=" * consoleWidth_55)
     print(f"{'✨ YOUR STUDENT PROFILE ✨':^{consoleWidth_55}}")
     print("=" * consoleWidth_55)
@@ -187,17 +194,23 @@ def display_student_profile(profile):
         duration_text = f"{duration} months (date range not set)"
     else:
         duration_text = "N/A"
-    print(f"1,{'Course of Study:':<{profileFieldWidth}} {profile.get('course_of_study', 'N/A')}")
-    print(f"2,{'Year of Study:':<{profileFieldWidth}} {formatted_year}")
-    print(f"3,{'Internship Duration:':<{profileFieldWidth}} {duration_text}")
-    print(f"4,{'Skills:':<{profileFieldWidth}} {format_list(profile.get('skills', []))}")
-    print(f"5,{'Preferred Roles:':<{profileFieldWidth}} {format_list(profile.get('preferred_roles', []))}")
-    print(f"6,{'Minimum Monthly Salary:':<{profileFieldWidth}} ${profile.get('minimum_monthly_salary', '0.00')}")
-    print(f"7,{'Preferred Work Arrangement:':<{profileFieldWidth}} {profile.get('preferred_work_arrangement', 'N/A')}")
-    print(f"8,{'Preferred Location:':<{profileFieldWidth}} {format_list(profile.get('preferred_location', []))}")
-    print(f"9,{'Industry Interest:':<{profileFieldWidth}} {format_list(profile.get('industry_interest', []))}")
-    print(f"10,{'Company Preference:':<{profileFieldWidth}} {format_list(profile.get('company_preference', []))}")
-    print(f"11,{'Past Experience:':<{profileFieldWidth}} {exp_text}")
+
+    fields = [
+        ("Course of Study:", profile.get("course_of_study", "N/A")),
+        ("Year of Study:", formatted_year),
+        ("Internship Duration:", duration_text),
+        ("Skills:", format_list(profile.get("skills", []))),
+        ("Preferred Roles:", format_list(profile.get("preferred_roles", []))),
+        ("Minimum Monthly Salary:", f"${profile.get('minimum_monthly_salary', '0.00')}"),
+        ("Preferred Work Arrangement:", work_arrangement),
+        ("Preferred Location:", format_list(profile.get("preferred_location", []))),
+        ("Industry Interest:", format_list(profile.get("industry_interest", []))),
+        ("Company Preference:", format_list(profile.get("company_preference", []))),
+        ("Past Experience:", exp_text),
+    ]
+    for number, (label, value) in enumerate(fields, 1):
+        line = f"{number:>2},{label:<{profileFieldWidth}} {value}"
+        print(line)
     print("=" * consoleWidth_55 + "\n")
 
 
@@ -664,10 +677,10 @@ def looping_pass_experience(pass_experience_input):
     experiences = {}
     response = pass_experience_input.strip().lower()
 
-    while response not in {"have", "exit"}:
+    while response not in {"yes", "no"}:
         response = prompt_input("Enter 'Have' to add past experience or 'Exit' to skip:").strip().lower()
 
-    while response == "have":
+    while response == "yes":
         job_title = prompt_input("Enter your job title:")
         while any(existing.casefold() == job_title.strip().casefold() for existing in experiences):
             print("That job title has already been added; enter a different title.")
@@ -681,9 +694,9 @@ def looping_pass_experience(pass_experience_input):
             "Date": dateofhiring,
             "Job_Decription": jobdiscription,
         }
-        response = prompt_input("Do you have another past experience? (Have/Exit):").strip().lower()
-        while response not in {"have", "exit"}:
-            response = prompt_input("Enter 'Have' to add another or 'Exit' to finish:").strip().lower()
+        response = prompt_input("Do you have another past experience? (Yes/No):").strip().lower()
+        while response not in {"yes", "no"}:
+            response = prompt_input("Enter 'Yes' to add another or 'No' to finish:").strip().lower()
 
     return arrange_pass_experiences(experiences)
 
@@ -761,7 +774,7 @@ def Get_User_Input():
 
         # Past experience (e.g previous SWE internship)
         past_experience = looping_pass_experience(
-            prompt_input("Do you have past work experience? (Have/Exit):")
+            prompt_input("Do you have past work experience? (Yes/No):")
         )
 
         
@@ -978,7 +991,7 @@ def update_Student_profile(input_chooser_update,student_profile):
             )
         elif field_number == 11:
             updated_profile["past_experience"] = looping_pass_experience(
-                prompt_input("Do you have past work experience? (Have/Exit):")
+                prompt_input("Do you have past work experience? (Yes/No):")
             )
     return updated_profile
 
