@@ -67,11 +67,11 @@ def salaryFlag(flags, userProfile, job_id):
         return False
 
 def workarrangementFlag(flags, userProfile, job_id):
-    userWorkarrangment = userProfile["student_profile"]["preferred_work_arrangement"]
-    if not userWorkarrangement:
+    userWorkArrangment = userProfile["student_profile"]["preferred_work_arrangement"]
+    if not userWorkArrangment:
         return False
     listing_data = get_job_by_id(job_id)
-    if listing_data["work_mode"] != userWorkarrangment:
+    if listing_data["work_mode"] != userWorkArrangment:
         #if work_mode of job listing does not match users preference, raise flag
         flags.append("Work arrangement does not meet user's preference")
         return True
