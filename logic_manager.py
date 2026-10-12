@@ -33,57 +33,50 @@ def save_ai_result(conn, student_profile, ai_result):
     return data_manager.save_match(
         conn, student_profile, job_ids, scores, ai_result["overall_feedback"])
 
-def salaryFlag(flags, internshipData, userProfile):
+def get_job_by_id(job_id, csv_file='internships.csv'):
+    with open(csv_file, 'r') as file:
+        read_file = csv.DictReader(file)
+        for row in read_file:
+            if row['job_id'] == str(job_id):
+                return row
+    return None
+
+def salaryFlag(flags, userProfile, job_id):
     #Check if the salary is below the user's expected minimum salary
-    userSalary = userProfile["student_profile"]["minimum_monthly_salary"]
-    if isinstance(userSalary, str):
-        userSalary = 0
-    if (internshipData["monthly_allowance"] < (userSalary - 200)):
+    userSalary = int(userProfile["student_profile"]["minimum_monthly_salary"])
+    if not userSalary:
+        return False
+    listing_data = get_job_by_id(job_id)
+    if listing_data["monthly_allowance"] < (userSalary - 200):
         #If the user provided a minimum expected monthly salary and a listing's stated salary is below that by more than $200
-        flags.append("Salary below expected minimum")
-    
-def durationFlag(flags, internshipData, userProfile):
-    user_duration_months = userProfile["student_profile"]["duration"]
-    internship_duration_months = internshipData["duration_months"]
+        flags.append("Salary below expected minimum by >$200")
+        return True
+    else:
+        return False
 
-    if internship_duration_months > user_duration_months:
-        flags.append("Duration mismatch")
-
-def skillFlag(flags, internshipData, userProfile):
-    #Check if the user has the required skills for the internship
-    # assuming that internshipData and userProfile are arrays of strings
-    skillMatch = []
-    for skill in userProfile["student_profile"]["skills"]:
-        if skill in internshipData["required_skills"]:
-            skillMatch.append(f"Skill match: {skill}")
-    if len(skillMatch) == 0:
-        #If a listing requires skills that the student does not have
-        flags.append("No matching skills")
-
-def roleFlag(flags, internshipData, userProfile):
-    #Check if the user has the preferred role for the internship
-    # assuming that internshipData and userProfile are arrays of strings
-    roleMatch = []
-    for role in userProfile["student_profile"]["preferred_roles"]:
-        if role in internshipData["job_title"]:
-            roleMatch.append(f"Role match: {role}")
-    if len(roleMatch) == 0:
-        #If a listing requires roles that the student does not have
-        flags.append("No matching roles")
-
-def workarrangementFlag(flags, internshipData, userProfile):
+def workarrangementFlag(flags, userProfile, job_id):
     userWorkarrangment = userProfile["student_profile"]["preferred_work_arrangement"]
-    if internshipData["work_mode"] != userWorkarrangment:
+    if not userWorkarrangement:
+        return False
+    listing_data = get_job_by_id(job_id)
+    if listing_data["work_mode"] != userWorkarrangment:
         #if work_mode of job listing does not match users preference, raise flag
         flags.append("Work arrangement does not meet user's preference")
-        #for review, do these functions take in job_id to search?
+        return True
+    else:
+        return False
 
-def locationFlag(flags, internshipData, userProfile):
+def locationFlag(flags, userProfile, job_id):
     userLocation = userProfile["student_profile"]["preferred_location"]
-    if internshipData["location_district"] != userLocation:
+    if not userLocation:
+        return False
+    listing_data = get_job_by_id(job_id)
+    if listing_data["location_district"] != userLocation:
         #if location does not match, raise flag
         flags.append("Location does not meet user's preference")
-        #to change, student_profile location should be limited to North, East, South, West, Central
+        return True
+    else:
+        return False
 
 #output to IO manager
 #Expecting recomendation to be a very long paragraph
