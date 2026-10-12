@@ -96,21 +96,39 @@ def demo(conn):
 
     # SAVE a match (goes through logic_manager, like the real AI flow does)
     # Fake AI result in the same format as ai_manager.run_ai_pipeline returns
-    demo_profile = {"student_profile": {"course_of_study": "Accountancy", "skills": ["Excel", "Audit"]}}
+    # The salary / work arrangement / location fields are what logic_manager's flags check
+    demo_profile = {"student_profile": {
+        "course_of_study": "Accountancy",
+        "skills": ["Excel", "Audit"],
+        "minimum_monthly_salary": "1500.00",
+        "preferred_work_arrangement": ["Hybrid"],
+        "preferred_location": ["Central", "South"],
+    }}
+    # The AI shortlists 5 to 10 internships; logic_manager keeps the best 5
     demo_ai_result = {
-        "selected_internships": [
-            {"job_id": 1, "SkillsMatch": 40, "RoleMatch": 30, "IndustryInterestMatch": None,
-             "ExperienceMatch": None, "CompanyPreferenceMatch": None},
-            {"job_id": 2, "SkillsMatch": 90, "RoleMatch": 80, "IndustryInterestMatch": None,
-             "ExperienceMatch": None, "CompanyPreferenceMatch": 50},
-            {"job_id": 3, "SkillsMatch": 60, "RoleMatch": 50, "IndustryInterestMatch": 40,
-             "ExperienceMatch": None, "CompanyPreferenceMatch": None},
-            {"job_id": 4, "SkillsMatch": 20, "RoleMatch": None, "IndustryInterestMatch": None,
-             "ExperienceMatch": None, "CompanyPreferenceMatch": None},
-            {"job_id": 5, "SkillsMatch": 70, "RoleMatch": 70, "IndustryInterestMatch": 70,
-             "ExperienceMatch": None, "CompanyPreferenceMatch": None},
-        ],
-        "overall_feedback": "Demo feedback: build up your IFRS and data analytics skills.",
+        "selected_internships": {
+            "internships": [
+                {"job_id": 1, "SkillsMatch": 40, "RoleMatch": 30, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 2, "SkillsMatch": 90, "RoleMatch": 80, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": 50},
+                {"job_id": 3, "SkillsMatch": 60, "RoleMatch": 50, "IndustryInterestMatch": 40,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 4, "SkillsMatch": 20, "RoleMatch": None, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 5, "SkillsMatch": 70, "RoleMatch": 70, "IndustryInterestMatch": 70,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 6, "SkillsMatch": 10, "RoleMatch": 10, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},  # lowest, gets cut
+            ]
+        },
+        "overall_feedback": {
+            "points": [
+                "Demo feedback: build up your IFRS knowledge.",
+                "Demo feedback: practise data analytics in Excel.",
+                "Demo feedback: add an audit project to your portfolio.",
+            ]
+        },
     }
     match_id = logic_manager.save_ai_result(conn, demo_profile, demo_ai_result)
     print("Saved demo match_id:", match_id)
@@ -120,7 +138,7 @@ def demo(conn):
 
 def main():
     conn = setup()
-    # demo(conn)
+    demo(conn)
 
     loopmain = True
     while loopmain:

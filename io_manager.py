@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 import textwrap
 
 import data_manager
+import logic_manager   # logic_manager.find_matches runs the AI and saves
 
 STUDENT_PROFILE_JSON = Path(
     os.getenv(
@@ -45,7 +46,8 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             print("  2. View past listings")
             print("  3. Delete History")
             print("  4. Search for internships")
-            print("  5. Exit")
+            print("  5. Find internship matches (AI)")
+            print("  6. Exit")
             print("=" * consoleWidth_60)
 
         case "CourseDisplay":
@@ -1038,7 +1040,7 @@ def input_validator_option(functionnumber):
     if(functionnumber<1):
         print("Your input is incorrect please Try again")
         return False
-    elif (functionnumber >5):
+    elif (functionnumber >6):
         print("Your input is incorrect please Try again")
         return False
     return True
@@ -1046,7 +1048,7 @@ def input_validator_option(functionnumber):
 def inputlooper(functionnumber):
     Trueorfalse = input_validator_option(functionnumber)
     while not Trueorfalse :
-        functionnumber = prompt_input("Choose an option (1-5):")
+        functionnumber = prompt_input("Choose an option (1-6):")
         Trueorfalse = input_validator_option(functionnumber)
     return int(functionnumber)
 
@@ -1106,32 +1108,41 @@ def display_internship(internship):
         ("Description", internship.get("job_description")),
     ])
 
-def display_run_summary(run):
+# data_manager.get_match(conn, match_id) gives one match as:
+# {"match_id": 1, "created_at": "2026-10-12 12:26:37",
+#  "overall_feedback": {"points": ["...", "..."]},
+#  "profile": {"student_profile": {...}},                     <- profile at the time of the match
+#  "jobs": [{"job_id": 12, "score": 82.3, "flags": ["..."]},  <- 5 jobs, best first
+#           ...]}
+# The job details (title, company, ...) are not copied in, get them with
+# data_manager.get_internship(conn, job_id).
+
+def format_feedback(feedback):
+    # AI feedback is {"points": [...]}, print one point per line
+    return "\n".join(f"- {point}" for point in feedback["points"])
+
+def display_run_summary(match):
+    top_job = match["jobs"][0]   # jobs are best first
     print_card("PAST RECOMMENDATION RUN", [
-        ("Run ID", run.get("run_id")),
-        ("Created", run.get("created_at")),
-        ("Match Count", run.get("match_count", len(run.get("matches", [])))),
-        ("Feedback", run.get("overall_feedback")),
+        ("Match ID", match.get("match_id")),
+        ("Created", match.get("created_at")),
+        ("Top Job ID", top_job["job_id"]),
+        ("Top Score", f"{top_job['score']:.1f}"),
+        ("Feedback", format_feedback(match.get("overall_feedback"))),
     ])
 
-def display_run_details(run):
-    display_run_summary(run)
-    if "profile" in run:
-        print_card("PROFILE SNAPSHOT", [
-            ("Profile", json.dumps(run["profile"], indent=2, ensure_ascii=False)),
-        ])
-    for match in run.get("matches", []):
-        print_card(f"INTERNSHIP MATCH - JOB {match.get('job_id', 'N/A')}", [
-            ("Overall Score", match.get("overall_match_score")),
-            ("Skills", match.get("skills_match")),
-            ("Role", match.get("role_match")),
-            ("Industry Interest", match.get("industry_interest_match")),
-            ("Experience", match.get("experience_match")),
-            ("Salary", match.get("salary_match")),
-            ("Work Arrangement", match.get("work_arrangement_match")),
-            ("Location", match.get("location_match")),
-            ("Company Preference", match.get("company_preference_match")),
-            ("Advice", match.get("advice")),
+def display_run_details(conn, match):
+    display_run_summary(match)
+    display_student_profile(match["profile"]["student_profile"])
+    for rank, job in enumerate(match["jobs"], 1):
+        internship = data_manager.get_internship(conn, job["job_id"])
+        if internship is None:   # internship was deleted after the match was saved
+            internship = {"job_title": "Internship removed", "company_name": None}
+        print_card(f"MATCH {rank} - JOB {job['job_id']}", [
+            ("Role", internship.get("job_title")),
+            ("Company", internship.get("company_name")),
+            ("Overall Score", f"{job['score']:.1f}"),
+            ("Flags", format_list(job["flags"]) if job["flags"] else "None"),
         ])
 
 def print_listing_pages(listings, display_listing):
@@ -1145,32 +1156,33 @@ def print_listing_pages(listings, display_listing):
             break
 
 def list_all_Listing(conn):
-    past_runs = data_manager.list_runs(conn, limit=-1)
+    # list_matches gives every match newest first, get_match fills in the "jobs" list
+    past_runs = [data_manager.get_match(conn, match["match_id"]) for match in data_manager.list_matches(conn)]
     print_listing_pages(past_runs, display_run_summary)
 
 def get_latest_one(conn):
-    latest_runs = data_manager.list_runs(conn, limit=1)
-    latest_run = data_manager.get_run(conn, latest_runs[0]["run_id"]) if latest_runs else None
+    latest_runs = data_manager.list_matches(conn)   # newest first, so [0] is the latest
+    latest_run = data_manager.get_match(conn, latest_runs[0]["match_id"]) if latest_runs else None
     if latest_run is None:
         print("No past listing found")
         return None
-    display_run_details(latest_run)
+    display_run_details(conn, latest_run)
     return latest_run
 
 def view_past_listing(conn):
     run_id = id_input(
-        "Enter a run ID to view (-1 for the latest run, or -2 to browse all runs):"
+        "Enter a match ID to view (-1 for the latest match, or -2 to browse all matches):"
     )
     if run_id == -1:
         get_latest_one(conn)
     elif run_id == -2:
         list_all_Listing(conn)
     else:
-        run = data_manager.get_run(conn, run_id)
+        run = data_manager.get_match(conn, run_id)   # None if the id doesn't exist
         if run is None:
             print("No past listing found with that id")
         else:
-            display_run_details(run)
+            display_run_details(conn, run)
 
 def list_all_internship(conn):
     internships = data_manager.list_internships(conn, limit=-1)
@@ -1196,24 +1208,60 @@ def search_internship(conn):
 #option 4 delete listing:
 
 def delete_run_id_checker(deleted_run_id,conn):
-    past_runs = data_manager.list_runs(conn, limit=-1)
-    if deleted_run_id.isdigit()==False:
+    # Johann: valid input is -1, -2, or a match_id that exists.
+    # The input is text, so check it is a number before int() (isdigit() alone rejects "-1")
+    match_ids = [match["match_id"] for match in data_manager.list_matches(conn)]
+    if deleted_run_id.strip().lstrip("-").isdigit()==False:
+        print("Please enter a number.")
         return False
-    elif deleted_run_id <-2 or deleted_run_id>past_runs[len(past_runs)-1]["run_id"]:
-        return False
-    else:
+    deleted_run_id = int(deleted_run_id)
+    if deleted_run_id in (-1, -2) or deleted_run_id in match_ids:
         return True
+    else:
+        print("No past listing found with that id.")
+        return False
 
 def delete_run_id_checking_Correcter(deleted_run_id,conn):
     is_valid = delete_run_id_checker(deleted_run_id,conn)
     while not is_valid:
-        deleted_run_id = input("Enter the run_id that you want to delete specifically ,type -1 to delete the latest listing , type -2 to delete all listing")
+        deleted_run_id = prompt_input("Enter the match ID to delete (-1 for the latest, -2 to delete all):")
         is_valid = delete_run_id_checker(deleted_run_id,conn)
-    return deleted_run_id
+    return int(deleted_run_id)
 
 def deleteListing(conn): 
-    deleted_run_id = delete_run_id_checking_Correcter(input("Enter the run_id that you want to delete specifically ,type -1 to delete the latest listing , type -2 to delete all listing"),conn)
+    past_runs = data_manager.list_matches(conn)   # newest first
+    if not past_runs:
+        print("No past listing found")
+        return None
+    list_all_Listing(conn)
+    deleted_run_id = delete_run_id_checking_Correcter(prompt_input("Enter the match ID to delete (-1 for the latest, -2 to delete all):"),conn)
+    if deleted_run_id == -1:
+        to_delete = [past_runs[0]["match_id"]]
+    elif deleted_run_id == -2:
+        to_delete = [match["match_id"] for match in past_runs]
+    else:
+        to_delete = [deleted_run_id]
+    if Confirming_input(prompt_input(f"Delete {len(to_delete)} listing(s)? This cannot be undone (Y/N):")):
+        for match_id in to_delete:
+            data_manager.delete_match(conn, match_id)   # also deletes that match's profile snapshot
+        print(f"Deleted {len(to_delete)} listing(s).")
+    else:
+        print("Nothing was deleted.")
     return deleted_run_id
+
+#option 5 find internship matches:
+def find_internship_matches(conn, studentprofile):
+    print("Finding your top 5 internships. This can take a minute...")
+    try:
+        # DB NOTE (Johann): runs the AI, scores + flags each job, saves it, returns the new match_id
+        match_id = logic_manager.find_matches(conn, studentprofile)
+    except Exception as error:
+        # e.g. no GEMINI_API_KEY, no internet, or the AI gave a bad answer: go back to the menu
+        print(f"Could not find matches: {error}")
+        return None
+    print(f"Saved as match {match_id}. You can view it again with option 2.")
+    display_run_details(conn, data_manager.get_match(conn, match_id))
+    return match_id
 
 def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
     if functionnumber == 1:
@@ -1223,12 +1271,15 @@ def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
         view_past_listing(conn)
         return True,studentprofile
     elif functionnumber == 3:
-        deleteListing(conn)#Pending completion
+        deleteListing(conn)
         return True,studentprofile
     elif functionnumber == 4:
         search_internship(conn)
         return True,studentprofile
     elif functionnumber == 5:
+        find_internship_matches(conn, studentprofile)
+        return True,studentprofile
+    elif functionnumber == 6:
         add_student_profile_json(studentprofile)
         print("Have a good day. Thanks!")
         return False,studentprofile
@@ -1237,7 +1288,7 @@ def menu_caller_loop_1102(student_profile,conn):
     continues = True
     while continues:
         menutypenumerical = menuprinter(student_profile)
-        functionnumber = inputlooper(prompt_input("Choose an option (1-5):"))
+        functionnumber = inputlooper(prompt_input("Choose an option (1-6):"))
         continues,student_profile = inputmenucaller_1002(int(functionnumber),conn,student_profile)
     return student_profile,continues
 
