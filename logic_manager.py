@@ -22,7 +22,7 @@ def save_ai_result(conn, student_profile, ai_result):
     #ai_result is the output of ai_manager.run_ai_pipeline:
     #{"selected_internships": [5 dicts with job_id + AI scores], "overall_feedback": "..."}
     results = []
-    for internship in ai_result["selected_internships"]:
+    for internship in ai_result["selected_internships"]["internships"]:
         flags = []
         current_score = calculateScore(internship)
         flag_deduction = 0
@@ -131,10 +131,12 @@ def calculateScore(aiOutput):
         "CompanyPreferenceMatch": 0.05
         }
     for key, value in aiOutput.items():
-        if value == None:
-            aiOutput[key] = 0   #change NULL value to 0 to prevent TypeError during MatchScore calculation
-        else:
-            TotalScore += weightage[key]    #if an optional field has been filled in, add its weightage to TotalScore
-
+        try:
+            if value == None:
+                aiOutput[key] = 0   #change NULL value to 0 to prevent TypeError during MatchScore calculation
+            else:
+                TotalScore += weightage[key]    #if an optional field has been filled in, add its weightage to TotalScore
+        except:
+            continue
     OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
     return OverallMatchScore/TotalScore   #divide OverallScore over TotalScore to get final score out of 100%
