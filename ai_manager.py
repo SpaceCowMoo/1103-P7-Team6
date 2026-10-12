@@ -163,30 +163,30 @@ def get_latest_profile(filename):
     with open(filename, "r", encoding="utf-8") as file:
         data = json.load(file)
 
-    profile = data.get("Student_Profile")
+    profile = data.get("student_profile")
 
     if not isinstance(profile, dict) or not profile:
-        raise ValueError("Student_Profile is missing or empty")
+        raise ValueError("student_profile is missing or empty")
 
     return profile
 
 def get_ai_input(profile):
-    year_of_study = profile.get("Year_of_Study", "")
+    year_of_study = profile.get("year_of_study", "")
     if isinstance(year_of_study, str):
         year_of_study = year_of_study.split(",", maxsplit=1)[0].strip()
 
     ai_input = {
-        "course_of_study": profile.get("Cource_of_Study"),
+        "course_of_study": profile.get("course_of_study"),
         "year_of_study": year_of_study,
-        "internship_duration": profile.get("Duration"),
-        "internship_start_to_ending": profile.get("Internship_Start_to_Ending"),
-        "skills": profile.get("Skills"),
-        "preferred_roles": profile.get("Preferred_Roles"),
-        "minimum_monthly_salary": profile.get("Minimum_monthly_Salary"),
-        "preferred_location": profile.get("Preferred_location"),
-        "preferred_work_arrangement": profile.get("Preferred_Work_Arrangement"),
-        "industry_interests": profile.get("Industry_interest"),
-        "company_preference": profile.get("Company_preference"),
+        "internship_duration": profile.get("duration"),
+        "internship_start_to_ending": profile.get("available_internship_dates"),
+        "skills": profile.get("skills"),
+        "preferred_roles": profile.get("preferred_roles"),
+        "minimum_monthly_salary": profile.get("minimum_monthly_salary"),
+        "preferred_location": profile.get("preferred_location"),
+        "preferred_work_arrangement": profile.get("preferred_work_arrangement"),
+        "industry_interests": profile.get("industry_interest"),
+        "company_preference": profile.get("company_preference"),
         "past_experience": profile.get("past_experience")
     }
 

@@ -4,7 +4,7 @@
 # UserProfile references data from io manager
 # It will be a dictionary of the user's profile information
 # We assume that we wont have a history of the user output
-# Example format: {"CourseOfStudy": "Applied Artificial Intelligence", "YearOfStudy": "Year 1", ...}
+# Example format: {"student_profile": {"course_of_study": "Applied Artificial Intelligence", "year_of_study": "1", "duration": 4, "skills": [...], ...}}
 # DBReference is the database connection reference to the internship database
 
 #Imports
@@ -20,7 +20,7 @@ def addInternshipResultToDB(conn, profile, internship_result, ai_output=None, ov
 
 def salaryFlag(flags, internshipData, userProfile):
     #Check if the salary is below the user's expected minimum salary
-    userSalary = userProfile["Student_Profile"]["Minimum_monthly_Salary"]
+    userSalary = userProfile["student_profile"]["minimum_monthly_salary"]
     if isinstance(userSalary, str):
         userSalary = 0
     if (internshipData["monthly_allowance"] < (userSalary - 200)):
@@ -28,7 +28,7 @@ def salaryFlag(flags, internshipData, userProfile):
         flags.append("Salary below expected minimum")
     
 def durationFlag(flags, internshipData, userProfile):
-    user_duration_months = userProfile["Student_Profile"]["Duration"]
+    user_duration_months = userProfile["student_profile"]["duration"]
     internship_duration_months = internshipData["duration_months"]
 
     if internship_duration_months > user_duration_months:
@@ -38,7 +38,7 @@ def skillFlag(flags, internshipData, userProfile):
     #Check if the user has the required skills for the internship
     # assuming that internshipData and userProfile are arrays of strings
     skillMatch = []
-    for skill in userProfile["Student_Profile"]["Skills"]:
+    for skill in userProfile["student_profile"]["skills"]:
         if skill in internshipData["required_skills"]:
             skillMatch.append(f"Skill match: {skill}")
     if len(skillMatch) == 0:
@@ -49,7 +49,7 @@ def roleFlag(flags, internshipData, userProfile):
     #Check if the user has the preferred role for the internship
     # assuming that internshipData and userProfile are arrays of strings
     roleMatch = []
-    for role in userProfile["Student_Profile"]["Preferred_Roles"]:
+    for role in userProfile["student_profile"]["preferred_roles"]:
         if role in internshipData["job_title"]:
             roleMatch.append(f"Role match: {role}")
     if len(roleMatch) == 0:
@@ -57,14 +57,14 @@ def roleFlag(flags, internshipData, userProfile):
         flags.append("No matching roles")
 
 def workarrangementFlag(flags, internshipData, userProfile):
-    userWorkarrangment = userProfile["Student_Profile"]["Preferred_Work_Arrangement"]
+    userWorkarrangment = userProfile["student_profile"]["preferred_work_arrangement"]
     if internshipData["work_mode"] != userWorkarrangment:
         #if work_mode of job listing does not match users preference, raise flag
         flags.append("Work arrangement does not meet user's preference")
         #for review, do these functions take in job_id to search?
 
 def locationFlag(flags, internshipData, userProfile):
-    userLocation = userProfile["Student_Profile"]["Preferred_location"]
+    userLocation = userProfile["student_profile"]["preferred_location"]
     if internshipData["location_district"] != userLocation:
         #if location does not match, raise flag
         flags.append("Location does not meet user's preference")

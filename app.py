@@ -86,7 +86,7 @@ def demo(conn):
     print("\n===== AI run demo =====")
     # SAVE an AI run (goes through logic_manager, like the real AI flow will)
     # Example data in the same format as ai_manager / logic_manager.evaluateInternship
-    demo_profile = {"Student_Profile": {"Cource_of_Study": "ICT", "Skills": ["Python"]}}
+    demo_profile = {"student_profile": {"course_of_study": "ICT", "skills": ["Python"]}}
     demo_ai_output = {1: {"InternshipID": new_id, "SkillsMatch": 90, "RoleMatch": 80, "Advice": "Apply now"}}
     demo_result = {1: {"InternshipID": new_id, "OverallMatchScore": 85.0, "Advice": "Apply now"}}
     run_id = logic_manager.addInternshipResultToDB(conn, demo_profile, demo_result, demo_ai_output, "Demo run")

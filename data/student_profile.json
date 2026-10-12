@@ -1,34 +1,34 @@
 {
-    "Student_Profile": {
-        "Cource_of_Study": "Information and Communications Technology (Software Engineering)",
-        "Year_of_Study": "1",
-        "Duration": 4,
-        "Internship_Start_to_Ending": "13/11/2026 - 14/03/2027",
-        "Skills": [
+    "student_profile": {
+        "course_of_study": "Information and Communications Technology (Software Engineering)",
+        "year_of_study": "1",
+        "duration": 4,
+        "available_internship_dates": "13/11/2026 - 14/03/2027",
+        "skills": [
             "Python",
             "Software development Life Cycle",
             "C programming"
         ],
-        "Preferred_Roles": [
+        "preferred_roles": [
             "Programmer",
             "It Specialist"
         ],
-        "Minimum_monthly_Salary": "1500.00",
-        "Preferred_Work_Arrangement": [
+        "minimum_monthly_salary": "1500.00",
+        "preferred_work_arrangement": [
             "On-site",
             "Hybrid"
         ],
-        "Preferred_location": [
+        "preferred_location": [
             "North",
             "East",
             "South",
             "West",
             "Central"
         ],
-        "Industry_interest": [
+        "industry_interest": [
             "Information technology"
         ],
-        "Company_preference": [
+        "company_preference": [
             "Start-ups",
             "Multi-National Corporations (MNCs)",
             "Government",
