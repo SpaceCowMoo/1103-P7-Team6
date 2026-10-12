@@ -1,3 +1,14 @@
+# data_manager.py
+# Everything that talks to the SQLite database lives here.
+#
+# There are 3 tables:
+#   internships       - the internship listings (loaded once from the CSV)
+#   student_profiles  - a copy (snapshot) of the student profile, saved each time the AI runs
+#   matches           - the AI result: top 5 job ids, their scores and one feedback text
+#
+# Every function takes `conn` (the database connection) as its first argument.
+# app.setup() opens the connection once and passes it around.
+
 import csv
 import json
 import sqlite3
@@ -10,18 +21,6 @@ INTERNSHIP_COLUMNS = [
     "monthly_allowance", "work_mode", "duration_months", "required_skills",
     "location_district", "job_description",
 ]
-
-# AI output key -> database column
-MATCH_FIELDS = {
-    "SkillsMatch": "skills_match",
-    "RoleMatch": "role_match",
-    "IndustryInterestMatch": "industry_interest_match",
-    "ExperienceMatch": "experience_match",
-    "SalaryMatch": "salary_match",
-    "WorkArrangementMatch": "work_arrangement_match",
-    "LocationMatch": "location_match",
-    "CompanyPreferenceMatch": "company_preference_match",
-}
 
 # If you change the tables, delete the .db file so they get created again.
 SCHEMA_SQL = """
@@ -40,65 +39,52 @@ SCHEMA_SQL = """
         job_description    TEXT NOT NULL
     );
 
-    -- One row per AI run: JSON copy of the student profile at that moment.
+    -- One row per saved match: JSON copy of the student profile at that moment.
     CREATE TABLE IF NOT EXISTS student_profiles (
         profile_id    INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at    TEXT DEFAULT CURRENT_TIMESTAMP,
         profile_json  TEXT NOT NULL
     );
 
-    -- One row per time the AI is run for a student.
-    CREATE TABLE IF NOT EXISTS recommendation_runs (
-        run_id            INTEGER PRIMARY KEY AUTOINCREMENT,
-        created_at        TEXT DEFAULT CURRENT_TIMESTAMP,
+    -- One row per saved match: the top 5 job ids (best first) and their scores.
+    -- job_id_N has no foreign key, so a match stays readable after an internship is deleted.
+    CREATE TABLE IF NOT EXISTS matches (
+        match_id          INTEGER PRIMARY KEY AUTOINCREMENT,
         profile_id        INTEGER NOT NULL REFERENCES student_profiles(profile_id),
-        overall_feedback  TEXT
-    );
-
-    -- One row per internship scored in a run.
-    -- Match columns allow NULL = not enough info to assess that factor.
-    -- job_id has no foreign key, so past results stay after an internship is deleted.
-    CREATE TABLE IF NOT EXISTS match_results (
-        result_id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-        run_id                    INTEGER NOT NULL
-                                  REFERENCES recommendation_runs(run_id) ON DELETE CASCADE,
-        job_id                    INTEGER NOT NULL,
-        skills_match              INTEGER,
-        role_match                INTEGER,
-        industry_interest_match   INTEGER,
-        experience_match          INTEGER,
-        salary_match              INTEGER,
-        work_arrangement_match    INTEGER,
-        location_match            INTEGER,
-        company_preference_match  INTEGER,
-        overall_match_score       REAL,
-        advice                    TEXT
+        job_id_1          INTEGER NOT NULL,
+        job_id_2          INTEGER NOT NULL,
+        job_id_3          INTEGER NOT NULL,
+        job_id_4          INTEGER NOT NULL,
+        job_id_5          INTEGER NOT NULL,
+        score_1           REAL NOT NULL,
+        score_2           REAL NOT NULL,
+        score_3           REAL NOT NULL,
+        score_4           REAL NOT NULL,
+        score_5           REAL NOT NULL,
+        overall_feedback  TEXT,
+        created_at        TEXT DEFAULT CURRENT_TIMESTAMP
     );
 """
 
 def get_conn(db_path):
+    """Open the database. Rows come back like dicts: row["job_title"]"""
     conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # rows behave like dicts
+    conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")  # SQLite has this off by default
     return conn
 
 def init_db(conn):
+    """Create the 3 tables if they don't exist yet. Safe to call every startup"""
     conn.executescript(SCHEMA_SQL)
-    internship_columns = {
-        row["name"] for row in conn.execute("PRAGMA table_info(internships)")
-    }
-    if "company_type" not in internship_columns:
-        conn.execute(
-            "ALTER TABLE internships "
-            "ADD COLUMN company_type TEXT NOT NULL DEFAULT 'Not specified'"
-        )
-        conn.commit()
 
 def is_empty(conn, table):
-    """True if the table has no rows (i.e. CSV has not been loaded yet)"""
+    """True if the table has no rows (e.g. the CSV has not been loaded yet)"""
     return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
 
+# ---------- small helpers (used only inside this file) ----------
+
 def _insert(conn, table, data, replace=False):
+    """Insert one dict as one row. {"a": 1, "b": 2} -> INSERT INTO table (a, b) VALUES (1, 2)"""
     columns = ", ".join(data)
     marks = ", ".join(f":{k}" for k in data)
     verb = "INSERT OR REPLACE" if replace else "INSERT"
@@ -122,19 +108,20 @@ def load_internships_csv(conn, path):
             _insert(conn, "internships", row, replace=True)
     return len(rows)
 
-# ---------- internships CRUD ----------
+# ---------- internships ----------
 
-def create_internship(conn, data: dict):
+def create_internship(conn, data):
     """Insert a new internship. Returns the new job_id"""
     with conn:
         return _insert(conn, "internships", _editable_fields(data)).lastrowid
 
-def get_internship(conn, job_id: int):
+def get_internship(conn, job_id):
+    """One internship as a dict, or None if the job_id doesn't exist"""
     row = conn.execute("SELECT * FROM internships WHERE job_id = ?", (job_id,)).fetchone()
     return dict(row) if row else None
 
 def list_internships(conn, limit=50, **filters):
-    """Example: list_internships(conn, work_mode="Remote", industry="Software"). limit=-1 means all"""
+    """Example: list_internships(conn, work_mode="Hybrid"). limit=-1 means all"""
     query = "SELECT * FROM internships WHERE 1=1"
     values = []
     for column, value in filters.items():
@@ -148,7 +135,7 @@ def list_internships(conn, limit=50, **filters):
     values.append(limit)
     return [dict(r) for r in conn.execute(query, values).fetchall()]
 
-def update_internship(conn, job_id: int, changes: dict):
+def update_internship(conn, job_id, changes):
     """Update only the given fields. Returns True if a row was updated"""
     changes = _editable_fields(changes)
     if not changes:
@@ -161,48 +148,59 @@ def update_internship(conn, job_id: int, changes: dict):
         )
     return cur.rowcount > 0
 
-def delete_internship(conn, job_id: int):
+def delete_internship(conn, job_id):
+    """Delete one internship. Returns True if it existed"""
     with conn:
         cur = conn.execute("DELETE FROM internships WHERE job_id = ?", (job_id,))
     return cur.rowcount > 0
 
-# ---------- AI runs ----------
+# ---------- matches ----------
 
-def save_run(conn, profile, internship_result, ai_output=None, overall_feedback=None):
-    """Save one AI run: profile snapshot, the run, and one match row per internship. Returns run_id"""
-    ai_by_id = {entry["InternshipID"]: entry for entry in (ai_output or {}).values()}
-    with conn:  # all or nothing: any error rolls everything back
+def save_match(conn, profile, job_ids, scores, overall_feedback):
+    """Save one profile snapshot and one match row. Returns the new match_id"""
+    if len(job_ids) != 5 or len(scores) != 5:
+        raise ValueError("save_match needs exactly 5 job ids and 5 scores")
+    with conn:  # all or nothing: if the match insert fails, the profile insert is undone
         profile_id = _insert(conn, "student_profiles",
                              {"profile_json": json.dumps(profile)}).lastrowid
-        run_id = _insert(conn, "recommendation_runs",
-                         {"profile_id": profile_id, "overall_feedback": overall_feedback}).lastrowid
-        for result in internship_result.values():
-            ai = ai_by_id.get(result["InternshipID"], {})
-            row = {column: ai.get(key) for key, column in MATCH_FIELDS.items()}  # missing -> NULL
-            row.update(run_id=run_id, job_id=result["InternshipID"],
-                       overall_match_score=result.get("OverallMatchScore"),
-                       advice=result.get("Advice"))
-            _insert(conn, "match_results", row)
-    return run_id
+        row = {"profile_id": profile_id, "overall_feedback": overall_feedback}
+        for i in range(5):
+            row[f"job_id_{i + 1}"] = job_ids[i]
+            row[f"score_{i + 1}"] = scores[i]
+        return _insert(conn, "matches", row).lastrowid
 
-def get_run(conn, run_id):
-    """One run with its profile and match results. None if run_id is unknown"""
+def get_match(conn, match_id):
+    """One match with its profile snapshot and a list of 5 jobs. None if not found"""
     row = conn.execute("""
-        SELECT r.run_id, r.created_at, r.overall_feedback, p.profile_json
-        FROM recommendation_runs r JOIN student_profiles p ON p.profile_id = r.profile_id
-        WHERE r.run_id = ?""", (run_id,)).fetchone()
+        SELECT m.*, p.profile_json
+        FROM matches m JOIN student_profiles p ON p.profile_id = m.profile_id
+        WHERE m.match_id = ?""", (match_id,)).fetchone()
     if row is None:
         return None
-    run = dict(row)
-    run["profile"] = json.loads(run.pop("profile_json"))
-    run["matches"] = [dict(r) for r in conn.execute(
-        "SELECT * FROM match_results WHERE run_id = ? ORDER BY result_id", (run_id,))]
-    return run
+    jobs = []
+    for i in range(1, 6):
+        jobs.append({"job_id": row[f"job_id_{i}"], "score": row[f"score_{i}"]})
+    return {
+        "match_id": row["match_id"],
+        "created_at": row["created_at"],
+        "overall_feedback": row["overall_feedback"],
+        "profile": json.loads(row["profile_json"]),
+        "jobs": jobs,
+    }
 
-def list_runs(conn, limit=-1):
-    """Past runs, newest first, with how many internships each run scored. limit=-1 means all"""
-    rows = conn.execute("""
-        SELECT r.run_id, r.created_at, r.overall_feedback, COUNT(m.result_id) AS match_count
-        FROM recommendation_runs r LEFT JOIN match_results m ON m.run_id = r.run_id
-        GROUP BY r.run_id ORDER BY r.run_id DESC LIMIT ?""", (limit,))
+def list_matches(conn):
+    """Every match as a flat dict (job_id_1, score_1, ...), newest first"""
+    rows = conn.execute("SELECT * FROM matches ORDER BY match_id DESC")
     return [dict(r) for r in rows]
+
+def delete_match(conn, match_id):
+    """Delete a match and its profile snapshot. Returns True if it existed"""
+    row = conn.execute("SELECT profile_id FROM matches WHERE match_id = ?",
+                       (match_id,)).fetchone()
+    if row is None:
+        return False
+    with conn:  # delete the match first, because it points at the profile
+        conn.execute("DELETE FROM matches WHERE match_id = ?", (match_id,))
+        conn.execute("DELETE FROM student_profiles WHERE profile_id = ?",
+                     (row["profile_id"],))
+    return True

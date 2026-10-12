@@ -15,29 +15,29 @@ STUDENT_PROFILE_JSON = Path(
     )
 )
 
-
-def UserResponseidMaker():
-    return 0
+consoleWidth_60 = 60
+consoleWidth_55 = 55
+profileFieldWidth = 28
 
 def prompt_input(message):
-    print("\n" + "-" * 60)
+    print("\n" + "-" * consoleWidth_60)
     return input(f"{message.strip()}\n> ")
 
 #Menu output styles
 def menuDisplayType(typeofmenu,studentprofile={}):
-    width = 60
+    
 
     def print_heading(title):
-        print("\n" + "=" * width)
-        print(f"{title:^{width}}")
-        print("=" * width)
+        print("\n" + "=" * consoleWidth_60)
+        print(f"{title:^{consoleWidth_60}}")
+        print("=" * consoleWidth_60)
 
     match typeofmenu:
         case "Starting":
             print_heading("INTERN LINK")
             print("Welcome to Intern Link.")
             print("Please enter your student profile to get started.")
-            print("=" * width)
+            print("=" * consoleWidth_60)
 
         case "SecondTime":
             print_heading("INTERN LINK")
@@ -46,7 +46,7 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             print("  3. Delete History")
             print("  4. Search for internships")
             print("  5. Exit")
-            print("=" * width)
+            print("=" * consoleWidth_60)
 
         case "CourseDisplay":
             course_sections = [
@@ -113,21 +113,20 @@ def menuDisplayType(typeofmenu,studentprofile={}):
                 for course in courses:
                     print(f"  {course_number:>2}. {course}")
                     course_number += 1
-            print("\n" + "=" * width)
+            print("\n" + "=" * consoleWidth_60)
 
         case "locationdisplay":
             singapore_areas_list = ["North","East","South","West","Central"]
             print_heading("PREFERRED LOCATIONS")
             for number, area in enumerate(singapore_areas_list, 1):
                 print(f"  {number:>2}. {area}")
-            print("=" * width)
+            print("=" * consoleWidth_60)
 
         case "Preferred_Word_Arrangement":
             Preferred_word_arragement = ["On-site","Hybrid","No Preference"]
             print_heading("PREFERRED WORK ARRANGEMENT")
             for number, word_arrangement in enumerate(Preferred_word_arragement, 1):
                 print(f"  {number}. {word_arrangement}")
-
 
         case "company_preference":
             company_preferences = [
@@ -140,19 +139,19 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             print_heading("COMPANY PREFERENCES")
             for number, preference in enumerate(company_preferences, 1):
                 print(f"  {number}. {preference}")
-            print("=" * width)
-
-   
-
+            print("=" * consoleWidth_60)
 
         case "update_display":
             print_heading("YOUR STUDENT PROFILE")
             display_student_profile(studentprofile)
+
         case _:
             print(f"Unknown menu type: {typeofmenu}")
 
 #User input functions
+# ISSUE NOT USED YET
 def quitMenu():
+    print("Are you sure you want to quit?")
     print("Exiting application")
 
 def format_list(item):
@@ -164,7 +163,7 @@ def format_list(item):
 
 # 2. Define a function to display the profile nicely
 def display_student_profile(profile):
-    raw_year = str(profile.get("Year_of_Study", "")).split(",", maxsplit=1)[0].strip()
+    raw_year = str(profile.get("year_of_study", "")).split(",", maxsplit=1)[0].strip()
     formatted_year = f"Year {raw_year}" if raw_year.isdigit() else raw_year
 
     # Handle past_experience if it's an empty dictionary
@@ -172,13 +171,12 @@ def display_student_profile(profile):
     exp_text = "None recorded" if not past_exp else str(past_exp)
 
     # Print the UI box
-    print("\n" + "=" * 55)
-    print(f"{'✨ YOUR STUDENT PROFILE ✨':^55}")
-    print("=" * 55)
+    print("\n" + "=" * consoleWidth_55)
+    print(f"{'✨ YOUR STUDENT PROFILE ✨':^{consoleWidth_55}}")
+    print("=" * consoleWidth_55)
 
-    w = 28
-    duration = profile.get("Duration")
-    internship_dates = profile.get("Internship_Start_to_Ending")
+    duration = profile.get("duration")
+    internship_dates = profile.get("available_internship_dates")
     if internship_dates and duration is not None:
         duration_text = f"{internship_dates} ({duration} months)"
     elif internship_dates:
@@ -187,18 +185,18 @@ def display_student_profile(profile):
         duration_text = f"{duration} months (date range not set)"
     else:
         duration_text = "N/A"
-    print(f"1,{'Course of Study:':<{w}} {profile.get('Cource_of_Study', 'N/A')}")
-    print(f"2,{'Year of Study:':<{w}} {formatted_year}")
-    print(f"3,{'Internship Duration:':<{w}} {duration_text}")
-    print(f"4,{'Skills:':<{w}} {format_list(profile.get('Skills', []))}")
-    print(f"5,{'Preferred Roles:':<{w}} {format_list(profile.get('Preferred_Roles', []))}")
-    print(f"6,{'Minimum Monthly Salary:':<{w}} ${profile.get('Minimum_monthly_Salary', '0.00')}")
-    print(f"7,{'Preferred Work Arrangement:':<{w}} {profile.get('Preferred_Work_Arrangement', 'N/A')}")
-    print(f"8,{'Preferred Location:':<{w}} {format_list(profile.get('Preferred_location', []))}")
-    print(f"9,{'Industry Interest:':<{w}} {format_list(profile.get('Industry_interest', []))}")
-    print(f"10,{'Company Preference:':<{w}} {format_list(profile.get('Company_preference', []))}")
-    print(f"11,{'Past Experience:':<{w}} {exp_text}")
-    print("=" * 55 + "\n")
+    print(f"1,{'Course of Study:':<{profileFieldWidth}} {profile.get('course_of_study', 'N/A')}")
+    print(f"2,{'Year of Study:':<{profileFieldWidth}} {formatted_year}")
+    print(f"3,{'Internship Duration:':<{profileFieldWidth}} {duration_text}")
+    print(f"4,{'Skills:':<{profileFieldWidth}} {format_list(profile.get('skills', []))}")
+    print(f"5,{'Preferred Roles:':<{profileFieldWidth}} {format_list(profile.get('preferred_roles', []))}")
+    print(f"6,{'Minimum Monthly Salary:':<{profileFieldWidth}} ${profile.get('minimum_monthly_salary', '0.00')}")
+    print(f"7,{'Preferred Work Arrangement:':<{profileFieldWidth}} {profile.get('preferred_work_arrangement', 'N/A')}")
+    print(f"8,{'Preferred Location:':<{profileFieldWidth}} {format_list(profile.get('preferred_location', []))}")
+    print(f"9,{'Industry Interest:':<{profileFieldWidth}} {format_list(profile.get('industry_interest', []))}")
+    print(f"10,{'Company Preference:':<{profileFieldWidth}} {format_list(profile.get('company_preference', []))}")
+    print(f"11,{'Past Experience:':<{profileFieldWidth}} {exp_text}")
+    print("=" * consoleWidth_55 + "\n")
 
 
 #Input validation/correction functions
@@ -252,27 +250,25 @@ def course_of_study_words(course_of_study_id):
 ]
     return courses[course_of_study_id-1]
 
-def validate_Cource_of_Study(cource):
-    if not cource:
+def validate_course_of_study(course):
+    if not course:
         print("Invalid input. Please enter a number corresponding to your course of study.")
         return False
-    elif cource.isdigit()!= True:
+    elif course.isdigit()!= True:
         print("Invalid input. Please enter a number corresponding to your course of study.")
         return False 
-    elif int(cource) < 1 or int(cource) > 45:
+    elif int(course) < 1 or int(course) > 45:
         print("Invalid input. Please enter a number between 1 and 45.")
         return False
     return True
 
 def course_of_study_input(courseofStudy):
-    is_valid = validate_Cource_of_Study(courseofStudy)
+    is_valid = validate_course_of_study(courseofStudy)
     while is_valid == False:
         #course_of_study_menu()
         courseofStudy = prompt_input("Please enter your course of study (1-45):")
-        is_valid = validate_Cource_of_Study(courseofStudy)
+        is_valid = validate_course_of_study(courseofStudy)
     return course_of_study_words(int(courseofStudy))
-
-
 
 def validate_Year_of_Study(year):
     match = re.fullmatch(r"(?:Year\s*)?([1-6])", year.strip(), re.IGNORECASE)
@@ -351,7 +347,6 @@ def skill_validate(skillsinput):
         is_valid = skill_validation(skillsinput)
     return skillsinput , is_valid
 
-
 def continuousloopskills(skillsinput):
     skillslist = []
     while True:
@@ -378,7 +373,6 @@ def validate_Preferred_role(preferred_role):
         return areusure
     else:
         return areusure 
-
 
 def checking_Preferred_role_input(Preferred_role):
     is_valid = validate_Preferred_role(Preferred_role)
@@ -464,8 +458,6 @@ def num_to_string_work_location(preferred_work_arrangement):
             return "4"
     return Preferred_word_arragement_list[(preferred_work_arrangement-1)]
 
-
-
 def preferred_work_location_looper(preferred_work_arrangement):
     arrangements = ["On-site", "Hybrid", "No Preference"]
     selected = []
@@ -486,7 +478,6 @@ def preferred_work_location_looper(preferred_work_arrangement):
         response = prompt_input(
             "Choose another work arrangement (1-3, or type 'exit' to finish):"
         )
-
 
 def pre_work_location_input_validation(preferred_work_locations):
     preferred_work_locations,isvalid = validating_perferred_work_location_input(preferred_work_locations)
@@ -517,8 +508,6 @@ def validating_perferred_location_input(preferredlocations):
         preferredlocations = prompt_input("Choose a preferred location (1-5, or type 'exit' to finish):")
         is_valid = validating_preferred_locations(preferredlocations)
     return preferredlocations,is_valid
-
-
 
 def preferredlocations_number_to_string(preferredlocationnumber):
     singapore_areas_list = ["North","East","South","West","Central"]
@@ -574,7 +563,6 @@ def industrial_input_list_adder(industrial_interest):
         append_unique_value(industrial_interestlist, industrial_interest, "Industry interest")
         industrial_interest = prompt_input("Enter another industry interest (or type 'exit' to finish):")
 
-
 def validate_company_preference(company_perference):
     if not company_perference:
         print("Please enter a value.")
@@ -592,11 +580,10 @@ def validate_company_preference(company_perference):
 
 def company_preference_number_to_String(company_preference):
     company_preferenceslist = [
-    "Start-ups",
     "Multi-National Corporations (MNCs)",
-    "Government",
-    "Statutory Boards",
     "Small-to-Medium Enterprises (SMEs)",
+    "Start-ups",
+    "Government",
 ]
     return company_preferenceslist[int(company_preference)-1] 
 
@@ -631,7 +618,6 @@ def company_preference_looper(company_preference):
         response = prompt_input(
             "Choose another company preference (1-5, or type 'exit' to finish):"
         )
-
 
 def validate_pass_experience(job_title,dateofhiring,jobdiscription):
     while not job_title.strip():
@@ -695,40 +681,7 @@ def looping_pass_experience(pass_experience_input):
     return arrange_pass_experiences(experiences)
 
 
-        
-    
 def Get_User_Input():
-    sampleinput = {
-        "P1001": {
-            "Course_of_Study": "Applied Artificial Intelligence",
-            "Year_of_Study": "1",
-            "Internship_Duration": 18,
-            "Internship_Start_to_Ending":"14/10/2026 - 25/02/2027",
-            "Prefer_month":"February",
-            "Skills":["C Programming","Python Programming", "Artifical Intelligence programming"],
-            "Prefer_Role":["Ict Intern"],
-            "Minimum_monthly_salary":500.00,
-            "Preferred_Work_Arrangement":"On-Site",
-            "Preferred_location":["Chua Chu kang"],
-            "Industry_interests":["Artifical Intelligence"],
-            "Company_preference":"MNC",
-            "Past_experience":
-            {
-                "Ict Intern":{
-                    "Date":"11/06/2024 - 24/06/2025",
-                    "Job Decription":"It a work about a program"
-
-
-
-                }
-
-            }
-
-
-
-
-        }
-    }
     loopmanger = True
     while loopmanger:
 
@@ -807,25 +760,26 @@ def Get_User_Input():
         
 
         user_input = {
-            "Student_Profile":{
-                "Cource_of_Study":courseOfStudy,
-                "Year_of_Study":userYear,
-                "Duration":Total_month,
-                "Internship_Start_to_Ending":(
+            "student_profile":{
+                "course_of_study":courseOfStudy,
+                "year_of_study":userYear,
+                "duration":Total_month,
+                "available_internship_dates":(
                     f"{starting_date:%d/%m/%Y} - {ending_date:%d/%m/%Y}"
                 ),
-                "Skills":Skills,
-                "Preferred_Roles":preferedroles,
-                "Minimum_monthly_Salary":Minimummonthsalary,
-                "Preferred_Work_Arrangement":preferred_work_arrangement,
-                "Preferred_location":preferedlocation,
-                "Industry_interest":Industry_interest,
-                "Company_preference":Company_preference,
+                "skills":Skills,
+                "preferred_roles":preferedroles,
+                "minimum_monthly_salary":Minimummonthsalary,
+                "preferred_work_arrangement":preferred_work_arrangement,
+                "preferred_location":preferedlocation,
+                "industry_interest":Industry_interest,
+                "company_preference":Company_preference,
                 "past_experience":past_experience,
             }
         }
         return user_input
 
+# loading json file (Idk but data manager should be handeling this)
 def initialize_student_profile_Json():
     STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
 
@@ -843,27 +797,6 @@ def initialize_student_profile_Json():
             f"Invalid JSON in student profile {STUDENT_PROFILE_JSON}: {error}"
         ) from error
 
-    profile = student_profile.get("Student_Profile")
-    if isinstance(profile, dict) and "Avaliable_Intership_date" in profile:
-        legacy_duration = profile.pop("Avaliable_Intership_date")
-        if "Internship_Start_to_Ending" not in profile:
-            profile["Internship_Start_to_Ending"] = legacy_duration
-        if "Duration" not in profile:
-            if isinstance(legacy_duration, str):
-                try:
-                    start_text, end_text = legacy_duration.split(" - ", maxsplit=1)
-                    start_date = datetime.strptime(start_text.strip(), "%d/%m/%Y")
-                    end_date = datetime.strptime(end_text.strip(), "%d/%m/%Y")
-                    duration = relativedelta(end_date, start_date)
-                    legacy_duration = duration.years * 12 + duration.months
-                except (ValueError, TypeError) as error:
-                    raise ValueError(
-                        "The saved internship duration is invalid. "
-                        "Please correct the profile dates."
-                    ) from error
-            profile["Duration"] = legacy_duration
-        add_student_profile_json(student_profile)
-
     print("Student profile loaded successfully")
     return student_profile
 
@@ -873,7 +806,7 @@ def create_a_student_profile_json():
         with open(STUDENT_PROFILE_JSON, "w", encoding="utf-8") as file:
             json.dump({}, file)
     
-
+# Is the True statement even needed?
 def get_student_profile_json():
     try:
         student_profile = initialize_student_profile_Json()
@@ -907,6 +840,7 @@ def student_profile_load_checker(Fileloaded):
 
 def student_profile_load_check_linker(Booleanoffileloaded,Fileloaded):
     BooleanFileloaded = True
+    
     if Booleanoffileloaded == False:
         BooleanFileloaded , Fileloaded = student_profile_load_checker(Fileloaded)
         return BooleanFileloaded,Fileloaded
@@ -983,10 +917,10 @@ def update_Student_profile(input_chooser_update,student_profile):
         if field_number == 1:
             menuDisplayType("CourseDisplay")
             userCourse = prompt_input("Please enter your course of study (1-45):")
-            updated_profile["Cource_of_Study"] = course_of_study_input(userCourse)
+            updated_profile["course_of_study"] = course_of_study_input(userCourse)
         elif field_number == 2:
             year_of_study = prompt_input("Enter your year of study (1-6):")
-            updated_profile["Year_of_Study"] = validate_Year_of_Study(year_of_study)
+            updated_profile["year_of_study"] = validate_Year_of_Study(year_of_study)
         elif field_number == 3:
             internship_duration = prompt_input(
                 "Enter your available internship dates (DD/MM/YYYY - DD/MM/YYYY):"
@@ -994,43 +928,43 @@ def update_Student_profile(input_chooser_update,student_profile):
             starting_date, ending_date, total_months = internship_duration_checker(
                 internship_duration
             )
-            updated_profile["Duration"] = total_months
-            updated_profile["Internship_Start_to_Ending"] = (
+            updated_profile["duration"] = total_months
+            updated_profile["available_internship_dates"] = (
                 f"{starting_date:%d/%m/%Y} - {ending_date:%d/%m/%Y}"
             )
         elif field_number == 4:
-            updated_profile["Skills"] = continuousloopskills(
+            updated_profile["skills"] = continuousloopskills(
                 prompt_input("Enter a skill (or type 'exit' to finish):")
             )
         elif field_number == 5:
-            updated_profile["Preferred_Roles"] = continoous_Preferred_role(
+            updated_profile["preferred_roles"] = continoous_Preferred_role(
                 prompt_input("Enter a preferred role (or type 'exit' to finish):")
             )
         elif field_number == 6:
-            updated_profile["Minimum_monthly_Salary"] = minimum_monthly_salary_checker(
+            updated_profile["minimum_monthly_salary"] = minimum_monthly_salary_checker(
                 prompt_input("Enter your expected monthly salary (or type 'exit' to skip):")
             )
         elif field_number == 7:
             menuDisplayType("Preferred_Word_Arrangement")
-            updated_profile["Preferred_Work_Arrangement"] = preferred_work_location_looper(
+            updated_profile["preferred_work_arrangement"] = preferred_work_location_looper(
                 prompt_input(
                     "Choose a work arrangement (1-3, or type 'exit' to choose all):"
                 )
             )
         elif field_number == 8:
             menuDisplayType("locationdisplay")
-            updated_profile["Preferred_location"] = preferredlocation_listadder(
+            updated_profile["preferred_location"] = preferredlocation_listadder(
                 prompt_input(
                     "Choose a preferred location (1-5, or type 'exit' to choose all):"
                 )
             )
         elif field_number == 9:
-            updated_profile["Industry_interest"] = industrial_input_list_adder(
+            updated_profile["industry_interest"] = industrial_input_list_adder(
                 prompt_input("Enter an industry interest (or type 'exit' to skip):")
             )
         elif field_number == 10:
             menuDisplayType("company_preference")
-            updated_profile["Company_preference"] = company_preference_looper(
+            updated_profile["company_preference"] = company_preference_looper(
                 prompt_input(
                     "Choose a company preference (1-5, or type 'exit' to choose all):"
                 )
@@ -1062,20 +996,20 @@ def checking_user_update(studentprofile):
         
 def update_user_menu(studentprofile):
     if not isinstance(studentprofile, dict) or not isinstance(
-        studentprofile.get("Student_Profile"), dict
+        studentprofile.get("student_profile"), dict
         ):
-        raise ValueError("studentprofile must contain a Student_Profile dictionary")
+        raise ValueError("studentprofile must contain a student_profile dictionary")
     
-    profile = studentprofile["Student_Profile"]
+    profile = studentprofile["student_profile"]
     print("Current student profile:")
     menuDisplayType("update_display",profile)
     return checking_user_update(studentprofile)
 
 def update_student_profile_json(studentprofile):
     if not isinstance(studentprofile, dict) or not isinstance(
-        studentprofile.get("Student_Profile"), dict
+        studentprofile.get("student_profile"), dict
     ):
-        raise ValueError("studentprofile must contain a Student_Profile dictionary")
+        raise ValueError("studentprofile must contain a student_profile dictionary")
 
     selected_fields = update_chooser()
     if not selected_fields:
@@ -1083,9 +1017,9 @@ def update_student_profile_json(studentprofile):
         return studentprofile
 
     updated_studentprofile = studentprofile.copy()
-    updated_studentprofile["Student_Profile"] = update_Student_profile(
+    updated_studentprofile["student_profile"] = update_Student_profile(
         selected_fields,
-        studentprofile["Student_Profile"],
+        studentprofile["student_profile"],
     )
     add_student_profile_json(updated_studentprofile)
     print("Student profile updated successfully.")
@@ -1311,8 +1245,3 @@ def menu_function_call_general(menutypenumerical,conn):
         student_profile,trueorfalse = get_student_profile_json()
         student_profile,continues = menu_caller_loop_1102(student_profile,conn)
         return student_profile,continues
-
-        
-        
-
-    
