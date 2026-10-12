@@ -8,15 +8,30 @@
 # DBReference is the database connection reference to the internship database
 
 #Imports
-import io_manager
 import ai_manager
 import data_manager
 
 #functions
 
-def addInternshipResultToDB(conn, profile, internship_result, ai_output=None, overall_feedback=None):
-    #Save one AI run (profile, internship result, AI output) to the database. Returns the new run_id
-    return data_manager.save_run(conn, profile, internship_result, ai_output, overall_feedback)
+# def addInternshipResultToDB(conn, profile, internship_result, ai_output=None, overall_feedback=None):
+#     #Save one AI run (profile, internship result, AI output) to the database. Returns the new run_id
+#     return data_manager.save_run(conn, profile, internship_result, ai_output, overall_feedback)
+
+def save_ai_result(conn, student_profile, ai_result):
+    #Score each AI-selected internship and save them as one match. Returns the new match_id
+    #ai_result is the output of ai_manager.run_ai_pipeline:
+    #{"selected_internships": [5 dicts with job_id + AI scores], "overall_feedback": "..."}
+    results = []
+    for internship in ai_result["selected_internships"]:
+        results.append({"job_id": internship["job_id"], "score": calculateScore(internship)})
+
+    # Best score first, so job_id_1 / score_1 in the database is the top match
+    results.sort(key=lambda result: result["score"], reverse=True)
+
+    job_ids = [result["job_id"] for result in results]
+    scores = [result["score"] for result in results]
+    return data_manager.save_match(
+        conn, student_profile, job_ids, scores, ai_result["overall_feedback"])
 
 def salaryFlag(flags, internshipData, userProfile):
     #Check if the salary is below the user's expected minimum salary
