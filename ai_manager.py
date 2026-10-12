@@ -519,17 +519,20 @@ def generate_skill_gap_feedback(client, student_profile, shortlisted_internships
     raise RuntimeError("Skill-gap feedback generation failed")
 
 def run_ai_pipeline(client, student_profile, internships):
+    # Step 1: Filter internships by duration
     eligible_internships = filter_by_duration(
         student_profile,
         internships
     )
+
+    # Step 2: Let AI shortlist internships and generate match scores
     selected_scores = select_shortlisted_internships(
         client,
         student_profile,
         eligible_internships
     )
 
-    # Step 2: Match selected job IDs to their full internship records
+    # Step 3: Match selected job IDs to full internship records
     internship_lookup = {
         internship["job_id"]: internship
         for internship in eligible_internships
@@ -542,21 +545,22 @@ def run_ai_pipeline(client, student_profile, internships):
 
         internship = internship_lookup[job_id].copy()
 
-        # Combine internship details with the five AI scores
+        # Combine internship details with AI scores for feedback generation
         internship.update(scores)
 
         shortlisted_internships.append(internship)
 
-    # Step 3: Generate structured overall skill-gap feedback
+    # Step 4: Generate skill-gap feedback using full internship details
     feedback = generate_skill_gap_feedback(
         client,
         student_profile,
         shortlisted_internships
     )
 
+    # Step 5: Return only job IDs and AI match scores
     return {
         "selected_internships": {
-            "internships": shortlisted_internships
+            "internships": selected_scores
         },
         "overall_feedback": feedback
     }
