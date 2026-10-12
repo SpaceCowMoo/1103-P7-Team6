@@ -120,7 +120,7 @@ def demo(conn):
 
 def main():
     conn = setup()
-    demo(conn)
+    # demo(conn)
 
     loopmain = True
     while loopmain:
