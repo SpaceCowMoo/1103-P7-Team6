@@ -35,7 +35,7 @@ def configure_gemini():
 def call_gemini(client, prompt):
     try:
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.5-flash-lite",
             contents=prompt,
             config={
                 "response_mime_type": "application/json"
@@ -398,10 +398,22 @@ Return null when the student has no preferred role or
 the internship role cannot be assessed.
 
 3. IndustryInterestMatch:
-Compare industry_interests with the internship industry.
-Consider related industries and transferable interests.
-Return null when the student has no industry preference
-or the internship industry is unknown.
+Compare industry_interests with the internship's industry.
+
+- Give 90-100 for direct industry alignment.
+- Give 70-89 for strongly related industries.
+- Give 40-69 for partially related industries.
+- Give 1-39 for weak industry alignment.
+- Give 0 only for a complete mismatch.
+- Assess the internship's industry separately from its job role.
+- A technology-related job in a non-technology industry
+  should not automatically receive a perfect industry score.
+- Consider meaningful industry relationships, but
+  distinguish direct matches from related industries.
+- Do not give every internship the same score merely
+  because its responsibilities involve technology.
+- Return null if the student's industry preference
+  or the internship industry is missing.
 
 4. ExperienceMatch:
 Compare past_experience with job_description.
@@ -497,8 +509,6 @@ SCORING INSTRUCTIONS:
 - null: Insufficient information or missing optional preference.
 - Consider partial matches and transferable skills.
 - Do not treat missing optional preferences as zero.
-- Do not artificially change criterion scores merely
-  because an internship was previously rejected.
 - Salary, work arrangement and location are handled
   separately by the Logic Manager.
 - Do not generate scores or flags for these fields.
