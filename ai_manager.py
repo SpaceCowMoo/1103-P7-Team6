@@ -175,7 +175,6 @@ def get_ai_input(profile):
         "course_of_study": profile.get("Cource_of_Study"),
         "year_of_study": profile.get("Year_of_Study"),
         "internship_duration": profile.get("Avaliable_Intership_date"),
-        "preferred_month": profile.get("Preferred_month"),
         "skills": profile.get("Skills"),
         "preferred_roles": profile.get("Preferred_Roles"),
         "minimum_monthly_salary": profile.get("Minimum_monthly_Salary"),
@@ -187,6 +186,43 @@ def get_ai_input(profile):
     }
 
     return ai_input
+
+def filter_by_duration(student_profile, internships):
+    available_months = student_profile.get("internship_duration")
+
+    if available_months is None:
+        raise ValueError("Student internship duration is required")
+
+    try:
+        available_months = int(available_months)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Student internship duration must be a number of months"
+        )
+
+    if available_months <= 0:
+        raise ValueError(
+            "Student internship duration must be greater than zero"
+        )
+
+    eligible = []
+
+    for internship in internships:
+        duration = internship.get("duration_months")
+
+        if duration is None:
+            continue
+
+        try:
+            duration = int(duration)
+        except (TypeError, ValueError):
+            continue
+
+        if 0 < duration <= available_months:
+            eligible.append(internship)
+
+    return eligible
+
 
 def get_test_internship(conn, job_id):
     return data_manager.get_internship(conn, job_id)
@@ -626,17 +662,21 @@ def generate_skill_gap_feedback(client, student_profile, top_five):
     return feedback
 
 def run_ai_pipeline(client, student_profile, internships, past_preferences=None):
+    eligible_internships = filter_by_duration(
+        student_profile,
+        internships
+    )
     selected_scores = select_top_five_internships(
         client,
         student_profile,
-        internships,
+        eligible_internships,
         past_preferences
     )
 
     # Step 2: Match selected job IDs to their full internship records
     internship_lookup = {
         internship["job_id"]: internship
-        for internship in internships
+        for internship in eligible_internships
     }
 
     top_five = []
