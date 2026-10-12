@@ -376,7 +376,7 @@ def build_shortlist_prompt(student_profile, internships):
 You are the AI internship matching engine for InternLink.
 
 Your task is to analyse ALL the internship listings and
-select the FIVE most suitable internships for this student.
+select between FIVE and TEN suitable internships for this student.
 
 STUDENT PROFILE:
 {json.dumps(student_profile, indent=2)}
@@ -451,6 +451,40 @@ SELECTION INSTRUCTIONS:
 - Do not apply salary, location or work arrangement flags.
 - Return only job IDs from the supplied dataset.
 
+SELECTION PRIORITY:
+
+- Prioritise course relevance, academic-level suitability,
+  demonstrated skills and preferred roles.
+- Consider industry interests, experience and company
+  preferences when comparing otherwise suitable internships.
+- Do not prioritise an internship merely because it offers
+  a higher monthly allowance.
+- Do not select an internship with substantially unsuitable
+  responsibilities solely to fill the shortlist.
+
+ACADEMIC LEVEL SUITABILITY:
+
+- Assess whether each internship is realistic for the student's
+  current year of study, course and demonstrated abilities.
+- Use the internship's job_title, required_skills,
+  relevant_course and job_description to assess suitability.
+- A Year 1 student should generally be considered for
+  entry-level internships with appropriate learning opportunities.
+- Do not assume a student possesses advanced technical knowledge
+  simply because they are studying a related course.
+- Treat positions requiring substantial system architecture,
+  technical leadership or advanced specialist expertise
+  as less suitable unless the student demonstrates the
+  necessary skills and relevant experience.
+- Do not reject an internship solely because its job title
+  sounds advanced. Evaluate the actual responsibilities.
+- Consider relevant projects, skills and past experience
+  as evidence that a student can handle more advanced work.
+- Prefer internships where the student has a reasonable
+  foundation to perform the work and learn the missing skills.
+- Do not invent entry requirements that are not present
+  in the internship listing.
+
 SCORING INSTRUCTIONS:
 
 - Assess all five matching criteria independently.
@@ -489,7 +523,7 @@ JSON RESPONSE INSTRUCTIONS:
 
 Return ONLY a valid JSON object with this structure:
 
-{json.dumps(EXPECTED_TOP_FIVE_OUTPUT, indent=2)}
+{json.dumps(EXPECTED_SHORTLIST_OUTPUT, indent=2)}
 
 - selected_internships must contain between 5 and 10 objects.
 - Select 10 when at least 10 suitable internships are available.
@@ -688,7 +722,7 @@ def run_ai_pipeline(client, student_profile, internships):
 
         shortlisted_internships.append(internship)
 
-    # Step 3: Generate one overall skill-gap feedback paragraph
+    # Step 3: Generate structured overall skill-gap feedback
     feedback = generate_skill_gap_feedback(
         client,
         student_profile,
