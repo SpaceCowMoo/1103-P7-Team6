@@ -15,29 +15,29 @@ STUDENT_PROFILE_JSON = Path(
     )
 )
 
-
-def UserResponseidMaker():
-    return 0
+consoleWidth_60 = 60
+consoleWidth_55 = 55
+profileFieldWidth = 28
 
 def prompt_input(message):
-    print("\n" + "-" * 60)
+    print("\n" + "-" * consoleWidth_60)
     return input(f"{message.strip()}\n> ")
 
 #Menu output styles
 def menuDisplayType(typeofmenu,studentprofile={}):
-    width = 60
+    
 
     def print_heading(title):
-        print("\n" + "=" * width)
-        print(f"{title:^{width}}")
-        print("=" * width)
+        print("\n" + "=" * consoleWidth_60)
+        print(f"{title:^{consoleWidth_60}}")
+        print("=" * consoleWidth_60)
 
     match typeofmenu:
         case "Starting":
             print_heading("INTERN LINK")
             print("Welcome to Intern Link.")
             print("Please enter your student profile to get started.")
-            print("=" * width)
+            print("=" * consoleWidth_60)
 
         case "SecondTime":
             print_heading("INTERN LINK")
@@ -46,7 +46,7 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             print("  3. Delete History")
             print("  4. Search for internships")
             print("  5. Exit")
-            print("=" * width)
+            print("=" * consoleWidth_60)
 
         case "CourseDisplay":
             course_sections = [
@@ -113,21 +113,20 @@ def menuDisplayType(typeofmenu,studentprofile={}):
                 for course in courses:
                     print(f"  {course_number:>2}. {course}")
                     course_number += 1
-            print("\n" + "=" * width)
+            print("\n" + "=" * consoleWidth_60)
 
         case "locationdisplay":
             singapore_areas_list = ["North","East","South","West","Central"]
             print_heading("PREFERRED LOCATIONS")
             for number, area in enumerate(singapore_areas_list, 1):
                 print(f"  {number:>2}. {area}")
-            print("=" * width)
+            print("=" * consoleWidth_60)
 
         case "Preferred_Word_Arrangement":
             Preferred_word_arragement = ["On-site","Hybrid","No Preference"]
             print_heading("PREFERRED WORK ARRANGEMENT")
             for number, word_arrangement in enumerate(Preferred_word_arragement, 1):
                 print(f"  {number}. {word_arrangement}")
-
 
         case "company_preference":
             company_preferences = [
@@ -140,19 +139,19 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             print_heading("COMPANY PREFERENCES")
             for number, preference in enumerate(company_preferences, 1):
                 print(f"  {number}. {preference}")
-            print("=" * width)
-
-   
-
+            print("=" * consoleWidth_60)
 
         case "update_display":
             print_heading("YOUR STUDENT PROFILE")
             display_student_profile(studentprofile)
+
         case _:
             print(f"Unknown menu type: {typeofmenu}")
 
 #User input functions
+# ISSUE NOT USED YET
 def quitMenu():
+    print("Are you sure you want to quit?")
     print("Exiting application")
 
 def format_list(item):
@@ -172,11 +171,10 @@ def display_student_profile(profile):
     exp_text = "None recorded" if not past_exp else str(past_exp)
 
     # Print the UI box
-    print("\n" + "=" * 55)
-    print(f"{'✨ YOUR STUDENT PROFILE ✨':^55}")
-    print("=" * 55)
+    print("\n" + "=" * consoleWidth_55)
+    print(f"{'✨ YOUR STUDENT PROFILE ✨':^{consoleWidth_55}}")
+    print("=" * consoleWidth_55)
 
-    w = 28
     duration = profile.get("duration")
     internship_dates = profile.get("available_internship_dates")
     if internship_dates and duration is not None:
@@ -187,18 +185,18 @@ def display_student_profile(profile):
         duration_text = f"{duration} months (date range not set)"
     else:
         duration_text = "N/A"
-    print(f"1,{'Course of Study:':<{w}} {profile.get('course_of_study', 'N/A')}")
-    print(f"2,{'Year of Study:':<{w}} {formatted_year}")
-    print(f"3,{'Internship Duration:':<{w}} {duration_text}")
-    print(f"4,{'Skills:':<{w}} {format_list(profile.get('skills', []))}")
-    print(f"5,{'Preferred Roles:':<{w}} {format_list(profile.get('preferred_roles', []))}")
-    print(f"6,{'Minimum Monthly Salary:':<{w}} ${profile.get('minimum_monthly_salary', '0.00')}")
-    print(f"7,{'Preferred Work Arrangement:':<{w}} {profile.get('preferred_work_arrangement', 'N/A')}")
-    print(f"8,{'Preferred Location:':<{w}} {format_list(profile.get('preferred_location', []))}")
-    print(f"9,{'Industry Interest:':<{w}} {format_list(profile.get('industry_interest', []))}")
-    print(f"10,{'Company Preference:':<{w}} {format_list(profile.get('company_preference', []))}")
-    print(f"11,{'Past Experience:':<{w}} {exp_text}")
-    print("=" * 55 + "\n")
+    print(f"1,{'Course of Study:':<{profileFieldWidth}} {profile.get('course_of_study', 'N/A')}")
+    print(f"2,{'Year of Study:':<{profileFieldWidth}} {formatted_year}")
+    print(f"3,{'Internship Duration:':<{profileFieldWidth}} {duration_text}")
+    print(f"4,{'Skills:':<{profileFieldWidth}} {format_list(profile.get('skills', []))}")
+    print(f"5,{'Preferred Roles:':<{profileFieldWidth}} {format_list(profile.get('preferred_roles', []))}")
+    print(f"6,{'Minimum Monthly Salary:':<{profileFieldWidth}} ${profile.get('minimum_monthly_salary', '0.00')}")
+    print(f"7,{'Preferred Work Arrangement:':<{profileFieldWidth}} {profile.get('preferred_work_arrangement', 'N/A')}")
+    print(f"8,{'Preferred Location:':<{profileFieldWidth}} {format_list(profile.get('preferred_location', []))}")
+    print(f"9,{'Industry Interest:':<{profileFieldWidth}} {format_list(profile.get('industry_interest', []))}")
+    print(f"10,{'Company Preference:':<{profileFieldWidth}} {format_list(profile.get('company_preference', []))}")
+    print(f"11,{'Past Experience:':<{profileFieldWidth}} {exp_text}")
+    print("=" * consoleWidth_55 + "\n")
 
 
 #Input validation/correction functions
@@ -271,8 +269,6 @@ def course_of_study_input(courseofStudy):
         courseofStudy = prompt_input("Please enter your course of study (1-45):")
         is_valid = validate_course_of_study(courseofStudy)
     return course_of_study_words(int(courseofStudy))
-
-
 
 def validate_Year_of_Study(year):
     match = re.fullmatch(r"(?:Year\s*)?([1-6])", year.strip(), re.IGNORECASE)
@@ -351,7 +347,6 @@ def skill_validate(skillsinput):
         is_valid = skill_validation(skillsinput)
     return skillsinput , is_valid
 
-
 def continuousloopskills(skillsinput):
     skillslist = []
     while True:
@@ -378,7 +373,6 @@ def validate_Preferred_role(preferred_role):
         return areusure
     else:
         return areusure 
-
 
 def checking_Preferred_role_input(Preferred_role):
     is_valid = validate_Preferred_role(Preferred_role)
@@ -464,8 +458,6 @@ def num_to_string_work_location(preferred_work_arrangement):
             return "4"
     return Preferred_word_arragement_list[(preferred_work_arrangement-1)]
 
-
-
 def preferred_work_location_looper(preferred_work_arrangement):
     arrangements = ["On-site", "Hybrid", "No Preference"]
     selected = []
@@ -486,7 +478,6 @@ def preferred_work_location_looper(preferred_work_arrangement):
         response = prompt_input(
             "Choose another work arrangement (1-3, or type 'exit' to finish):"
         )
-
 
 def pre_work_location_input_validation(preferred_work_locations):
     preferred_work_locations,isvalid = validating_perferred_work_location_input(preferred_work_locations)
@@ -517,8 +508,6 @@ def validating_perferred_location_input(preferredlocations):
         preferredlocations = prompt_input("Choose a preferred location (1-5, or type 'exit' to finish):")
         is_valid = validating_preferred_locations(preferredlocations)
     return preferredlocations,is_valid
-
-
 
 def preferredlocations_number_to_string(preferredlocationnumber):
     singapore_areas_list = ["North","East","South","West","Central"]
@@ -573,7 +562,6 @@ def industrial_input_list_adder(industrial_interest):
             return industrial_interestlist
         append_unique_value(industrial_interestlist, industrial_interest, "Industry interest")
         industrial_interest = prompt_input("Enter another industry interest (or type 'exit' to finish):")
-
 
 def validate_company_preference(company_perference):
     if not company_perference:
@@ -630,7 +618,6 @@ def company_preference_looper(company_preference):
         response = prompt_input(
             "Choose another company preference (1-5, or type 'exit' to finish):"
         )
-
 
 def validate_pass_experience(job_title,dateofhiring,jobdiscription):
     while not job_title.strip():
@@ -694,8 +681,6 @@ def looping_pass_experience(pass_experience_input):
     return arrange_pass_experiences(experiences)
 
 
-        
-    
 def Get_User_Input():
     loopmanger = True
     while loopmanger:
@@ -794,6 +779,7 @@ def Get_User_Input():
         }
         return user_input
 
+# loading json file (Idk but data manager should be handeling this)
 def initialize_student_profile_Json():
     STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
 
@@ -820,7 +806,7 @@ def create_a_student_profile_json():
         with open(STUDENT_PROFILE_JSON, "w", encoding="utf-8") as file:
             json.dump({}, file)
     
-
+# Is the True statement even needed?
 def get_student_profile_json():
     try:
         student_profile = initialize_student_profile_Json()
@@ -854,6 +840,7 @@ def student_profile_load_checker(Fileloaded):
 
 def student_profile_load_check_linker(Booleanoffileloaded,Fileloaded):
     BooleanFileloaded = True
+    
     if Booleanoffileloaded == False:
         BooleanFileloaded , Fileloaded = student_profile_load_checker(Fileloaded)
         return BooleanFileloaded,Fileloaded
@@ -1258,8 +1245,3 @@ def menu_function_call_general(menutypenumerical,conn):
         student_profile,trueorfalse = get_student_profile_json()
         student_profile,continues = menu_caller_loop_1102(student_profile,conn)
         return student_profile,continues
-
-        
-        
-
-    
