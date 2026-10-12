@@ -78,6 +78,20 @@ def roleFlag(flags, internshipData, userProfile):
         #If a listing requires roles that the student does not have
         flags.append("No matching roles")
 
+def workarrangementFlag(flags, internshipData, userProfile):
+    userWorkarrangment = userProfile["Student_Profile"]["Preferred_Work_Arrangement"]
+    if internshipData["work_mode"] != userWorkarrangment:
+        #if work_mode of job listing does not match users preference, raise flag
+        flags.append("Work arrangement does not meet user's preference")
+        #for review, do these functions take in job_id to search?
+
+def locationFlag(flags, internshipData, userProfile):
+    userLocation = userProfile["Student_Profile"]["Preferred_location"]
+    if internshipData["location_district"] != userLocation:
+        #if location does not match, raise flag
+        flags.append("Location does not meet user's preference")
+        #to change, student_profile location should be limited to North, East, South, West, Central
+
 #output to IO manager
 #Expecting recomendation to be a very long paragraph
 def evaluateInternship(DBReference,aiScores, reccomendedActionsText, userProfile):
