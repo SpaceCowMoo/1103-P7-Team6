@@ -175,17 +175,6 @@ def calculateScore(aiOutput):
         "ExperienceMatch": 0.15, 
         "CompanyPreferenceMatch": 0.05
         }
-<<<<<<< HEAD
-    for key, value in aiOutput.items():
-        try:
-            if value == None:
-                aiOutput[key] = 0   #change NULL value to 0 to prevent TypeError during MatchScore calculation
-            else:
-                TotalScore += weightage[key]    #if an optional field has been filled in, add its weightage to TotalScore
-        except:
-            continue
-    OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
-=======
     # DB NOTE: the AI dict also has "job_id", so looping over aiOutput.items() hit
     # weightage["job_id"] -> KeyError. Same weighted average, but only the 5 score keys are read
     # and aiOutput is not changed.
@@ -198,5 +187,4 @@ def calculateScore(aiOutput):
             TotalScore += weight    #if an optional field has been filled in, add its weightage to TotalScore
     if TotalScore == 0:
         return 0    #every score was null, avoid dividing by zero
->>>>>>> e1a3b90e1bcdf300d9c92c5f4f87e8ee41187c89
     return OverallMatchScore/TotalScore   #divide OverallScore over TotalScore to get final score out of 100%
