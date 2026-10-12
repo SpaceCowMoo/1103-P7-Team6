@@ -567,80 +567,97 @@ def select_shortlisted_internships(client, student_profile, internships):
     raise RuntimeError("Internship shortlisting failed")
 
 
-def build_skill_gap_prompt(student_profile, top_five):
+def build_skill_gap_prompt(student_profile, shortlisted_internships):
+    return f"""
+You are an AI internship career advisor.
 
-    prompt = f"""
-You are an AI career development assistant for InternLink.
-
-Generate ONE overall personalised skill-gap feedback paragraph
-based on the student's top five recommended internships.
+Analyse the student's profile and the shortlisted internships.
 
 STUDENT PROFILE:
 {json.dumps(student_profile, indent=2)}
 
-TOP FIVE INTERNSHIPS:
-{json.dumps(top_five, indent=2)}
+SHORTLISTED INTERNSHIPS:
+{json.dumps(shortlisted_internships, indent=2)}
 
-FEEDBACK INSTRUCTIONS:
+TASK:
+Generate personalised skill-gap feedback for the student.
 
-- Analyse the SkillsMatch scores across all five internships.
-- Compare the student's existing skills with the required_skills
-  and job descriptions of the shortlisted internships.
-- Identify the student's weakest areas of skill alignment.
-- Focus on skill gaps that appear across multiple internships.
-- Consider the student's existing skills and past experience.
-- Suggest practical improvements such as learning relevant
-  technologies, taking courses or completing projects.
-- Generate ONE overall feedback paragraph of 3 to 5 sentences.
-- Do not provide separate feedback for each internship.
-- Do not provide separate feedback for individual skills.
-- Do not discuss salary, location or company preferences.
-- Do not recalculate scores or change internship rankings.
-- Do not invent missing skills or internship requirements.
-- Do not assume an unlisted skill is definitely absent.
-- Keep the feedback constructive, specific and personalised.
+INSTRUCTIONS:
+- Return 3 to 5 actionable feedback points.
+- Each point must be a short, clear sentence.
+- Identify important technical skills the student should improve.
+- Consider missing skills across the shortlisted internships.
+- Consider the student's preferred roles and industry interests.
+- Consider the student's past experience, including transferable skills.
+- Do not assume the student has skills not listed in their profile.
+- Do not invent internship requirements.
+- Avoid generic advice such as "work harder".
+- Do not repeat the same advice.
+- Do not recommend skills unrelated to the shortlisted internships.
+- Do not calculate match scores or rank internships.
 
-JSON RESPONSE INSTRUCTIONS:
-
-Return ONLY a valid JSON object.
-
-- Do not include Markdown code fences.
-- Do not include text outside the JSON object.
-- Use exactly the field name shown below.
-- The feedback must be a single string.
-
-EXPECTED JSON STRUCTURE:
+OUTPUT FORMAT:
+Return only valid JSON:
 
 {{
-    "overall_feedback": "One personalised feedback paragraph"
+    "overall_feedback": {{
+        "points": [
+            "First actionable recommendation.",
+            "Second actionable recommendation.",
+            "Third actionable recommendation."
+        ]
+    }}
 }}
 """
 
-    return prompt
 
-def generate_skill_gap_feedback(client, student_profile, top_five):
-    if not top_five:
-        raise ValueError("No shortlisted internships provided")
+def generate_skill_gap_feedback(client, student_profile, shortlisted_internships):
+    prompt = build_skill_gap_prompt(
+        student_profile,
+        shortlisted_internships
+    )
 
-    prompt = build_skill_gap_prompt(student_profile, top_five)
+    max_attempts = 3
 
-    response = call_gemini(client, prompt)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = call_gemini(client, prompt)
+            result = parse_gemini_response(response)
 
-    feedback = parse_gemini_response(response)
+            if not isinstance(result, dict):
+                raise ValueError("Feedback response must be a dictionary")
 
-    if not isinstance(feedback, dict):
-        raise ValueError("Feedback must be a dictionary")
+            if set(result.keys()) != {"overall_feedback"}:
+                raise ValueError("Unexpected feedback response fields")
 
-    if set(feedback.keys()) != {"overall_feedback"}:
-        raise ValueError("Feedback has incorrect fields")
+            feedback = result["overall_feedback"]
 
-    if not isinstance(feedback["overall_feedback"], str):
-        raise ValueError("Overall feedback must be a string")
+            if not isinstance(feedback, dict):
+                raise ValueError("overall_feedback must be a dictionary")
 
-    if not feedback["overall_feedback"].strip():
-        raise ValueError("Overall feedback cannot be empty")
+            if set(feedback.keys()) != {"points"}:
+                raise ValueError("Feedback must contain only 'points'")
 
-    return feedback
+            points = feedback["points"]
+
+            if not isinstance(points, list) or not 3 <= len(points) <= 5:
+                raise ValueError("Feedback must contain 3 to 5 points")
+
+            if not all(
+                isinstance(point, str) and point.strip()
+                for point in points
+            ):
+                raise ValueError("Every feedback point must be non-empty text")
+
+            return feedback
+
+        except ValueError as error:
+            if attempt == max_attempts:
+                raise RuntimeError(
+                    "Gemini failed to return valid skill-gap feedback"
+                ) from error
+
+    raise RuntimeError("Skill-gap feedback generation failed")
 
 def run_ai_pipeline(client, student_profile, internships):
     eligible_internships = filter_by_duration(
@@ -678,10 +695,11 @@ def run_ai_pipeline(client, student_profile, internships):
         shortlisted_internships
     )
 
-    # Step 4: Return results for the other managers
     return {
-        "selected_internships": shortlisted_internships,
-        "overall_feedback": feedback["overall_feedback"]
+        "selected_internships": {
+            "internships": shortlisted_internships
+        },
+        "overall_feedback": feedback
     }
 
 if __name__ == "__main__":
@@ -699,12 +717,14 @@ if __name__ == "__main__":
         raise ValueError("No student profiles found.")
 
     ai_input = get_ai_input(profile)
-    print("Updated Student Profile:")
+
+    print("\nUpdated Student Profile:")
     print(json.dumps(ai_input, indent=2))
 
     db_path = os.getenv("INTERNSHIP_DB", "data/internships.db")
-    print("Database being used:", os.path.abspath(db_path))
     csv_path = os.getenv("INTERNSHIP_DATA", "data/internships.csv")
+
+    print("\nDatabase being used:", os.path.abspath(db_path))
 
     # Connect to database
     conn = data_manager.get_conn(db_path)
@@ -734,15 +754,33 @@ if __name__ == "__main__":
             internships
         )
 
-        print("\nAI Shortlisted Internships:")
-        print(json.dumps(results["selected_internships"], indent=2))
+        # Extract the two output dictionaries
+        selected_output = results["selected_internships"]
+        feedback_output = results["overall_feedback"]
 
-        print("\nOverall Skill-Gap Feedback:")
-        print(results["overall_feedback"])
+        shortlisted_internships = selected_output["internships"]
+        feedback_points = feedback_output["points"]
 
-        print("\nEvaluation Summary:")
+        # Display shortlisted internships
+        print("\n========== AI SHORTLISTED INTERNSHIPS ==========")
+
+        for index, internship in enumerate(shortlisted_internships, 1):
+            print(f"\nInternship {index}:")
+            print(json.dumps(internship, indent=2))
+
+        # Display overall skill-gap feedback
+        print("\n========== OVERALL SKILL-GAP FEEDBACK ==========")
+
+        for index, point in enumerate(feedback_points, 1):
+            print(f"{index}. {point}")
+
+        # Evaluation summary
+        print("\n========== EVALUATION SUMMARY ==========")
         print("Total available internships:", len(internships))
-        print("Selected internships:", len(results["selected_internships"]))
+        print("Selected internships:", len(shortlisted_internships))
+        print("Feedback points generated:", len(feedback_points))
 
-    except (RuntimeError, ValueError) as e:
+        print("\nAI Manager pipeline completed successfully!")
+
+    except (RuntimeError, ValueError, KeyError, TypeError) as e:
         print("\nAI Manager failed:", e)
