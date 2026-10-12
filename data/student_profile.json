@@ -1,24 +1,40 @@
 {
     "Student_Profile": {
-        "Cource_of_Study": "Speech and Language Therapy",
-        "Year_of_Study": "1,2",
-        "Avaliable_Intership_date": "11/11/2026 - 11/12/2026",
-        "Preferred_month": "February",
+        "Cource_of_Study": "Information and Communications Technology (Software Engineering)",
+        "Year_of_Study": "1",
+        "Duration": 4,
+        "Internship_Start_to_Ending": "13/11/2026 - 14/03/2027",
         "Skills": [
             "Python",
-            "Dotnet"
+            "Software development Life Cycle",
+            "C programming"
         ],
         "Preferred_Roles": [
-            "data_analyst"
+            "Programmer",
+            "It Specialist"
         ],
         "Minimum_monthly_Salary": "1500.00",
-        "Preferred_Work_Arrangement": "On-site",
-        "Preferred_location": [
-            "Woodlands",
-            "Sembawang"
+        "Preferred_Work_Arrangement": [
+            "On-site",
+            "Hybrid"
         ],
-        "Industry_interest": [],
-        "Company_preference": "Big Tech Companies",
+        "Preferred_location": [
+            "North",
+            "East",
+            "South",
+            "West",
+            "Central"
+        ],
+        "Industry_interest": [
+            "Information technology"
+        ],
+        "Company_preference": [
+            "Start-ups",
+            "Multi-National Corporations (MNCs)",
+            "Government",
+            "Statutory Boards",
+            "Small-to-Medium Enterprises (SMEs)"
+        ],
         "past_experience": {}
     }
 }

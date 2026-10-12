@@ -171,11 +171,15 @@ def get_latest_profile(filename):
     return profile
 
 def get_ai_input(profile):
+    year_of_study = profile.get("Year_of_Study", "")
+    if isinstance(year_of_study, str):
+        year_of_study = year_of_study.split(",", maxsplit=1)[0].strip()
+
     ai_input = {
         "course_of_study": profile.get("Cource_of_Study"),
-        "year_of_study": profile.get("Year_of_Study"),
-        "internship_duration": profile.get("Avaliable_Intership_date"),
-        "preferred_month": profile.get("Preferred_month"),
+        "year_of_study": year_of_study,
+        "internship_duration": profile.get("Duration"),
+        "internship_start_to_ending": profile.get("Internship_Start_to_Ending"),
         "skills": profile.get("Skills"),
         "preferred_roles": profile.get("Preferred_Roles"),
         "minimum_monthly_salary": profile.get("Minimum_monthly_Salary"),
