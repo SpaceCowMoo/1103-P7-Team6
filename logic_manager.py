@@ -23,15 +23,27 @@ def save_ai_result(conn, student_profile, ai_result):
     #{"selected_internships": [5 dicts with job_id + AI scores], "overall_feedback": "..."}
     results = []
     for internship in ai_result["selected_internships"]:
-        results.append({"job_id": internship["job_id"], "score": calculateScore(internship)})
+        flags = []
+        current_score = calculateScore(internship)
+        flag_deduction = 0
+        if salaryFlag(flags, student_profile, internship["job_id"]):
+            deduction += 3
+        if workarrangementFlag(flags, student_profile, internship["job_id"]):
+            deduction += 3
+        if locationFlag(flags, student_profile, internship["job_id"]):
+            deduction += 3
+
+        final_score = current_score - flag_deduction
+
+        results.append({"job_id": internship["job_id"], "score": final_score, "flags": flags})
 
     # Best score first, so job_id_1 / score_1 in the database is the top match
     results.sort(key=lambda result: result["score"], reverse=True)
 
     job_ids = [result["job_id"] for result in results]
     scores = [result["score"] for result in results]
-    return data_manager.save_match(
-        conn, student_profile, job_ids, scores, ai_result["overall_feedback"])
+    flags = [result["flags"] for result in results]
+    return data_manager.save_match(conn, student_profile, job_ids, scores, flags, ai_result["overall_feedback"])
 
 def get_job_by_id(job_id, csv_file='internships.csv'):
     with open(csv_file, 'r') as file:
@@ -80,33 +92,33 @@ def locationFlag(flags, userProfile, job_id):
 
 #output to IO manager
 #Expecting recomendation to be a very long paragraph
-def evaluateInternship(DBReference,aiScores, reccomendedActionsText, userProfile):
-    ResultID = 1
-    InternshipResult = {}
-    for aiScore in aiScores:
-        flags = []
-        finalScore = calculateScore(aiScore)
-        # A row in the internship database
-        internshipData = data_manager.get_internship(DBReference, aiScore["job_id"])
+# def evaluateInternship(DBReference,aiScores, reccomendedActionsText, userProfile):
+#     ResultID = 1
+#     InternshipResult = {}
+#     for aiScore in aiScores:
+#         flags = []
+#         finalScore = calculateScore(aiScore)
+#         # A row in the internship database
+#         internshipData = data_manager.get_internship(DBReference, aiScore["job_id"])
 
-        salaryFlag(flags, internshipData, userProfile)
+#         salaryFlag(flags, internshipData, userProfile)
 
-        durationFlag(flags, internshipData, userProfile)
+#         durationFlag(flags, internshipData, userProfile)
 
-        skillFlag(flags, internshipData, userProfile)
+#         skillFlag(flags, internshipData, userProfile)
 
-        roleFlag(flags, internshipData, userProfile)
+#         roleFlag(flags, internshipData, userProfile)
 
-        InternshipResult[ResultID] = {
-            "job_id": internshipData["job_id"],
-            "overall_match_score": finalScore,
-            "overall_feedback": reccomendedActionsText["overall_feedback"],
-            "flags": flags,
-        }
-        ResultID += 1
+#         InternshipResult[ResultID] = {
+#             "job_id": internshipData["job_id"],
+#             "overall_match_score": finalScore,
+#             "overall_feedback": reccomendedActionsText["overall_feedback"],
+#             "flags": flags,
+#         }
+#         ResultID += 1
 
-    print("Internship Result:", InternshipResult)
-    return InternshipResult
+#     print("Internship Result:", InternshipResult)
+#     return InternshipResult
 
 #returns overall match score of a listing
 def calculateScore(aiOutput):
