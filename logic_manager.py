@@ -4,15 +4,13 @@
 # UserProfile references data from io manager
 # It will be a dictionary of the user's profile information
 # We assume that we wont have a history of the user output
-# Example format: {"CourseOfStudy": "Applied Artificial Intelligence", "YearOfStudy": "Year 1, Semester 1", ...}
+# Example format: {"CourseOfStudy": "Applied Artificial Intelligence", "YearOfStudy": "Year 1", ...}
 # DBReference is the database connection reference to the internship database
 
 #Imports
 import io_manager
 import ai_manager
 import data_manager
-from io_manager import datetime
-from calendar import monthrange
 
 #functions
 
@@ -30,30 +28,10 @@ def salaryFlag(flags, internshipData, userProfile):
         flags.append("Salary below expected minimum")
     
 def durationFlag(flags, internshipData, userProfile):
-    #Check if the duration of the internship matches the user's availability
-    userAvaliableTimeDays = userProfile["Student_Profile"]["Avaliable_Intership_date"]
-    internshipPeriodMonths = internshipData["duration_months"]
-    startDateText, endDateText = userAvaliableTimeDays.split(" - ")
-    startDate = datetime.strptime(startDateText.strip(), "%d/%m/%Y").date()
-    endDate = datetime.strptime(endDateText.strip(), "%d/%m/%Y").date()
-    
-    # Add calendar months, accounting for shorter months such as February.
-    monthIndex = startDate.month - 1 + internshipPeriodMonths
-    targetYear = startDate.year + monthIndex // 12
-    targetMonth = monthIndex % 12 + 1
-    targetDay = min(
-        startDate.day,
-        monthrange(targetYear, targetMonth)[1],
-    )
-    required_end_date = startDate.replace(
-        year=targetYear,
-        month=targetMonth,
-        day=targetDay,
-    )
-    
-    if endDate > required_end_date:
-        print("Availability is longer than the internship period")
-    elif endDate < required_end_date:
+    user_duration_months = userProfile["Student_Profile"]["Duration"]
+    internship_duration_months = internshipData["duration_months"]
+
+    if internship_duration_months > user_duration_months:
         flags.append("Duration mismatch")
 
 def skillFlag(flags, internshipData, userProfile):
@@ -77,6 +55,20 @@ def roleFlag(flags, internshipData, userProfile):
     if len(roleMatch) == 0:
         #If a listing requires roles that the student does not have
         flags.append("No matching roles")
+
+def workarrangementFlag(flags, internshipData, userProfile):
+    userWorkarrangment = userProfile["Student_Profile"]["Preferred_Work_Arrangement"]
+    if internshipData["work_mode"] != userWorkarrangment:
+        #if work_mode of job listing does not match users preference, raise flag
+        flags.append("Work arrangement does not meet user's preference")
+        #for review, do these functions take in job_id to search?
+
+def locationFlag(flags, internshipData, userProfile):
+    userLocation = userProfile["Student_Profile"]["Preferred_location"]
+    if internshipData["location_district"] != userLocation:
+        #if location does not match, raise flag
+        flags.append("Location does not meet user's preference")
+        #to change, student_profile location should be limited to North, East, South, West, Central
 
 #output to IO manager
 #Expecting recomendation to be a very long paragraph
@@ -126,4 +118,3 @@ def calculateScore(aiOutput):
 
     OverallMatchScore = (aiOutput["SkillsMatch"] * weightage["SkillsMatch"]) + (aiOutput["RoleMatch"] * weightage["RoleMatch"]) + (aiOutput["IndustryInterestMatch"] * weightage["IndustryInterestMatch"]) + (aiOutput["ExperienceMatch"] * weightage["ExperienceMatch"]) + (aiOutput["CompanyPreferenceMatch"] * weightage["CompanyPreferenceMatch"])
     return OverallMatchScore/TotalScore   #divide OverallScore over TotalScore to get final score out of 100%
-

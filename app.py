@@ -78,7 +78,7 @@ def demo(conn):
     print("\nUpdated:", data_manager.get_internship(conn, new_id))
 
     internship = data_manager.get_internship(conn, new_id)
-    print("\nUpdated Filtered:", internship["monthly_allowance"])
+    print("\nUpdated monthly allowance:", internship["monthly_allowance"])
 
     # LIST (with a filter)
     print("\nRemote jobs:", data_manager.list_internships(conn, work_mode="Remote"))
@@ -99,7 +99,11 @@ def demo(conn):
     # DELETE the internship: its past AI results are kept
     data_manager.delete_internship(conn, new_id)
     print("\nDeleted:", data_manager.get_internship(conn, new_id))  # None
-    print("Run still has", len(data_manager.get_run(conn, run_id)["matches"]), "match result(s)\n")
+    print(
+        "The saved run still has",
+        len(data_manager.get_run(conn, run_id)["matches"]),
+        "match result(s)\n",
+    )
 
 def main():
     conn = setup()
