@@ -13,48 +13,49 @@ INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
 STUDENT_PROFILE_JSON = os.getenv("STUDENT_PROFILE_JSON")
 DB_PATH = os.getenv("INTERNSHIP_DB")
 
-def setup():
+def setup_database():
     """Open the database, create the tables, and load the internships CSV for the first time"""
-    required = {
+    required_data_links = {
         "INTERNSHIP_DATA": INTERNSHIP_DATA,
         "STUDENT_PROFILE_JSON": STUDENT_PROFILE_JSON,
         "INTERNSHIP_DB": DB_PATH,
     }
-    missing = [name for name, value in required.items() if not value]
-    if missing:
-        sys.exit(f"Please set {', '.join(missing)} in your .env file")
+    missing_data_links = [name for name, value in required_data_links.items() if not value]
+    if missing_data_links:
+        sys.exit(f"Please set {', '.join(missing_data_links)} in your .env file")
 
     print("Starting up...")
 
     print("Checking for input files...")
-    for path in (INTERNSHIP_DATA, STUDENT_PROFILE_JSON):
-        if os.path.exists(path):
-            print(f"    Found: {path}")
+    for data_path in (INTERNSHIP_DATA, STUDENT_PROFILE_JSON):
+        if os.path.exists(data_path):
+            print(f"{'':>5}Found: {data_path}")
         else:
-            sys.exit(f"     Missing: {path}")
+            sys.exit(f"{'':>5}Missing: {data_path}")
 
     print(f"Opening database: {DB_PATH}")
-    conn = data_manager.get_conn(DB_PATH)
+    database_connection = data_manager.get_conn(DB_PATH)
 
     print("Creating tables (if they don't exist)...")
-    data_manager.init_db(conn)
+    data_manager.init_db(database_connection)
 
-    if data_manager.is_empty(conn, "internships"):  # only load once, so CRUD changes are kept
-        count = data_manager.load_internships_csv(conn, INTERNSHIP_DATA)
+    if data_manager.is_empty(database_connection, "internships"):  # only load once, so CRUD changes are kept
+        count = data_manager.load_internships_csv(database_connection, INTERNSHIP_DATA)
         print(f"Loaded {count} internships")
     else:
         print("Internships already in database, skipping CSV load")
 
     print("Setup complete!\n")
     time.sleep(1)
-    return conn
+    return database_connection
 
-def demo(conn):
+# Demo is to test functions
+def demo(database_connection):
     """Quick showcase of the database: internship CRUD, then save one demo match for testing"""
     print("===== Internship CRUD demo =====")
     # CREATE
     # will return new job id
-    new_id = data_manager.create_internship(conn, {
+    new_id = data_manager.create_internship(database_connection, {
         "company_name": "Test Co",
         "company_type": "Start-ups",
         "industry": "Test",
@@ -71,26 +72,26 @@ def demo(conn):
     print("Created job_id:", new_id)
 
     # READ
-    print("\nRead:", data_manager.get_internship(conn, new_id))
+    print("\nRead:", data_manager.get_internship(database_connection, new_id))
 
     # UPDATE
-    data_manager.update_internship(conn, new_id, {"monthly_allowance": 1200})
-    print("\nUpdated:", data_manager.get_internship(conn, new_id))
+    data_manager.update_internship(database_connection, new_id, {"monthly_allowance": 1200})
+    print("\nUpdated:", data_manager.get_internship(database_connection, new_id))
 
-    internship = data_manager.get_internship(conn, new_id)
+    internship = data_manager.get_internship(database_connection, new_id)
     print("\nUpdated monthly allowance:", internship["monthly_allowance"])
 
     # LIST (with a filter)
-    print("\nRemote jobs:", data_manager.list_internships(conn, work_mode="Remote"))
+    print("\nRemote jobs:", data_manager.list_internships(database_connection, work_mode="Remote"))
 
     # DELETE
-    data_manager.delete_internship(conn, new_id)
-    print("\nDeleted:", data_manager.get_internship(conn, new_id))  # None
+    data_manager.delete_internship(database_connection, new_id)
+    print("\nDeleted:", data_manager.get_internship(database_connection, new_id))  # None
 
     print("\n===== Match demo =====")
     # Only save a demo match when there are none yet, so restarting doesn't pile them up.
     # Delete it with menu option 3, restart, and it comes back for testing again.
-    if data_manager.list_matches(conn):
+    if data_manager.list_matches(database_connection):
         print("Matches already saved, skipping demo match\n")
         return
 
@@ -130,23 +131,23 @@ def demo(conn):
             ]
         },
     }
-    match_id = logic_manager.save_ai_result(conn, demo_profile, demo_ai_result)
+    match_id = logic_manager.save_ai_result(database_connection, demo_profile, demo_ai_result)
     print("Saved demo match_id:", match_id)
 
     # READ the match back (profile snapshot + 5 jobs, best first)
-    print("\nMatch:", data_manager.get_match(conn, match_id), "\n")
+    print("\nMatch:", data_manager.get_match(database_connection, match_id), "\n")
 
+# Main app excution
 def main():
-    conn = setup()
-    demo(conn)
+    database_connection = setup_database()
+    #demo(database_connection)
 
     loopmain = True
     while loopmain:
-        student_profile,loopedboolean = io_manager.get_student_profile_json()
-        loopmain,student_profile = io_manager.student_profile_load_check_linker(loopedboolean,student_profile)
+        student_profile = io_manager.get_student_profile_json()
         menutype_numerica = io_manager.menuprinter(student_profile)
-        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica,conn)
+        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica,database_connection)
 
-    conn.close()
+    database_connection.close()
 
 if __name__ == "__main__": main()
