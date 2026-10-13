@@ -53,7 +53,7 @@ def save_ai_result(conn, student_profile, ai_result):
         if locationFlag(conn, flags, student_profile, internship["job_id"]):
             flag_deduction += 3
 
-        final_score = current_score - flag_deduction
+        final_score = current_score - flag_deduction    #final score calculated after applying flag penalty points
 
         results.append({"job_id": internship["job_id"], "score": final_score, "flags": flags})
 
@@ -136,35 +136,6 @@ def locationFlag(conn, flags, userProfile, job_id):
     else:
         return False
 
-#output to IO manager
-#Expecting recomendation to be a very long paragraph
-# def evaluateInternship(DBReference,aiScores, reccomendedActionsText, userProfile):
-#     ResultID = 1
-#     InternshipResult = {}
-#     for aiScore in aiScores:
-#         flags = []
-#         finalScore = calculateScore(aiScore)
-#         # A row in the internship database
-#         internshipData = data_manager.get_internship(DBReference, aiScore["job_id"])
-
-#         salaryFlag(flags, internshipData, userProfile)
-
-#         durationFlag(flags, internshipData, userProfile)
-
-#         skillFlag(flags, internshipData, userProfile)
-
-#         roleFlag(flags, internshipData, userProfile)
-
-#         InternshipResult[ResultID] = {
-#             "job_id": internshipData["job_id"],
-#             "overall_match_score": finalScore,
-#             "overall_feedback": reccomendedActionsText["overall_feedback"],
-#             "flags": flags,
-#         }
-#         ResultID += 1
-
-#     print("Internship Result:", InternshipResult)
-#     return InternshipResult
 
 #returns overall match score of a listing
 def calculateScore(aiOutput):

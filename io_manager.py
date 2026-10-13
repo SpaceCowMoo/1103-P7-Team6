@@ -639,28 +639,35 @@ def company_preference_looper(company_preference):
             "Choose another company preference (1-5, or type 'exit' to finish):"
         )
 
-def validate_pass_experience(job_title,dateofhiring,jobdiscription):
-    while not job_title.strip():
-        print("Please enter a job title.")
-        job_title = prompt_input("Enter your job title:")
+# Check if user inputs an empty string for job_title and job_discription
+def validate_job_string_input(job_string, variable_name):
+    while not job_string.strip():
+        print(f"Please enter a value for {variable_name}.")
+        job_string = prompt_input(f"Enter {variable_name}:")
+    return job_string.strip()
+
+def validate_past_experience(job_period_past):
+    
+    today_date = datetime.combine(datetime.today(), datetime.min.time())
+    formated_today = today_date.strftime("%d/%m/%Y")
 
     while True:
         try:
-            start_text, end_text = dateofhiring.split("-", maxsplit=1)
+            start_text, end_text = job_period_past.split("-", maxsplit=1)
             start_date = datetime.strptime(start_text.strip(), "%d/%m/%Y")
             end_date = datetime.strptime(end_text.strip(), "%d/%m/%Y")
-            if start_date <= end_date:
+            if start_date > end_date:
+                print("Start date is a date after end date")
+            elif start_date > today_date or end_date > today_date:
+                print(f"Please set a date before {formated_today}")
+            else:
                 break
         except ValueError:
             pass
         print("Enter the experience dates as DD/MM/YYYY - DD/MM/YYYY.")
-        dateofhiring = prompt_input("Enter the period worked (DD/MM/YYYY - DD/MM/YYYY):")
-
-    while not jobdiscription.strip():
-        print("Please enter a job description.")
-        jobdiscription = prompt_input("Enter a short job description:")
-
-    return job_title.strip(), dateofhiring.strip(), jobdiscription.strip()
+        job_period_past = prompt_input("Enter the period worked (DD/MM/YYYY - DD/MM/YYYY):")
+            
+    return job_period_past.strip()
 
 def arrange_pass_experiences(experiences):
     return dict(
@@ -673,23 +680,29 @@ def arrange_pass_experiences(experiences):
         )
     )
 
-def looping_pass_experience(pass_experience_input):
+def looping_past_experience(pass_experience_input):
     experiences = {}
     response = pass_experience_input.strip().lower()
 
     while response not in {"yes", "no"}:
         response = prompt_input("Enter 'Have' to add past experience or 'Exit' to skip:").strip().lower()
 
-    while response == "yes":
-        job_title = prompt_input("Enter your job title:")
+    while response == "have":
+        job_title = validate_job_string_input(
+            prompt_input("Enter your job title:"), "job title"
+        )
         while any(existing.casefold() == job_title.strip().casefold() for existing in experiences):
             print("That job title has already been added; enter a different title.")
-            job_title = prompt_input("Enter a different job title:")
+            job_title = validate_job_string_input(
+                prompt_input("Enter a different job title:"), "job title"
+            )
         dateofhiring = prompt_input("Enter the period worked (DD/MM/YYYY - DD/MM/YYYY):")
+        dateofhiring = validate_past_experience(dateofhiring)
         jobdiscription = prompt_input("Enter a short job description:")
-        job_title, dateofhiring, jobdiscription = validate_pass_experience(
-            job_title, dateofhiring, jobdiscription
+        jobdiscription = validate_job_string_input(
+            jobdiscription, "job description"
         )
+
         experiences[job_title] = {
             "Date": dateofhiring,
             "Job_Decription": jobdiscription,
@@ -773,8 +786,8 @@ def Get_User_Input():
         )
 
         # Past experience (e.g previous SWE internship)
-        past_experience = looping_pass_experience(
-            prompt_input("Do you have past work experience? (Yes/No):")
+        past_experience = looping_past_experience(
+            prompt_input("Do you have past work experience? (Have/Exit):")
         )
 
         
@@ -799,8 +812,8 @@ def Get_User_Input():
         }
         return user_input
 
-# loading json file (Idk but data manager should be handeling this)
-def initialize_student_profile_Json():
+# loading json file
+def read_student_profile_json():
     STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
 
     with open(STUDENT_PROFILE_JSON, "r", encoding="utf-8") as file:
@@ -825,79 +838,59 @@ def create_a_student_profile_json():
     if not STUDENT_PROFILE_JSON.is_file():
         with open(STUDENT_PROFILE_JSON, "w", encoding="utf-8") as file:
             json.dump({}, file)
-    
-# Is the True statement even needed?
+
+
+# JSON REFERENCE
 def get_student_profile_json():
     try:
-        student_profile = initialize_student_profile_Json()
+        student_profile = read_student_profile_json()
     except FileNotFoundError:
         print("Student profile file not found; creating a new profile")
         create_a_student_profile_json()
-        student_profile = initialize_student_profile_Json()
+        student_profile = read_student_profile_json()
         print("Student profile created successfully")
-    return student_profile, True
-
-def loadingScreenMenu(fileloadingchecker,menutype):
-    if menutype == "loadingScreenMenu":
-        print(
-            "The program is trying to reload the student profile. "
-            f"Attempt {fileloadingchecker} of 3."
-        )
-    elif menutype =="FalseToLoadMessage":
-        print("Could not load student_profile.json. Please check that the file is valid.")
-
-def student_profile_load_checker(Fileloaded):
-    fileloadingchecker = 1
-    while (not Fileloaded and fileloadingchecker <=3):
-        loadingScreenMenu(fileloadingchecker,"loadingScreenMenu")
-        Fileloaded,booleanloader = get_student_profile_json()
-        fileloadingchecker = fileloadingchecker+1
-    if (fileloadingchecker>3 and booleanloader == False):
-        loadingScreenMenu(fileloadingchecker,"FalseToLoadMessage")
-        return False,Fileloaded
-    if Fileloaded:
-        return True,Fileloaded
-
-def student_profile_load_check_linker(Booleanoffileloaded,Fileloaded):
-    BooleanFileloaded = True
-    
-    if Booleanoffileloaded == False:
-        BooleanFileloaded , Fileloaded = student_profile_load_checker(Fileloaded)
-        return BooleanFileloaded,Fileloaded
-    else:
-        return BooleanFileloaded,Fileloaded
-
-
-
-def menuprinter(student_profile):
-    if not student_profile:
-        menuDisplayType("Starting")
-        return "1001"
-    else:
-        menuDisplayType("SecondTime")
-        return "1002"
-
-def input_validator():
-    studentprofile,inputboolean = get_student_profile_json()
-    if inputboolean == True:
-        print("User input added successfully.")
-        return studentprofile,True
-    else:
-        print("Failed to add user input.")
-        return studentprofile,False
+    return student_profile
 
 def add_student_profile_json(student_profile):
     STUDENT_PROFILE_JSON.parent.mkdir(parents=True, exist_ok=True)
     with open(STUDENT_PROFILE_JSON, "w", encoding="utf-8") as file:
         json.dump(student_profile, file, indent=4)
 
+def update_student_profile_json(studentprofile):
+    if not isinstance(studentprofile, dict) or not isinstance(
+        studentprofile.get("student_profile"), dict
+    ):
+        raise ValueError("studentprofile must contain a student_profile dictionary")
+
+    selected_fields = update_chooser()
+    if not selected_fields:
+        print("Profile update cancelled; no changes were made.")
+        return studentprofile
+
+    updated_studentprofile = studentprofile.copy()
+    updated_studentprofile["student_profile"] = update_Student_profile(
+        selected_fields,
+        studentprofile["student_profile"],
+    )
+    add_student_profile_json(updated_studentprofile)
+    print("Student profile updated successfully.")
+    return updated_studentprofile
+
+def menuprinter(student_profile):
+    if not student_profile:
+        # User to create profile student_profile.json is empty
+        menuDisplayType("Starting")
+        return "1001"
+    else:
+        # Use latest user profile
+        menuDisplayType("SecondTime")
+        return "1002"
+
 def menu_function_caller_first_time():
-    inputed = False
-    while not inputed:
-        Userinput = Get_User_Input()
-        add_student_profile_json(Userinput)
-        studentprofile,inputed = input_validator()
-    return studentprofile
+    user_input = Get_User_Input()
+    add_student_profile_json(user_input)
+    student_profile = get_student_profile_json()
+    return student_profile
 
 def validater_chooser_spilt(update_chooser):
     return [choice.strip() for choice in update_chooser.split(",")]
@@ -990,8 +983,8 @@ def update_Student_profile(input_chooser_update,student_profile):
                 )
             )
         elif field_number == 11:
-            updated_profile["past_experience"] = looping_pass_experience(
-                prompt_input("Do you have past work experience? (Yes/No):")
+            updated_profile["past_experience"] = looping_past_experience(
+                prompt_input("Do you have past work experience? (Have/Exit):")
             )
     return updated_profile
 
@@ -1025,25 +1018,6 @@ def update_user_menu(studentprofile):
     menuDisplayType("update_display",profile)
     return checking_user_update(studentprofile)
 
-def update_student_profile_json(studentprofile):
-    if not isinstance(studentprofile, dict) or not isinstance(
-        studentprofile.get("student_profile"), dict
-    ):
-        raise ValueError("studentprofile must contain a student_profile dictionary")
-
-    selected_fields = update_chooser()
-    if not selected_fields:
-        print("Profile update cancelled; no changes were made.")
-        return studentprofile
-
-    updated_studentprofile = studentprofile.copy()
-    updated_studentprofile["student_profile"] = update_Student_profile(
-        selected_fields,
-        studentprofile["student_profile"],
-    )
-    add_student_profile_json(updated_studentprofile)
-    print("Student profile updated successfully.")
-    return updated_studentprofile
 
 def input_validator_option(functionnumber):
     if functionnumber.isdigit()==False:
@@ -1121,14 +1095,6 @@ def display_internship(internship):
         ("Description", internship.get("job_description")),
     ])
 
-# data_manager.get_match(conn, match_id) gives one match as:
-# {"match_id": 1, "created_at": "2026-10-12 12:26:37",
-#  "overall_feedback": {"points": ["...", "..."]},
-#  "profile": {"student_profile": {...}},                     <- profile at the time of the match
-#  "jobs": [{"job_id": 12, "score": 82.3, "flags": ["..."]},  <- 5 jobs, best first
-#           ...]}
-# The job details (title, company, ...) are not copied in, get them with
-# data_manager.get_internship(conn, job_id).
 
 def format_feedback(feedback):
     # AI feedback is {"points": [...]}, print one point per line
@@ -1311,6 +1277,6 @@ def menu_function_call_general(menutypenumerical,conn):
         menutypenumerical = menuprinter(student_profile)
         return student_profile,True
     if menutypenumerical == "1002":
-        student_profile,trueorfalse = get_student_profile_json()
+        student_profile = get_student_profile_json()
         student_profile,continues = menu_caller_loop_1102(student_profile,conn)
         return student_profile,continues
