@@ -42,7 +42,7 @@ SCHEMA_SQL = """
     -- One row per saved match: JSON copy of the student profile at that moment.
     CREATE TABLE IF NOT EXISTS student_profiles (
         profile_id    INTEGER PRIMARY KEY AUTOINCREMENT,
-        created_at    TEXT DEFAULT CURRENT_TIMESTAMP,
+        created_at    TEXT DEFAULT (datetime('now', '+8 hours')),
         profile_json  TEXT NOT NULL
     );
 
@@ -69,7 +69,7 @@ SCHEMA_SQL = """
         flags_4           TEXT NOT NULL,
         flags_5           TEXT NOT NULL,
         overall_feedback  TEXT,
-        created_at        TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at        TEXT DEFAULT (datetime('now', '+8 hours'))
     );
 """
 
