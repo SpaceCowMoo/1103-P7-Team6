@@ -50,7 +50,7 @@ def setup():
     return conn
 
 def demo(conn):
-    """Quick showcase of the database: internship CRUD, then saving and reading an AI run"""
+    """Quick showcase of the database: internship CRUD, then save one demo match for testing"""
     print("===== Internship CRUD demo =====")
     # CREATE
     # will return new job id
@@ -83,27 +83,58 @@ def demo(conn):
     # LIST (with a filter)
     print("\nRemote jobs:", data_manager.list_internships(conn, work_mode="Remote"))
 
-    print("\n===== AI run demo =====")
-    # SAVE an AI run (goes through logic_manager, like the real AI flow will)
-    # Example data in the same format as ai_manager / logic_manager.evaluateInternship
-    demo_profile = {"student_profile": {"course_of_study": "ICT", "skills": ["Python"]}}
-    demo_ai_output = {1: {"InternshipID": new_id, "SkillsMatch": 90, "RoleMatch": 80, "Advice": "Apply now"}}
-    demo_result = {1: {"InternshipID": new_id, "OverallMatchScore": 85.0, "Advice": "Apply now"}}
-    run_id = logic_manager.addInternshipResultToDB(conn, demo_profile, demo_result, demo_ai_output, "Demo run")
-    print("Saved run_id:", run_id)
-
-    # READ the run back (profile snapshot + match results)
-    print("\nRun:", data_manager.get_run(conn, run_id))
-    print("\nPast runs:", data_manager.list_runs(conn, limit=3))
-
-    # DELETE the internship: its past AI results are kept
+    # DELETE
     data_manager.delete_internship(conn, new_id)
     print("\nDeleted:", data_manager.get_internship(conn, new_id))  # None
-    print(
-        "The saved run still has",
-        len(data_manager.get_run(conn, run_id)["matches"]),
-        "match result(s)\n",
-    )
+
+    print("\n===== Match demo =====")
+    # Only save a demo match when there are none yet, so restarting doesn't pile them up.
+    # Delete it with menu option 3, restart, and it comes back for testing again.
+    if data_manager.list_matches(conn):
+        print("Matches already saved, skipping demo match\n")
+        return
+
+    # SAVE a match (goes through logic_manager, like the real AI flow does)
+    # Fake AI result in the same format as ai_manager.run_ai_pipeline returns
+    # The salary / work arrangement / location fields are what logic_manager's flags check
+    demo_profile = {"student_profile": {
+        "course_of_study": "Accountancy",
+        "skills": ["Excel", "Audit"],
+        "minimum_monthly_salary": "1500.00",
+        "preferred_work_arrangement": ["Hybrid"],
+        "preferred_location": ["Central", "South"],
+    }}
+    # The AI shortlists 5 to 10 internships; logic_manager keeps the best 5
+    demo_ai_result = {
+        "selected_internships": {
+            "internships": [
+                {"job_id": 1, "SkillsMatch": 40, "RoleMatch": 30, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 2, "SkillsMatch": 90, "RoleMatch": 80, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": 50},
+                {"job_id": 3, "SkillsMatch": 60, "RoleMatch": 50, "IndustryInterestMatch": 40,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 4, "SkillsMatch": 20, "RoleMatch": None, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 5, "SkillsMatch": 70, "RoleMatch": 70, "IndustryInterestMatch": 70,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},
+                {"job_id": 6, "SkillsMatch": 10, "RoleMatch": 10, "IndustryInterestMatch": None,
+                 "ExperienceMatch": None, "CompanyPreferenceMatch": None},  # lowest, gets cut
+            ]
+        },
+        "overall_feedback": {
+            "points": [
+                "Demo feedback: build up your IFRS knowledge.",
+                "Demo feedback: practise data analytics in Excel.",
+                "Demo feedback: add an audit project to your portfolio.",
+            ]
+        },
+    }
+    match_id = logic_manager.save_ai_result(conn, demo_profile, demo_ai_result)
+    print("Saved demo match_id:", match_id)
+
+    # READ the match back (profile snapshot + 5 jobs, best first)
+    print("\nMatch:", data_manager.get_match(conn, match_id), "\n")
 
 def main():
     conn = setup()
