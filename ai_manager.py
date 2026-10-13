@@ -35,7 +35,12 @@ def configure_gemini():
     if not api_key:
         raise ValueError("GEMINI_API_KEY is missing from .env")
 
-    client = genai.Client(api_key=api_key)
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to initialise Gemini client: {e}"
+        ) from e
 
     return client
 
@@ -52,6 +57,11 @@ def call_gemini(client, prompt):
         )
 
     except errors.APIError as e:
+        if getattr(e, "code", None) == 429:
+            raise RuntimeError(
+                "Gemini API rate limit or quota exceeded. Please try again later."
+            ) from e
+
         raise RuntimeError(
             f"Gemini API request failed: {e}"
         ) from e
@@ -61,12 +71,17 @@ def call_gemini(client, prompt):
             f"Unable to connect to Gemini: {e}"
         ) from e
 
-    if not response.text or not response.text.strip():
+    try:
+        response_text = response.text
+    except (ValueError, AttributeError) as e:
         raise RuntimeError(
-            "Gemini returned an empty response"
-        )
+            f"Unable to read Gemini response: {e}"
+        ) from e
 
-    return response.text
+    if not isinstance(response_text, str) or not response_text.strip():
+        raise RuntimeError("Gemini returned an empty response")
+
+    return response_text
 
 # Convert Gemini's text response into a Python dictionary
 # Remove Markdown formatting if present and reject invalid JSON
