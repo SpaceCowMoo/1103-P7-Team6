@@ -1,28 +1,49 @@
 {
-  "Student_Profile": {
-    "Cource_of_Study": "Information Technology",
-    "Year_of_Study": "2",
-    "Avaliable_Intership_date": "11/08/2026 - 11/12/2026",
-    "Preferred_month": "August",
-    "Skills": [
-      "Python",
-      "SQL",
-      "Excel",
-      "Data Analysis"
-    ],
-    "Preferred_Roles": [
-      "data_analyst"
-    ],
-    "Minimum_monthly_Salary": "1500.00",
-    "Preferred_Work_Arrangement": "On-site",
-    "Preferred_location": [
-      "Woodlands",
-      "Sembawang"
-    ],
-    "Industry_interest": [
-      "Professional Services"
-    ],
-    "Company_preference": "Multi-National Corporations (MNCs)",
-    "past_experience": {}
-  }
+    "student_profile": {
+        "course_of_study": "Information and Communications Technology (Software Engineering)",
+        "year_of_study": "1",
+        "duration": 4,
+        "available_internship_dates": "13/11/2026 - 14/03/2027",
+        "skills": [
+            "Python",
+            "Software development Life Cycle",
+            "C programming"
+        ],
+        "preferred_roles": [
+            "Programmer",
+            "It Specialist"
+        ],
+        "minimum_monthly_salary": "1500.00",
+        "preferred_work_arrangement": [
+            "On-site",
+            "Hybrid"
+        ],
+        "preferred_location": [
+            "North",
+            "East",
+            "South",
+            "West",
+            "Central"
+        ],
+        "industry_interest": [
+            "Information technology"
+        ],
+        "company_preference": [
+            "Start-ups",
+            "Multi-National Corporations (MNCs)",
+            "Government",
+            "Statutory Boards",
+            "Small-to-Medium Enterprises (SMEs)"
+        ],
+        "past_experience": {
+            "Software Development Intern": {
+                "Date": "01/06/2025 - 31/08/2025",
+                "Job_Decription": "Assisted in developing and testing software applications using Python. Helped debug code, fix software issues, and document development processes. Worked with developers to understand user requirements and participated in software testing."
+            },
+            "IT Support Assistant": {
+                "Date": "01/12/2024 - 28/02/2025",
+                "Job_Decription": "Provided technical support by troubleshooting computer hardware and software issues. Assisted with installing applications, maintaining computer systems, and resolving basic network connectivity problems."
+            }
+        }
+    }
 }
