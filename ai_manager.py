@@ -1,3 +1,6 @@
+# AI Manager - InternLink
+# Handles Gemini API communication, prompt construction,
+# response parsing, JSON validation and AI-generated feedback.
 import json
 import os
 from dotenv import load_dotenv
@@ -5,6 +8,8 @@ from google import genai
 from google.genai import errors
 import data_manager
 
+# Expected fields and structure for each AI-assessed internship
+# Scores range from 0-100, or None if a criterion cannot be assessed
 EXPECTED_AI_OUTPUT = {
     "job_id": None,
     "SkillsMatch": None,
@@ -14,12 +19,14 @@ EXPECTED_AI_OUTPUT = {
     "CompanyPreferenceMatch": None
 }
 
+# JSON template used to instruct Gemini on the required shortlist format
 EXPECTED_SHORTLIST_OUTPUT = {
     "selected_internships": [
         EXPECTED_AI_OUTPUT
     ]
 }
 
+# Load the API key from .env and initialise the Gemini client
 def configure_gemini():
     load_dotenv(override=True)
 
@@ -28,10 +35,17 @@ def configure_gemini():
     if not api_key:
         raise ValueError("GEMINI_API_KEY is missing from .env")
 
-    client = genai.Client(api_key=api_key)
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to initialise Gemini client: {e}"
+        ) from e
 
     return client
 
+# Send a prompt to Gemini and request a JSON response
+# Raise an error if the API fails or returns an empty response
 def call_gemini(client, prompt):
     try:
         response = client.models.generate_content(
@@ -43,6 +57,11 @@ def call_gemini(client, prompt):
         )
 
     except errors.APIError as e:
+        if getattr(e, "code", None) == 429:
+            raise RuntimeError(
+                "Gemini API rate limit or quota exceeded. Please try again later."
+            ) from e
+
         raise RuntimeError(
             f"Gemini API request failed: {e}"
         ) from e
@@ -52,13 +71,20 @@ def call_gemini(client, prompt):
             f"Unable to connect to Gemini: {e}"
         ) from e
 
-    if not response.text or not response.text.strip():
+    try:
+        response_text = response.text
+    except (ValueError, AttributeError) as e:
         raise RuntimeError(
-            "Gemini returned an empty response"
-        )
+            f"Unable to read Gemini response: {e}"
+        ) from e
 
-    return response.text
+    if not isinstance(response_text, str) or not response_text.strip():
+        raise RuntimeError("Gemini returned an empty response")
 
+    return response_text
+
+# Convert Gemini's text response into a Python dictionary
+# Remove Markdown formatting if present and reject invalid JSON
 def parse_gemini_response(response_text):
     if not isinstance(response_text, str) or not response_text.strip():
         raise ValueError("Gemini returned an empty response")
@@ -81,6 +107,8 @@ def parse_gemini_response(response_text):
 
     return result
 
+# Validate the fields, job ID and score ranges of an AI-assessed internship
+# Reject unexpected fields, incorrect IDs and invalid score values
 def validate_gemini_response(result, job_id):
     if not isinstance(result, dict):
         raise ValueError("Gemini response must be a dictionary")
@@ -106,17 +134,7 @@ def validate_gemini_response(result, job_id):
 
     return result
 
-def get_latest_profile(filename):
-    with open(filename, "r", encoding="utf-8") as file:
-        data = json.load(file)
-
-    profile = data.get("student_profile")
-
-    if not isinstance(profile, dict) or not profile:
-        raise ValueError("Student_Profile is missing or empty")
-
-    return profile
-
+# Convert the student profile into the field names expected by the AI prompts
 def get_ai_input(profile):
     return {
         "course_of_study": profile.get("course_of_study"),
@@ -133,6 +151,8 @@ def get_ai_input(profile):
         "past_experience": profile.get("past_experience", {})
     }
 
+# Filter out internships that exceed the student's available duration
+# Skip listings with missing or invalid duration values
 def filter_by_duration(student_profile, internships):
     available_months = student_profile.get("internship_duration")
 
@@ -169,6 +189,9 @@ def filter_by_duration(student_profile, internships):
 
     return eligible
 
+# Build the AI prompt using the student profile and eligible internships
+# Instruct Gemini to shortlist 5-10 internships and score five matching criteria
+# Final ranking, weighted scores and preference flags are handled by Logic Manager
 def build_shortlist_prompt(student_profile, internships):
 
     prompt = f"""
@@ -346,6 +369,8 @@ Return ONLY a valid JSON object with this structure:
 
     return prompt
 
+# Validate the shortlist returned by Gemini
+# Ensure there are 5-10 unique internships with valid IDs and scores
 def validate_shortlist_response(result, internships):
     if not isinstance(result, dict):
         raise ValueError("Top-five response must be a dictionary")
@@ -359,11 +384,11 @@ def validate_shortlist_response(result, internships):
         raise ValueError(
             "Gemini must select between 5 and 10 internships"
         )
-
+    # Collect valid job IDs to prevent Gemini from selecting nonexistent listings
     valid_job_ids = {
         internship["job_id"] for internship in internships
     }
-
+    # Track selected IDs to detect duplicate internship recommendations
     seen_ids = set()
 
     for entry in selected:
@@ -383,7 +408,8 @@ def validate_shortlist_response(result, internships):
 
     return selected
 
-
+# Request and validate an AI-generated internship shortlist
+# Retry up to three times if Gemini returns an invalid response
 def select_shortlisted_internships(client, student_profile, internships):
     if len(internships) < 5:
         raise ValueError(
@@ -409,7 +435,8 @@ def select_shortlisted_internships(client, student_profile, internships):
 
     raise RuntimeError("Internship shortlisting failed")
 
-
+# Build a prompt to identify skill gaps across the shortlisted internships
+# Request personalised, actionable recommendations based on the student's profile
 def build_skill_gap_prompt(student_profile, shortlisted_internships):
     return f"""
 You are an AI internship career advisor.
@@ -469,7 +496,9 @@ Return only valid JSON:
 }}
 """
 
-
+# Generate and validate personalised skill-gap feedback using Gemini
+# Ensure the response contains 3-5 non-empty feedback points
+# Retry up to three times if the response format is invalid
 def generate_skill_gap_feedback(client, student_profile, shortlisted_internships):
     prompt = build_skill_gap_prompt(
         student_profile,
@@ -518,6 +547,7 @@ def generate_skill_gap_feedback(client, student_profile, shortlisted_internships
 
     raise RuntimeError("Skill-gap feedback generation failed")
 
+# Main AI Manager pipeline:
 def run_ai_pipeline(client, student_profile, internships):
     # Step 1: Filter internships by duration
     eligible_internships = filter_by_duration(
