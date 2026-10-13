@@ -145,8 +145,8 @@ def main():
     loopmain = True
     while loopmain:
         student_profile = io_manager.get_student_profile_json()
-        menutype_numerica = io_manager.menuprinter(student_profile)
-        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica,database_connection)
+        menutype_numerica = io_manager.menu_numeric(student_profile)
+        student_profile,loopmain =io_manager.menu_function_call_general(student_profile,menutype_numerica,database_connection)
 
     database_connection.close()
 

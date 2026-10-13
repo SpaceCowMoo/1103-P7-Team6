@@ -35,6 +35,11 @@
             "Statutory Boards",
             "Small-to-Medium Enterprises (SMEs)"
         ],
-        "past_experience": {}
+        "past_experience": {
+            "Programmer": {
+                "Date": "11/01/2024 - 20/03/2025",
+                "Job_Decription": "It to help the code and solve coding problem"
+            }
+        }
     }
 }
