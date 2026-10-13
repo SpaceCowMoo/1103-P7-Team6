@@ -35,15 +35,6 @@
             "Statutory Boards",
             "Small-to-Medium Enterprises (SMEs)"
         ],
-        "past_experience": {
-            "Software Development Intern": {
-                "Date": "01/06/2025 - 31/08/2025",
-                "Job_Decription": "Assisted in developing and testing software applications using Python. Helped debug code, fix software issues, and document development processes. Worked with developers to understand user requirements and participated in software testing."
-            },
-            "IT Support Assistant": {
-                "Date": "01/12/2024 - 28/02/2025",
-                "Job_Decription": "Provided technical support by troubleshooting computer hardware and software issues. Assisted with installing applications, maintaining computer systems, and resolving basic network connectivity problems."
-            }
-        }
+        "past_experience": {}
     }
 }
