@@ -166,8 +166,9 @@ def get_internship(conn, job_id):
     row = conn.execute("SELECT * FROM internships WHERE job_id = ?", (job_id,)).fetchone()
     return dict(row) if row else None
 
-def list_internships(conn, limit=50, **filters):
-    """Example: list_internships(conn, work_mode="Hybrid"). limit=-1 means all"""
+
+def list_internships(conn, limit=50, partial=False, **filters):
+    """List internships with exact filters, or substring matching for text when partial=True."""
     query = "SELECT * FROM internships WHERE 1=1"
     values = []
     for column, value in filters.items():
@@ -175,8 +176,12 @@ def list_internships(conn, limit=50, **filters):
             continue
         if column not in INTERNSHIP_COLUMNS:
             raise ValueError(f"Unknown column: {column}")
-        query += f" AND {column} = ?"
-        values.append(value)
+        if partial and column not in {"job_id", "monthly_allowance", "duration_months"}:
+            query += f" AND {column} LIKE ? COLLATE NOCASE"
+            values.append(f"%{value}%")
+        else:
+            query += f" AND {column} = ?"
+            values.append(value)
     query += " ORDER BY job_id ASC LIMIT ?"
     values.append(limit)
     return [dict(r) for r in conn.execute(query, values).fetchall()]

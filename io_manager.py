@@ -35,7 +35,6 @@ def display_error(message):
 #Menu output styles
 def menuDisplayType(typeofmenu,studentprofile={}):
     
-
     def print_heading(title):
         print("\n" + "=" * consoleWidth_60)
         print(f"{title:^{consoleWidth_60}}")
@@ -876,8 +875,6 @@ def Get_User_Input():
             prompt_input("Do you have past work experience? (Y/N):")
         )
 
-        
-
         user_input = {
             "student_profile":{
                 "course_of_study":courseOfStudy,
@@ -1263,26 +1260,50 @@ def view_past_listing(conn):
         else:
             display_run_details(conn, run)
 
-def list_all_internship(conn):
-    internships = data_manager.list_internships(conn, limit=-1)
+def list_all_internship(conn, search_type):
+    filter_columns = {
+        1: "company_name",
+        2: "company_type",
+        3: "industry",
+        4: "job_title",
+        5: "relevant_course",
+        6: "monthly_allowance",
+        7: "work_mode",
+        8: "duration_months",
+        9: "required_skills",
+        10: "location_district",
+    }
+
+    if search_type == -1:
+        internships = data_manager.list_internships(conn, limit=-1)
+    elif search_type in filter_columns:
+        search_item = prompt_input("Search: ")
+        column = filter_columns[search_type]
+        internships = data_manager.list_internships(
+            conn,
+            limit=-1,
+            partial=True,
+            **{column: search_item},
+        )
+    else:
+        print("Error: something went wrong")
+        return []
+
     print_listing_pages(internships, display_internship)
     return internships
 
-
 def search_internship(conn):
-    input_id = id_input(
-        "Enter an internship ID to search (-1 to browse all internships,-2 to exit):"
-    )
-    if input_id == -2:
-        None
-    elif input_id != -1:
-        internship = data_manager.get_internship(conn, input_id)
-        if internship is None:
-            print("No internship found with that id")
+    menuDisplayType("FilterInternships")
+    while True:
+        search_type = id_input(
+            "Enter a search field (1-10), -1 to view all, or -2 to exit:"
+        )
+        if search_type == -1 or 1 <= search_type <= 10:
+            return list_all_internship(conn, search_type)
+        if search_type == -2:
+            return None
         else:
-            display_internship(internship)
-    else:
-        internship = list_all_internship(conn)
+            print("Please input a number between 1 and 10, or -1 to view all")
 
 #option 4 delete listing:
 
