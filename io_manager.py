@@ -22,6 +22,19 @@ consoleWidth_55 = 55
 profileFieldWidth = 28
 courseCount = 0
 
+INTERNSHIP_FILTER_FIELDS = {
+    1: {"label": "Company Name", "column": "company_name"},
+    2: {"label": "Company Type", "column": "company_type"},
+    3: {"label": "Industry", "column": "industry"},
+    4: {"label": "Job Title", "column": "job_title"},
+    5: {"label": "Relevant Course", "column": "relevant_course"},
+    6: {"label": "Monthly Allowance", "column": "monthly_allowance"},
+    7: {"label": "Work Mode", "column": "work_mode"},
+    8: {"label": "Duration Months", "column": "duration_months"},
+    9: {"label": "Required Skills", "column": "required_skills"},
+    10: {"label": "Location", "column": "location_district"},
+}
+
 def prompt_input(message):
     print("\n" + "-" * consoleWidth_60)
     return input(f"{message.strip()}\n> ")
@@ -155,22 +168,9 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             display_student_profile(studentprofile)
         
         case "FilterInternships":
-            internship_fields_filterable = [
-                "Company Name",
-                "Company Type",
-                "Industry",
-                "Job Title",
-                "Relevant Course",
-                "Monthly Allowance",
-                "Work Mode",
-                "Duration Months",
-                "Required Skills",
-                "Location"
-                ]
-
             print_heading("FILTER OPTIONS")
-            for number, filter in enumerate(internship_fields_filterable, 1):
-                print(f"  {number:>2}. {filter}")
+            for number, field in INTERNSHIP_FILTER_FIELDS.items():
+                print(f"  {number:>2}. {field['label']}")
             print("=" * consoleWidth_60)
             
         case _:
@@ -719,7 +719,7 @@ def company_preference_looper(company_preference):
 
         preference = company_preference_number_to_String(response)
         append_unique_value(selected, preference, "Company preference")
-        print("\nSelected locations:", ", ".join(selected) or "None")
+        print("\nSelected Company Preferences:", ", ".join(selected) or "None")
         response = prompt_input(
             "Choose another company preference (1-5, or type 'exit' to finish):"
         )
@@ -1261,29 +1261,45 @@ def view_past_listing(conn):
             display_run_details(conn, run)
 
 def list_all_internship(conn, search_type):
-    filter_columns = {
-        1: "company_name",
-        2: "company_type",
-        3: "industry",
-        4: "job_title",
-        5: "relevant_course",
-        6: "monthly_allowance",
-        7: "work_mode",
-        8: "duration_months",
-        9: "required_skills",
-        10: "location_district",
-    }
-
+    active_filters = {}
+    
+    # Show All internships
     if search_type == -1:
         internships = data_manager.list_internships(conn, limit=-1)
-    elif search_type in filter_columns:
-        search_item = prompt_input("Search: ")
-        column = filter_columns[search_type]
+    
+    elif search_type in INTERNSHIP_FILTER_FIELDS:
+        while True:
+            field = INTERNSHIP_FILTER_FIELDS[search_type]
+            column = field["column"]
+
+            search_item = prompt_input("Search: ").strip()
+            active_filters[column] = search_item                
+            
+            for field in INTERNSHIP_FILTER_FIELDS.values():
+                column = field["column"]
+                if column in active_filters:
+                    print(f"Current filters: {field['label']}, Item to find: {active_filters[column]}")
+            if not Confirming_input(prompt_input("Add another filter? (Y/N):")):
+                break
+
+            menuDisplayType("FilterInternships")
+            while True:
+                search_type = id_input(
+                    "Choose another field (1-10), -1 to search, or -2 to cancel:"
+                )
+                if search_type == -2:
+                    return None
+                if search_type == -1 or search_type in INTERNSHIP_FILTER_FIELDS:
+                    break
+                print("Please input a number between 1 and 10, -1 to search, or -2 to cancel")
+            if search_type == -1:
+                break
+
         internships = data_manager.list_internships(
             conn,
             limit=-1,
             partial=True,
-            **{column: search_item},
+            **active_filters,
         )
     else:
         print("Error: something went wrong")
@@ -1294,6 +1310,7 @@ def list_all_internship(conn, search_type):
 
 def search_internship(conn):
     menuDisplayType("FilterInternships")
+    
     while True:
         search_type = id_input(
             "Enter a search field (1-10), -1 to view all, or -2 to exit:"
