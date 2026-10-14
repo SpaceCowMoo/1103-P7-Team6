@@ -431,33 +431,27 @@ def append_unique_value(values, value, field_name):
     values.append(value.strip())
     return True
 
-def skill_validation(skillsinput):
-    areusure = True
-    if not skillsinput:
-        print("Invalid input. Please try again.")
-        areusure = False
-        return areusure
-    elif skillsinput.isdigit()==True:
-        print("You entered a number.")
-        areusure = Confirming_input(prompt_input("Is this correct? (Y/N):"))
-        return areusure
-    elif len(skillsinput) == 1:
-        print("You entered a single character.")
-        areusure = Confirming_input(prompt_input("Is this correct? (Y/N):"))
-        return areusure
-    return areusure
+def validate_skill(skillsinput):
+    while True:
+        if not skillsinput:
+            print("Invalid input. Please try again.")
+        elif skillsinput.isdigit():
+            print("You entered a number.")
+            if Confirming_input(prompt_input("Is this correct? (Y/N):")):
+                return skillsinput
+        elif len(skillsinput) == 1:
+            print("You entered a single character.")
+            if Confirming_input(prompt_input("Is this correct? (Y/N):")):
+                return skillsinput
+        else:
+            return skillsinput
 
-def skill_validate(skillsinput):
-    is_valid = skill_validation(skillsinput)
-    while is_valid == False:
         skillsinput = prompt_input("Enter a skill (or type 'exit' to finish):")
-        is_valid = skill_validation(skillsinput)
-    return skillsinput , is_valid
 
 def continuousloopskills(skillsinput):
     skillslist = []
     while True:
-        skillinput, _ = skill_validate(skillsinput)
+        skillinput = validate_skill(skillsinput)
         skillinput = skillinput.strip()
         if skillinput.casefold() == "exit":
             return skillslist
