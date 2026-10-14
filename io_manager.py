@@ -19,6 +19,7 @@ STUDENT_PROFILE_JSON = Path(
 consoleWidth_60 = 60
 consoleWidth_55 = 55
 profileFieldWidth = 28
+courseCount = 0
 
 def prompt_input(message):
     print("\n" + "-" * consoleWidth_60)
@@ -117,20 +118,20 @@ def menuDisplayType(typeofmenu,studentprofile={}):
                     course_number += 1
             print("\n" + "=" * consoleWidth_60)
 
-        case "locationdisplay":
+        case "LocationDisplay":
             singapore_areas_list = ["North","East","South","West","Central"]
             print_heading("PREFERRED LOCATIONS")
             for number, area in enumerate(singapore_areas_list, 1):
                 print(f"  {number:>2}. {area}")
             print("=" * consoleWidth_60)
 
-        case "Preferred_Word_Arrangement":
+        case "PreferredWorkArrangement":
             Preferred_word_arragement = ["On-site","Hybrid","No Preference"]
             print_heading("PREFERRED WORK ARRANGEMENT")
             for number, word_arrangement in enumerate(Preferred_word_arragement, 1):
                 print(f"  {number}. {word_arrangement}")
 
-        case "company_preference":
+        case "CompanyPreference":
             company_preferences = [
                 "Start-ups",
                 "Multi-National Corporations (MNCs)",
@@ -140,22 +141,36 @@ def menuDisplayType(typeofmenu,studentprofile={}):
             ]
             print_heading("COMPANY PREFERENCES")
             for number, preference in enumerate(company_preferences, 1):
-                print(f"  {number}. {preference}")
+                print(f"  {number:>2}. {preference}")
             print("=" * consoleWidth_60)
 
-        case "update_display":
+        case "UpdateDisplay":
             print_heading("YOUR STUDENT PROFILE")
             display_student_profile(studentprofile)
+        
+        case "FilterInternships":
+            internship_fields_filterable = [
+                "Company Name",
+                "Company Type",
+                "Industry",
+                "Job Title",
+                "Relevant Course",
+                "Monthly Allowance",
+                "Work Mode",
+                "Duration Months",
+                "Required Skills",
+                "Location"
+                ]
 
+            print_heading("FILTER OPTIONS")
+            for number, filter in enumerate(internship_fields_filterable, 1):
+                print(f"  {number:>2}. {filter}")
+            print("=" * consoleWidth_60)
+            
         case _:
             print(f"Unknown menu type: {typeofmenu}")
 
-#User input functions
-# ISSUE NOT USED YET
-def quitMenu():
-    print("Are you sure you want to quit?")
-    print("Exiting application")
-
+# Formating for CLI display
 def format_list(item):
     if isinstance(item, list) and item:
         return ", ".join(item)
@@ -249,27 +264,30 @@ def course_of_study_words(course_of_study_id):
     "Physiotherapy",
     "Radiation Therapy",
     "Speech and Language Therapy"
-]
+    ]
+    global courseCount
+    courseCount = len(courses)
     return courses[course_of_study_id-1]
 
 def validate_course_of_study(course):
+
     if not course:
         print("Invalid input. Please enter a number corresponding to your course of study.")
         return False
     elif course.isdigit()!= True:
         print("Invalid input. Please enter a number corresponding to your course of study.")
         return False 
-    elif int(course) < 1 or int(course) > 45:
-        print("Invalid input. Please enter a number between 1 and 45.")
+    elif int(course) < 1 or int(course) > courseCount:
+        print(f"Invalid input. Please enter a number between 1 and {courseCount}.")
         return False
     return True
 
 def course_of_study_input(courseofStudy):
     is_valid = validate_course_of_study(courseofStudy)
     while is_valid == False:
-        #course_of_study_menu()
         courseofStudy = prompt_input("Please enter your course of study (1-45):")
         is_valid = validate_course_of_study(courseofStudy)
+    
     return course_of_study_words(int(courseofStudy))
 
 def validate_Year_of_Study(year):
@@ -746,14 +764,14 @@ def Get_User_Input():
         
         # Preferred location, 
 
-        menuDisplayType("Preferred_Word_Arrangement")
+        menuDisplayType("PreferredWorkArrangement")
         preferred_work_arrangement = preferred_work_location_looper(
             prompt_input(
                 "Choose a work arrangement (1-3, or type 'exit' to choose all):"
             )
         )
 
-        menuDisplayType("locationdisplay")
+        menuDisplayType("LocationDisplay")
         preferedlocation = preferredlocation_listadder(
             prompt_input("Choose a preferred location (1-5 to choose individually, or type 'exit' to choose All):")
         )
@@ -765,7 +783,7 @@ def Get_User_Input():
         )
     
         # Company preference (e.g start-up, MNCs),
-        menuDisplayType("company_preference") 
+        menuDisplayType("CompanyPreference") 
         Company_preference = company_preference_looper(
             prompt_input(
                 "Choose a company preference (1-5, or type 'exit' to choose all):"
@@ -945,14 +963,14 @@ def update_Student_profile(input_chooser_update,student_profile):
                 prompt_input("Enter your expected monthly salary (or type 'exit' to skip):")
             )
         elif field_number == 7:
-            menuDisplayType("Preferred_Word_Arrangement")
+            menuDisplayType("PreferredWorkArrangement")
             updated_profile["preferred_work_arrangement"] = preferred_work_location_looper(
                 prompt_input(
                     "Choose a work arrangement (1-3, or type 'exit' to choose all):"
                 )
             )
         elif field_number == 8:
-            menuDisplayType("locationdisplay")
+            menuDisplayType("LocationDisplay")
             updated_profile["preferred_location"] = preferredlocation_listadder(
                 prompt_input(
                     "Choose a preferred location (1-5, or type 'exit' to choose all):"
@@ -963,7 +981,7 @@ def update_Student_profile(input_chooser_update,student_profile):
                 prompt_input("Enter an industry interest (or type 'exit' to skip):")
             )
         elif field_number == 10:
-            menuDisplayType("company_preference")
+            menuDisplayType("CompanyPreference")
             updated_profile["company_preference"] = company_preference_looper(
                 prompt_input(
                     "Choose a company preference (1-5, or type 'exit' to choose all):"
@@ -1002,7 +1020,7 @@ def update_user_menu(studentprofile):
     
     profile = studentprofile["student_profile"]
     print("Current student profile:")
-    menuDisplayType("update_display",profile)
+    menuDisplayType("UpdateDisplay",profile)
     return checking_user_update(studentprofile)
 
 
@@ -1168,8 +1186,6 @@ def search_internship(conn):
             display_internship(internship)
     else:
         internship = list_all_internship(conn)
-
-
 
 #option 4 delete listing:
 
