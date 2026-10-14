@@ -369,6 +369,7 @@ def validate_course_of_study(course):
     return True
 
 def course_of_study_input(courseofStudy):
+    course_of_study_words(10)
     is_valid = validate_course_of_study(courseofStudy)
     while is_valid == False:
         courseofStudy = prompt_input("Please enter your course of study (1-45):")

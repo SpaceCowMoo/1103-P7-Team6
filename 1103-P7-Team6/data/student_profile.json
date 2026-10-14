@@ -1,17 +1,18 @@
 {
     "student_profile": {
         "course_of_study": "Information and Communications Technology (Software Engineering)",
-        "year_of_study": "1",
-        "duration": 4,
-        "available_internship_dates": "13/11/2026 - 14/03/2027",
+        "year_of_study": "6",
+        "duration": 6,
+        "available_internship_dates": "14/11/2026 - 20/05/2027",
         "skills": [
-            "Python",
-            "Software development Life Cycle",
-            "C programming"
+            "python",
+            "C programming",
+            "Software development life cycle"
         ],
         "preferred_roles": [
-            "Programmer",
-            "It Specialist"
+            "data analyse",
+            "programmer",
+            "It specialist"
         ],
         "minimum_monthly_salary": "1500.00",
         "preferred_work_arrangement": [
@@ -26,7 +27,8 @@
             "Central"
         ],
         "industry_interest": [
-            "Information technology"
+            "Information technolgy",
+            "media"
         ],
         "company_preference": [
             "Start-ups",
@@ -36,9 +38,9 @@
             "Small-to-Medium Enterprises (SMEs)"
         ],
         "past_experience": {
-            "Programmer": {
-                "Date": "11/01/2024 - 20/03/2025",
-                "Job_Decription": "It to help the code and solve coding problem"
+            "It intern": {
+                "Date": "11/05/2024 - 14/08/2024",
+                "Job_Decription": "A intern help the chool setup the laptop"
             }
         }
     }
