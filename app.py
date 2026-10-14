@@ -10,14 +10,12 @@ import data_manager
 import logic_manager
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
-STUDENT_PROFILE_JSON = os.getenv("STUDENT_PROFILE_JSON")
 DB_PATH = os.getenv("INTERNSHIP_DB")
 
 def setup_database():
     """Open the database, create the tables, and load the internships CSV for the first time"""
     required_data_links = {
         "INTERNSHIP_DATA": INTERNSHIP_DATA,
-        "STUDENT_PROFILE_JSON": STUDENT_PROFILE_JSON,
         "INTERNSHIP_DB": DB_PATH,
     }
     missing_data_links = [name for name, value in required_data_links.items() if not value]
@@ -27,7 +25,9 @@ def setup_database():
     print("Starting up...")
 
     print("Checking for input files...")
-    for data_path in (INTERNSHIP_DATA, STUDENT_PROFILE_JSON):
+    # Checks if the app has items that cannot be re-created automatically
+    # Make sure there is a comma at the end
+    for data_path in (INTERNSHIP_DATA,):
         if os.path.exists(data_path):
             print(f"{'':>5}Found: {data_path}")
         else:
@@ -145,8 +145,8 @@ def main():
     loopmain = True
     while loopmain:
         student_profile = io_manager.get_student_profile_json()
-        menutype_numerica = io_manager.menuprinter(student_profile)
-        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerica,database_connection)
+        menutype_numerical = io_manager.menuprinter(student_profile)
+        student_profile,loopmain =io_manager.menu_function_call_general(menutype_numerical,database_connection)
 
     database_connection.close()
 
