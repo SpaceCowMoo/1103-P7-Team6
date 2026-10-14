@@ -29,9 +29,9 @@ def setup_database():
     # Make sure there is a comma at the end
     for data_path in (INTERNSHIP_DATA,):
         if os.path.exists(data_path):
-            io_manager.display_message(f"{'':>5}Found: {data_path}")
+            io_manager.display_message(f"\tFound: {data_path}")
         else:
-            sys.exit(f"{'':>5}Missing: {data_path}")
+            sys.exit(f"\tMissing: {data_path}")
 
     io_manager.display_message(f"Opening database: {DB_PATH}")
     database_connection = data_manager.get_conn(DB_PATH)

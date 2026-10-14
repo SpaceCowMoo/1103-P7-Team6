@@ -40,3 +40,19 @@ macOS / Linux / Git Bash:
 ```bash
 docker run --rm -it -v "$(pwd)/data:/app/internlink/data" internlink
 ```
+
+## Running Tests
+
+To run the test script, use the following Docker commands:
+
+1. **Build the test image:**
+
+```bash
+docker build -t internlink-test .
+```
+
+2. **Run the test script:**
+
+```bash
+docker run --rm internlink-test python test_script.py
+```
