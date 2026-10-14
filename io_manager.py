@@ -452,10 +452,8 @@ def continuousloopskills(skillsinput):
     while True:
         skillinput = validate_skill(skillsinput)
         skillinput = skillinput.strip()
-        if skillinput.casefold() == "exit":
-            return skillslist
         append_unique_value(skillslist, skillinput, "Skill")
-        skillsinput = prompt_input("Enter another skill (or type 'exit' to finish):")
+        skillsinput = prompt_input("Enter another skill:")
 
 def validate_Preferred_role(preferred_role):
     areusure = True 
