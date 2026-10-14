@@ -2,9 +2,10 @@ import os
 import json
 from pathlib import Path
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 import textwrap
+from zoneinfo import ZoneInfo
 
 import data_manager
 import logic_manager   # logic_manager.find_matches runs the AI and saves
@@ -190,7 +191,6 @@ def display_student_profile(profile):
     formatted_year = f"Year {raw_year}" if raw_year.isdigit() else raw_year
 
     past_exp = profile.get("past_experience", {})
-    exp_text = "None recorded" if not past_exp else str(past_exp)
     work_arrangement = profile.get("preferred_work_arrangement", "N/A")
     if (
         isinstance(work_arrangement, list)
@@ -201,9 +201,6 @@ def display_student_profile(profile):
     else:
         work_arrangement = format_list(work_arrangement)
 
-    print("\n" + "=" * consoleWidth_55)
-    print(f"{'✨ YOUR STUDENT PROFILE ✨':^{consoleWidth_55}}")
-    print("=" * consoleWidth_55)
 
     duration = profile.get("duration")
     internship_dates = profile.get("available_internship_dates")
@@ -216,23 +213,93 @@ def display_student_profile(profile):
     else:
         duration_text = "N/A"
 
-    fields = [
-        ("Course of Study:", profile.get("course_of_study", "N/A")),
-        ("Year of Study:", formatted_year),
-        ("Internship Duration:", duration_text),
-        ("Skills:", format_list(profile.get("skills", []))),
-        ("Preferred Roles:", format_list(profile.get("preferred_roles", []))),
-        ("Minimum Monthly Salary:", f"${profile.get('minimum_monthly_salary', '0.00')}"),
-        ("Preferred Work Arrangement:", work_arrangement),
-        ("Preferred Location:", format_list(profile.get("preferred_location", []))),
-        ("Industry Interest:", format_list(profile.get("industry_interest", []))),
-        ("Company Preference:", format_list(profile.get("company_preference", []))),
-        ("Past Experience:", exp_text),
-    ]
-    for number, (label, value) in enumerate(fields, 1):
-        line = f"{number:>2},{label:<{profileFieldWidth}} {value}"
-        print(line)
-    print("=" * consoleWidth_55 + "\n")
+    width = 60
+    content_width = width - 4
+
+    def print_line(text=""):
+        print(f"| {text:<{content_width}} |")
+
+    def print_wrapped(text, indent="  "):
+        lines = textwrap.wrap(
+            str(text),
+            width=content_width,
+            initial_indent=indent,
+            subsequent_indent=indent,
+            break_on_hyphens=False,
+        ) or [indent.rstrip()]
+        for line in lines:
+            print_line(line)
+
+    def print_field(number, label, value):
+        prefix = f"  {number}. {label}: "
+        value = str(value) if value not in (None, "") else "Not specified"
+        lines = textwrap.wrap(
+            value,
+            width=max(1, content_width - len(prefix)),
+            subsequent_indent=" " * len(prefix),
+            break_on_hyphens=False,
+        ) or ["Not specified"]
+        print_line(prefix + lines[0])
+        for line in lines[1:]:
+            print_line(line)
+
+    def print_list_field(number, label, values):
+        print_line(f"  {number}. {label}:")
+        if isinstance(values, list):
+            items = [str(value) for value in values if str(value).strip()]
+        elif isinstance(values, str) and values.strip():
+            items = [values]
+        else:
+            items = []
+        if items:
+            for item in items:
+                print_wrapped(f"- {item}", indent="     ")
+        else:
+            print_wrapped("None specified", indent="     ")
+
+    border = "+" + "-" * (width - 2) + "+"
+    print("\n" + border)
+    print_line("STUDENT PROFILE".center(content_width))
+    print(border)
+
+    print_line("ACADEMIC & AVAILABILITY")
+    print_field(1, "Course", profile.get("course_of_study"))
+    print_field(2, "Year", formatted_year)
+    print_field(3, "Internship", duration_text)
+
+    print(border)
+    print_line("SKILLS & ROLES")
+    print_list_field(4, "Skills", profile.get("skills", []))
+    print_list_field(5, "Preferred roles", profile.get("preferred_roles", []))
+
+    print(border)
+    print_line("PREFERENCES")
+    salary = profile.get("minimum_monthly_salary")
+    salary_text = f"${salary}" if salary not in (None, "") else "Not specified"
+    print_field(6, "Minimum salary", salary_text)
+    print_field(7, "Work arrangement", work_arrangement)
+    print_field(8, "Location", format_list(profile.get("preferred_location", [])))
+    print_field(9, "Industry", format_list(profile.get("industry_interest", [])))
+    print_list_field(10, "Company type", profile.get("company_preference", []))
+
+    print(border)
+    print_line("PAST EXPERIENCE")
+    if isinstance(past_exp, dict) and past_exp:
+        for job_title, details in past_exp.items():
+            if not isinstance(details, dict):
+                details = {}
+            print_wrapped(f"- {job_title}")
+            period = details.get("Date")
+            if period:
+                print_wrapped(f"Period: {period}", indent="      ")
+            description = details.get(
+                "Job_Decription", details.get("Job_Description")
+            )
+            if description:
+                print_wrapped(f"Description: {description}", indent="      ")
+    else:
+        print_wrapped("None recorded")
+    print(border + "\n")
 
 
 #Input validation/correction functions
@@ -708,10 +775,10 @@ def looping_past_experience(pass_experience_input):
     experiences = {}
     response = pass_experience_input.strip().lower()
 
-    while response not in {"yes", "no"}:
-        response = prompt_input("Enter 'Have' to add past experience or 'Exit' to skip:").strip().lower()
+    while response not in {"y", "n"}:
+        response = prompt_input("Enter 'Y' to add past experience or 'N' to skip:").strip().lower()
 
-    while response == "have":
+    while response == "y":
         job_title = validate_job_string_input(
             prompt_input("Enter your job title:"), "job title"
         )
@@ -731,9 +798,9 @@ def looping_past_experience(pass_experience_input):
             "Date": dateofhiring,
             "Job_Decription": jobdiscription,
         }
-        response = prompt_input("Do you have another past experience? (Yes/No):").strip().lower()
-        while response not in {"yes", "no"}:
-            response = prompt_input("Enter 'Yes' to add another or 'No' to finish:").strip().lower()
+        response = prompt_input("Do you have another past experience? (Y/N):").strip().lower()
+        while response not in {"y", "n"}:
+            response = prompt_input("Enter 'Y' to add another or 'N' to finish:").strip().lower()
 
     return arrange_pass_experiences(experiences)
 
@@ -811,7 +878,7 @@ def Get_User_Input():
 
         # Past experience (e.g previous SWE internship)
         past_experience = looping_past_experience(
-            prompt_input("Do you have past work experience? (Have/Exit):")
+            prompt_input("Do you have past work experience? (Y/N):")
         )
 
         
@@ -899,6 +966,12 @@ def update_student_profile_json(studentprofile):
     add_student_profile_json(updated_studentprofile)
     print("Student profile updated successfully.")
     return updated_studentprofile
+
+def menu_numeric(student_profile):
+    if not student_profile:
+        return "1001"
+    else:
+        return "1002"
 
 def menuprinter(student_profile):
     if not student_profile:
@@ -1008,7 +1081,7 @@ def update_Student_profile(input_chooser_update,student_profile):
             )
         elif field_number == 11:
             updated_profile["past_experience"] = looping_past_experience(
-                prompt_input("Do you have past work experience? (Have/Exit):")
+                prompt_input("Do you have past work experience? (Y/N):")
             )
     return updated_profile
 
@@ -1124,24 +1197,30 @@ def format_feedback(feedback):
     # AI feedback is {"points": [...]}, print one point per line
     return "\n".join(f"- {point}" for point in feedback["points"])
 
-def display_run_summary(match):
+def display_run_summary(match,recommandationtype="PAST RECOMMENDATION RUN"):
     top_job = match["jobs"][0]   # jobs are best first
-    print_card("PAST RECOMMENDATION RUN", [
+    created_at = datetime.fromisoformat(match["created_at"])
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    singapore_datetime = created_at.astimezone(ZoneInfo("Asia/Singapore"))
+
+    print_card(f"{recommandationtype} ", [
         ("Match ID", match.get("match_id")),
-        ("Created", match.get("created_at")),
+        ("Created (SGT)", singapore_datetime.strftime("%d %b %Y, %I:%M %p")),
         ("Top Job ID", top_job["job_id"]),
         ("Top Score", f"{top_job['score']:.1f}"),
         ("Feedback", format_feedback(match.get("overall_feedback"))),
     ])
 
-def display_run_details(conn, match):
-    display_run_summary(match)
-    display_student_profile(match["profile"]["student_profile"])
+def display_run_details(conn, match,reccomandationtype="PAST RECOMMENDATION RUN"):
+    display_run_summary(match,reccomandationtype)
+    #display_student_profile(match["profile"]["student_profile"])
     for rank, job in enumerate(match["jobs"], 1):
         internship = data_manager.get_internship(conn, job["job_id"])
         if internship is None:   # internship was deleted after the match was saved
             internship = {"job_title": "Internship removed", "company_name": None}
-        print_card(f"MATCH {rank} - JOB {job['job_id']}", [
+        #- JOB {job['job_id']}
+        print_card(f"MATCH {rank} - JOB {job['job_id']} ", [
             ("Role", internship.get("job_title")),
             ("Company", internship.get("company_name")),
             ("Overall Score", f"{job['score']:.1f}"),
@@ -1216,7 +1295,7 @@ def delete_run_id_checker(deleted_run_id,conn):
         print("Please enter a number.")
         return False
     deleted_run_id = int(deleted_run_id)
-    if deleted_run_id in (-1, -2) or deleted_run_id in match_ids:
+    if deleted_run_id in (-1, -2,-3) or deleted_run_id in match_ids:
         return True
     else:
         print("No past listing found with that id.")
@@ -1225,7 +1304,7 @@ def delete_run_id_checker(deleted_run_id,conn):
 def delete_run_id_checking_Correcter(deleted_run_id,conn):
     is_valid = delete_run_id_checker(deleted_run_id,conn)
     while not is_valid:
-        deleted_run_id = prompt_input("Enter the match ID to delete (-1 for the latest, -2 to delete all):")
+        deleted_run_id = prompt_input("Enter the match ID to delete (-1 for the latest, -2 to delete all,-3 to exit) :")
         is_valid = delete_run_id_checker(deleted_run_id,conn)
     return int(deleted_run_id)
 
@@ -1235,8 +1314,10 @@ def deleteListing(conn):
         print("No past listing found")
         return None
     list_all_Listing(conn)
-    deleted_run_id = delete_run_id_checking_Correcter(prompt_input("Enter the match ID to delete (-1 for the latest, -2 to delete all):"),conn)
-    if deleted_run_id == -1:
+    deleted_run_id = delete_run_id_checking_Correcter(prompt_input("Enter the match ID to delete (-1 for the latest, -2 to delete all,-3 to exit):"),conn)
+    if deleted_run_id == -3:
+        return deleted_run_id
+    elif deleted_run_id == -1:
         to_delete = [past_runs[0]["match_id"]]
     elif deleted_run_id == -2:
         to_delete = [match["match_id"] for match in past_runs]
@@ -1261,7 +1342,7 @@ def find_internship_matches(conn, studentprofile):
         print(f"Could not find matches: {error}")
         return None
     print(f"Saved as match {match_id}. You can view it again with option 2.")
-    display_run_details(conn, data_manager.get_match(conn, match_id))
+    display_run_details(conn, data_manager.get_match(conn, match_id),"Recommandation Run Result")
     return match_id
 
 def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
@@ -1293,12 +1374,11 @@ def menu_caller_loop_1102(student_profile,conn):
         continues,student_profile = inputmenucaller_1002(int(functionnumber),conn,student_profile)
     return student_profile,continues
 
-def menu_function_call_general(menutypenumerical,conn):
+def menu_function_call_general(student_profile,menutypenumerical,conn):
     if menutypenumerical == "1001":
         student_profile = menu_function_caller_first_time()
         menutypenumerical = menuprinter(student_profile)
         return student_profile,True
     if menutypenumerical == "1002":
-        student_profile = get_student_profile_json()
         student_profile,continues = menu_caller_loop_1102(student_profile,conn)
         return student_profile,continues
