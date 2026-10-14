@@ -97,6 +97,35 @@ def _insert(conn, table, data, replace=False):
     verb = "INSERT OR REPLACE" if replace else "INSERT"
     return conn.execute(f"{verb} INTO {table} ({columns}) VALUES ({marks})", data)
 
+# Validate data within internships.csv
+def _validate_internship_row(row, line_number):
+    # If 1st row fields mismatch with data of 2nd row and beyond
+    if None in row:
+        raise ValueError(f"Line {line_number}: too many fields")
+    missing = [column for column in INTERNSHIP_COLUMNS if row.get(column) is None]
+    # If field is missing
+    if missing:
+        raise ValueError(f"Line {line_number}: missing fields: {', '.join(missing)}")
+
+    text_fields = set(INTERNSHIP_COLUMNS) - {
+        "job_id", "monthly_allowance", "duration_months"
+    }
+    # Check Text values
+    for field in text_fields:
+        if not row[field].strip():
+            raise ValueError(f"Line {line_number}: {field} is blank")
+    # Check values not text
+    try:
+        row["job_id"] = int(row["job_id"])
+        row["monthly_allowance"] = int(row["monthly_allowance"])
+        row["duration_months"] = int(row["duration_months"])
+    except ValueError as error:
+        raise ValueError(f"Line {line_number}: invalid numeric value") from error
+    if row["job_id"] <= 0 or row["monthly_allowance"] < 0 or row["duration_months"] <= 0:
+        raise ValueError(f"Line {line_number}: numeric value is out of range")
+
+    return row
+
 def _editable_fields(data):
     """Keep only internship columns the user may set (job_id is made by SQLite)"""
     return {k: v for k, v in data.items() if k in INTERNSHIP_COLUMNS and k != "job_id"}
@@ -118,9 +147,11 @@ def load_internships_csv(conn, path):
     with open(path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
     with conn:
-        for row in rows:
-            row = {k: v for k, v in row.items() if k in INTERNSHIP_COLUMNS}  # keeps job_id
-            _insert(conn, "internships", row, replace=True)
+        for line_number, internship_row in enumerate(rows, start=2):
+            row_validated = _validate_internship_row(internship_row, line_number)
+            internship_row = {key: value for key, value in row_validated.items() if key in INTERNSHIP_COLUMNS}
+            _insert(conn, "internships", internship_row, replace=True)
+            
     return len(rows)
 
 # ---------- internships ----------

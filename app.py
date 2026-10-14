@@ -22,37 +22,43 @@ def setup_database():
     if missing_data_links:
         sys.exit(f"Please set {', '.join(missing_data_links)} in your .env file")
 
-    print("Starting up...")
+    io_manager.display_message("Starting up...")
 
-    print("Checking for input files...")
+    io_manager.display_message("Checking for input files...")
     # Checks if the app has items that cannot be re-created automatically
     # Make sure there is a comma at the end
     for data_path in (INTERNSHIP_DATA,):
         if os.path.exists(data_path):
-            print(f"{'':>5}Found: {data_path}")
+            io_manager.display_message(f"{'':>5}Found: {data_path}")
         else:
             sys.exit(f"{'':>5}Missing: {data_path}")
 
-    print(f"Opening database: {DB_PATH}")
+    io_manager.display_message(f"Opening database: {DB_PATH}")
     database_connection = data_manager.get_conn(DB_PATH)
 
-    print("Creating tables (if they don't exist)...")
+    io_manager.display_message("Creating tables (if they don't exist)...")
     data_manager.init_db(database_connection)
 
     if data_manager.is_empty(database_connection, "internships"):  # only load once, so CRUD changes are kept
-        count = data_manager.load_internships_csv(database_connection, INTERNSHIP_DATA)
-        print(f"Loaded {count} internships")
+        try:
+            count = data_manager.load_internships_csv(database_connection, INTERNSHIP_DATA)
+        except ValueError as error:
+            io_manager.display_error(f"Could not load internship data: {error}")
+            io_manager.display_message(f"Please ensure {INTERNSHIP_DATA} is formatted correctly")
+            database_connection.close()
+            return None
+        io_manager.display_message(f"Loaded {count} internships")
     else:
-        print("Internships already in database, skipping CSV load")
+        io_manager.display_message("Internships already in database, skipping CSV load")
 
-    print("Setup complete!\n")
+    io_manager.display_message("Setup complete!\n")
     time.sleep(1)
     return database_connection
 
 # Demo is to test functions
 def demo(database_connection):
     """Quick showcase of the database: internship CRUD, then save one demo match for testing"""
-    print("===== Internship CRUD demo =====")
+    io_manager.display_message("===== Internship CRUD demo =====")
     # CREATE
     # will return new job id
     new_id = data_manager.create_internship(database_connection, {
@@ -69,30 +75,30 @@ def demo(database_connection):
         "job_description": "FOR AI"
 
     })
-    print("Created job_id:", new_id)
+    io_manager.display_message("Created job_id:", new_id)
 
     # READ
-    print("\nRead:", data_manager.get_internship(database_connection, new_id))
+    io_manager.display_message("\nRead:", data_manager.get_internship(database_connection, new_id))
 
     # UPDATE
     data_manager.update_internship(database_connection, new_id, {"monthly_allowance": 1200})
-    print("\nUpdated:", data_manager.get_internship(database_connection, new_id))
+    io_manager.display_message("\nUpdated:", data_manager.get_internship(database_connection, new_id))
 
     internship = data_manager.get_internship(database_connection, new_id)
-    print("\nUpdated monthly allowance:", internship["monthly_allowance"])
+    io_manager.display_message("\nUpdated monthly allowance:", internship["monthly_allowance"])
 
     # LIST (with a filter)
-    print("\nRemote jobs:", data_manager.list_internships(database_connection, work_mode="Remote"))
+    io_manager.display_message("\nRemote jobs:", data_manager.list_internships(database_connection, work_mode="Remote"))
 
     # DELETE
     data_manager.delete_internship(database_connection, new_id)
-    print("\nDeleted:", data_manager.get_internship(database_connection, new_id))  # None
+    io_manager.display_message("\nDeleted:", data_manager.get_internship(database_connection, new_id))  # None
 
-    print("\n===== Match demo =====")
+    io_manager.display_message("\n===== Match demo =====")
     # Only save a demo match when there are none yet, so restarting doesn't pile them up.
     # Delete it with menu option 3, restart, and it comes back for testing again.
     if data_manager.list_matches(database_connection):
-        print("Matches already saved, skipping demo match\n")
+        io_manager.display_message("Matches already saved, skipping demo match\n")
         return
 
     # SAVE a match (goes through logic_manager, like the real AI flow does)
@@ -132,14 +138,16 @@ def demo(database_connection):
         },
     }
     match_id = logic_manager.save_ai_result(database_connection, demo_profile, demo_ai_result)
-    print("Saved demo match_id:", match_id)
+    io_manager.display_message("Saved demo match_id:", match_id)
 
     # READ the match back (profile snapshot + 5 jobs, best first)
-    print("\nMatch:", data_manager.get_match(database_connection, match_id), "\n")
+    io_manager.display_message("\nMatch:", data_manager.get_match(database_connection, match_id), "\n")
 
 # Main app excution
 def main():
     database_connection = setup_database()
+    if database_connection is None:
+        return
     #demo(database_connection)
 
     loopmain = True

@@ -25,6 +25,12 @@ def prompt_input(message):
     print("\n" + "-" * consoleWidth_60)
     return input(f"{message.strip()}\n> ")
 
+def display_message(*values, sep=" ", end="\n"):
+    print(*values, sep=sep, end=end)
+
+def display_error(message):
+    print(f"Error: {message}")
+
 #Menu output styles
 def menuDisplayType(typeofmenu,studentprofile={}):
     
