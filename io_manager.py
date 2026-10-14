@@ -1254,12 +1254,14 @@ def get_latest_one(conn):
 
 def view_past_listing(conn):
     run_id = id_input(
-        "Enter a match ID to view (-1 for the latest match, or -2 to browse all matches):"
+        "Enter a match ID to view (-1 for the latest match, or -2 to browse all matches,-3 to exit):"
     )
     if run_id == -1:
         get_latest_one(conn)
     elif run_id == -2:
         list_all_Listing(conn)
+    elif run_id == -3:
+        None
     else:
         run = data_manager.get_match(conn, run_id)   # None if the id doesn't exist
         if run is None:
@@ -1275,9 +1277,11 @@ def list_all_internship(conn):
 
 def search_internship(conn):
     input_id = id_input(
-        "Enter an internship ID to search (-1 to browse all internships):"
+        "Enter an internship ID to search (-1 to browse all internships,-2 to exit):"
     )
-    if input_id != -1:
+    if input_id == -2:
+        None
+    elif input_id != -1:
         internship = data_manager.get_internship(conn, input_id)
         if internship is None:
             print("No internship found with that id")
