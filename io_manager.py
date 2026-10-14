@@ -23,6 +23,7 @@ profileFieldWidth = 28
 courseCount = 0
 
 INTERNSHIP_FILTER_FIELDS = {
+    0: {"label": "Job ID", "column": "job_id"},
     1: {"label": "Company Name", "column": "company_name"},
     2: {"label": "Company Type", "column": "company_type"},
     3: {"label": "Industry", "column": "industry"},
@@ -452,8 +453,12 @@ def continuousloopskills(skillsinput):
     while True:
         skillinput = validate_skill(skillsinput)
         skillinput = skillinput.strip()
+        if skillinput.casefold() == "exit" and len(skillslist) > 0:
+            return skillslist
+        if len(skillslist) <= 0:
+            print("[MANDATORY] Please input in a skill.")
         append_unique_value(skillslist, skillinput, "Skill")
-        skillsinput = prompt_input("Enter another skill:")
+        skillsinput = prompt_input("Enter another skill (type 'exit' to finish):")
 
 def validate_Preferred_role(preferred_role):
     areusure = True 
@@ -1289,16 +1294,18 @@ def list_all_internship(conn, search_type):
                     return None
                 if search_type == -1 or search_type in INTERNSHIP_FILTER_FIELDS:
                     break
-                print("Please input a number between 1 and 10, -1 to search, or -2 to cancel")
+                print("Please input a number between 0 and 10, -1 to search, or -2 to cancel")
             if search_type == -1:
                 break
 
+        is_partial_search = search_type != 0
         internships = data_manager.list_internships(
             conn,
             limit=-1,
-            partial=True,
+            partial= is_partial_search,
             **active_filters,
         )
+        
     else:
         print("Error: something went wrong")
         return []
@@ -1311,14 +1318,14 @@ def search_internship(conn):
     
     while True:
         search_type = id_input(
-            "Enter a search field (1-10), -1 to view all, or -2 to exit:"
+            "Enter a search field (0-10), -1 to view all, or -2 to exit:"
         )
-        if search_type == -1 or 1 <= search_type <= 10:
+        if search_type == -1 or 0 <= search_type <= 10:
             return list_all_internship(conn, search_type)
         if search_type == -2:
             return None
         else:
-            print("Please input a number between 1 and 10, or -1 to view all")
+            print("Please input a number between 0 and 10, or -1 to view all")
 
 #option 4 delete listing:
 
