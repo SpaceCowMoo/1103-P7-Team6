@@ -1,0 +1,24 @@
+{
+  "selected_internships": {
+    "internships": [
+      {"job_id": 421, "SkillsMatch": 85, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 423, "SkillsMatch": 80, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 425, "SkillsMatch": 90, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 31, "SkillsMatch": 80, "RoleMatch": 85, "IndustryInterestMatch": 90, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 58, "SkillsMatch": 85, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 199, "SkillsMatch": 75, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 291, "SkillsMatch": 70, "RoleMatch": 85, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 293, "SkillsMatch": 70, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 597, "SkillsMatch": 75, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 643, "SkillsMatch": 70, "RoleMatch": 85, "IndustryInterestMatch": 90, "ExperienceMatch": null, "CompanyPreferenceMatch": 100}
+    ]
+  },
+  "overall_feedback": {
+    "points": [
+      "Build on your existing Python proficiency by completing a Linux command-line tutorial and creating a small automation script to qualify for cloud development roles at Bytedance and AWS.",
+      "Bridge the gap in cloud infrastructure and containerization required by Sea Group and IBM by following an introductory Docker and Kubernetes tutorial to deploy a local Python microservice.",
+      "Prepare for systems architecture and design roles at GovTech and AWS by studying fundamental system design principles and documenting a simple three-tier web application architecture.",
+      "Develop familiarity with Agile methodologies and requirements gathering through a collaborative open-source project to meet the expectations for systems analyst roles at Accenture."
+    ]
+  }
+}

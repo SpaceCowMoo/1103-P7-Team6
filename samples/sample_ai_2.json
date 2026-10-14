@@ -1,0 +1,24 @@
+{
+  "selected_internships": {
+    "internships": [
+      {"job_id": 17, "SkillsMatch": 60, "RoleMatch": 80, "IndustryInterestMatch": 100, "ExperienceMatch": 40, "CompanyPreferenceMatch": null},
+      {"job_id": 194, "SkillsMatch": 85, "RoleMatch": 90, "IndustryInterestMatch": 100, "ExperienceMatch": 75, "CompanyPreferenceMatch": null},
+      {"job_id": 223, "SkillsMatch": 50, "RoleMatch": 70, "IndustryInterestMatch": 70, "ExperienceMatch": 40, "CompanyPreferenceMatch": 100},
+      {"job_id": 435, "SkillsMatch": 60, "RoleMatch": 75, "IndustryInterestMatch": 70, "ExperienceMatch": 50, "CompanyPreferenceMatch": 100},
+      {"job_id": 416, "SkillsMatch": 45, "RoleMatch": 70, "IndustryInterestMatch": 100, "ExperienceMatch": 30, "CompanyPreferenceMatch": 100},
+      {"job_id": 219, "SkillsMatch": 55, "RoleMatch": 80, "IndustryInterestMatch": 70, "ExperienceMatch": 40, "CompanyPreferenceMatch": 100},
+      {"job_id": 31, "SkillsMatch": 70, "RoleMatch": 80, "IndustryInterestMatch": 40, "ExperienceMatch": 70, "CompanyPreferenceMatch": 100},
+      {"job_id": 438, "SkillsMatch": 75, "RoleMatch": 75, "IndustryInterestMatch": 70, "ExperienceMatch": 80, "CompanyPreferenceMatch": 100},
+      {"job_id": 623, "SkillsMatch": 65, "RoleMatch": 75, "IndustryInterestMatch": 70, "ExperienceMatch": 70, "CompanyPreferenceMatch": 100},
+      {"job_id": 434, "SkillsMatch": 50, "RoleMatch": 75, "IndustryInterestMatch": 70, "ExperienceMatch": 70, "CompanyPreferenceMatch": 100}
+    ]
+  },
+  "overall_feedback": {
+    "points": [
+      "Bridge your gap in data visualization tools like Tableau and Power BI—required by internships such as Singtel (Job 31) and Schneider Electric (Job 435)—by leveraging your existing Microsoft Excel and SQL proficiency to build interactive dashboard projects using public financial datasets.",
+      "Develop proficiency in Python or R data analysis libraries to meet requirements for data-heavy roles like MAS's Data Analyst Intern (Job 194), building upon your foundational programming knowledge in Java and JavaScript.",
+      "Acquire familiarity with cloud infrastructure and DevOps concepts such as Docker and CI/CD pipelines to better prepare for technical fintech roles at companies like Coinhako (Job 17).",
+      "Gain exposure to enterprise resource planning (ERP) or robotic process automation (RPA) tools like SAP to align more closely with business technology and digital transformation consulting positions at firms like KPMG (Job 223) and Accenture (Job 219)."
+    ]
+  }
+}

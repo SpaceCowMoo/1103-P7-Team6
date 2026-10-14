@@ -1,0 +1,33 @@
+{
+    "student_profile": {
+        "course_of_study": "Information and Communications Technology (Software Engineering)",
+        "year_of_study": "1",
+        "duration": 5,
+        "available_internship_dates": "01/04/2027 - 30/09/2027",
+        "skills": [
+            "Python",
+            "Microsoft Excel",
+            "Basic HTML"
+        ],
+        "preferred_roles": [
+            "IT Support Intern",
+            "Software Development Intern",
+            "exit\\"
+        ],
+        "minimum_monthly_salary": "800.00",
+        "preferred_work_arrangement": [
+            "On-site",
+            "Hybrid"
+        ],
+        "preferred_location": [
+            "North"
+        ],
+        "industry_interest": [
+            "Information Technology"
+        ],
+        "company_preference": [
+            "Government"
+        ],
+        "past_experience": {}
+    }
+}

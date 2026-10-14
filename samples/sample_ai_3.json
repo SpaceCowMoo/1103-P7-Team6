@@ -1,0 +1,24 @@
+{
+  "selected_internships": {
+    "internships": [
+      {"job_id": 22, "SkillsMatch": 60, "RoleMatch": 70, "IndustryInterestMatch": 90, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 28, "SkillsMatch": 50, "RoleMatch": 80, "IndustryInterestMatch": 70, "ExperienceMatch": null, "CompanyPreferenceMatch": null},
+      {"job_id": 58, "SkillsMatch": 70, "RoleMatch": 75, "IndustryInterestMatch": 70, "ExperienceMatch": null, "CompanyPreferenceMatch": null},
+      {"job_id": 221, "SkillsMatch": 50, "RoleMatch": 85, "IndustryInterestMatch": 90, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 285, "SkillsMatch": 60, "RoleMatch": 80, "IndustryInterestMatch": 90, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 419, "SkillsMatch": 65, "RoleMatch": 70, "IndustryInterestMatch": 70, "ExperienceMatch": null, "CompanyPreferenceMatch": null},
+      {"job_id": 423, "SkillsMatch": 60, "RoleMatch": 80, "IndustryInterestMatch": 90, "ExperienceMatch": null, "CompanyPreferenceMatch": 100},
+      {"job_id": 562, "SkillsMatch": 50, "RoleMatch": 75, "IndustryInterestMatch": 70, "ExperienceMatch": null, "CompanyPreferenceMatch": null},
+      {"job_id": 597, "SkillsMatch": 50, "RoleMatch": 70, "IndustryInterestMatch": 70, "ExperienceMatch": null, "CompanyPreferenceMatch": null},
+      {"job_id": 599, "SkillsMatch": 50, "RoleMatch": 80, "IndustryInterestMatch": 70, "ExperienceMatch": null, "CompanyPreferenceMatch": null}
+    ]
+  },
+  "overall_feedback": {
+    "points": [
+      "Bridge your basic HTML knowledge into modern web development by building a small responsive project using React to meet the frontend requirements seen in GovTech software engineering roles.",
+      "Leverage your Python proficiency to learn backend framework fundamentals like Node.js or basic API development through building a simple CRUD application, aligning with the system design and backend needs of GovTech architectures.",
+      "Gain familiarity with Agile methodologies and requirements gathering techniques by documenting user stories for a personal coding project in a tool like Trello, preparing you for Business Analyst and Systems Analyst positions.",
+      "Complement your existing Python skills by taking an introductory cloud computing tutorial on AWS to understand serverless patterns and cloud architecture basics required by cloud-focused internships."
+    ]
+  }
+}

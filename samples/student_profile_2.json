@@ -1,0 +1,40 @@
+{
+    "student_profile": {
+        "course_of_study": "Applied Computing (Fintech)",
+        "year_of_study": "2",
+        "duration": 3,
+        "available_internship_dates": "01/05/2027 - 31/08/2027",
+        "skills": [
+            "Java",
+            "JavaScript",
+            "SQL",
+            "FigmaFigma",
+            "Microsoft Excel"
+        ],
+        "preferred_roles": [
+            "FinTech Intern",
+            "Business Analyst Intern"
+        ],
+        "minimum_monthly_salary": "1800.00",
+        "preferred_work_arrangement": [
+            "Hybrid"
+        ],
+        "preferred_location": [
+            "East",
+            "Central"
+        ],
+        "industry_interest": [
+            "FinTech",
+            "Banking"
+        ],
+        "company_preference": [
+            "Small-to-Medium Enterprises (SMEs)"
+        ],
+        "past_experience": {
+            "Finance Assistant": {
+                "Date": "01/06/2025 - 31/08/2025",
+                "Job_Decription": "Assisted with financial data entry, Excel reporting, transaction reconciliation and preparation of monthly financial summaries."
+            }
+        }
+    }
+}
