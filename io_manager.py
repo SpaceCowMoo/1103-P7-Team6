@@ -448,16 +448,22 @@ def validate_skill(skillsinput):
 
         skillsinput = prompt_input("Enter a skill (or type 'exit' to finish):")
 
+#def exitChecker(skillsinput,skillslist):
+    
+
+
 def continuousloopskills(skillsinput):
     skillslist = []
+    # Validate exit method
     while True:
         skillinput = validate_skill(skillsinput)
         skillinput = skillinput.strip()
-        if skillinput.casefold() == "exit" and len(skillslist) > 0:
-            return skillslist
-        if len(skillslist) <= 0:
+        if skillinput.casefold() == "exit" and len(skillslist) <= 0:
             print("[MANDATORY] Please input in a skill.")
-        append_unique_value(skillslist, skillinput, "Skill")
+        elif skillinput.casefold() == "exit" and len(skillslist) > 0:
+            return skillslist
+        else:
+            append_unique_value(skillslist, skillinput, "Skill")
         skillsinput = prompt_input("Enter another skill (type 'exit' to finish):")
 
 def validate_Preferred_role(preferred_role):
