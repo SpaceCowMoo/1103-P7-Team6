@@ -4,11 +4,7 @@
         "year_of_study": "6",
         "duration": 6,
         "available_internship_dates": "14/11/2026 - 20/05/2027",
-        "skills": [
-            "python",
-            "C programming",
-            "Software development life cycle"
-        ],
+        "skills": [],
         "preferred_roles": [
             "data analyse",
             "programmer",
