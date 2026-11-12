@@ -1,10 +1,9 @@
-class Past_internship:
+class PastInternship:
     def __init__(self, company_name, role, description, duration, start_date, end_date):
         self.__company_name = company_name
         self.__role = role
         self.__description = description
         self.__duration = duration
-
         self.__start_date = start_date
         self.__end_date = end_date
 
@@ -33,5 +32,8 @@ class Past_internship:
             "description": self.__description,
             "duration": self.__duration,
             "start_date": self.__start_date,
-            "end_date": self.__end_date
+            "end_date": self.__end_date,
         }
+
+
+Past_internship = PastInternship
