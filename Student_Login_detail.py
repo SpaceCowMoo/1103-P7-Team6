@@ -1,7 +1,7 @@
-class Student_login_details:
-    def __init__(self,user_id,User_role, username, password):
+class StudentLoginDetails:
+    def __init__(self, user_id, user_role, username, password):
         self.__user_id = user_id
-        self.__user_role = User_role
+        self.__user_role = user_role
         self.__username = username
         self.__password = password
 
@@ -22,7 +22,7 @@ class Student_login_details:
             "user_id": self.__user_id,
             "user_role": self.__user_role,
             "username": self.__username,
-            "password": self.__password
+            "password": self.__password,
         }
 
     def add_login_details(self, username, password):
@@ -36,4 +36,4 @@ class Student_login_details:
             self.__password = password
 
 
-
+Student_login_details = StudentLoginDetails

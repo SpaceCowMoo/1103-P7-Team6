@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 import data_manager
 import logic_manager   # logic_manager.find_matches runs the AI and saves
+import Student_class as Student
 
 STUDENT_PROFILE_JSON = Path(
     os.getenv(
