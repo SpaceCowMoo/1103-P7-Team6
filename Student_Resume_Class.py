@@ -2,19 +2,19 @@ from Past_internship_done_class import Past_internship
 
 
 class Student_Resume:
-    def __init__(self, Courses , Year_of_Study, Duration_of_internship,available_internship_date,Skills,Preferred_role,Minimum_monthly_salary,Preferred_location,preferred_work_arrangement,industry_interest,company_preference,Past_internships:list[Past_internship]):
+    def __init__(self, Courses:list[str] , Year_of_Study:int, Duration_of_internship:int,available_internship_date:str,Skills:list[str],Preferred_role:list[str],Minimum_monthly_salary:float,Preferred_location:str,preferred_work_arrangement:str,industry_interest:list[str],company_preference:list[str],Past_internships:list[Past_internship]):
         self.__past_internships: list[Past_internship] = Past_internships
-        self.__Courses = Courses
-        self.__Year_of_Study = Year_of_Study
-        self.__Duration_of_internship = Duration_of_internship
-        self.__available_internship_date = available_internship_date
-        self.__Skills = Skills
-        self.__Preferred_role = Preferred_role
-        self.__Minimum_monthly_salary = Minimum_monthly_salary
-        self.__Preferred_location = Preferred_location
-        self.__preferred_work_arrangement = preferred_work_arrangement
-        self.__industry_interest = industry_interest
-        self.__company_preference = company_preference
+        self.__Courses:str = Courses
+        self.__Year_of_Study:int = Year_of_Study
+        self.__Duration_of_internship:int = Duration_of_internship
+        self.__available_internship_date:str = available_internship_date
+        self.__Skills:list[str] = Skills
+        self.__Preferred_role:list[str] = Preferred_role
+        self.__Minimum_monthly_salary:float = Minimum_monthly_salary
+        self.__Preferred_location:list[str] = Preferred_location
+        self.__preferred_work_arrangement:list[str] = preferred_work_arrangement
+        self.__industry_interest:list[str] = industry_interest
+        self.__company_preference:list[str] = company_preference
 
     def get_Courses(self):
         return self.__Courses
