@@ -1,6 +1,10 @@
 # MatchService class that retrieves intership data and AI results
 # Also handles the scoring of each individual internship and applies flags
 # Finally it ranks and saves the results to the database
+from ai_manager import AIManager
+from data_manager import DataManager
+from match_scorer import MatchScorer
+from flag_evaluator import FlagEvaluator
 
 class MatchService:
     def __init__(self, conn):
