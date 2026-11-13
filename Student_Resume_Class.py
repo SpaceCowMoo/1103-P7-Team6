@@ -1,3 +1,6 @@
+import json
+import sqlite3
+
 from Past_internship_done_class import PastInternship
 
 
@@ -121,6 +124,40 @@ class StudentResume:
             self.__industry_interest = industry_interest
         if company_preference is not None:
             self.__company_preference = company_preference
+
+    # ---------- JSON text (how a resume is stored in a database column) ----------
+
+    def to_json(self):
+        return json.dumps(self.fetch_Student_Resume_details())
+
+    @classmethod
+    def from_json(cls, text):
+        data = json.loads(text)
+        past_internships = [PastInternship(**item) for item in data.pop("Past_internships", [])]
+        return cls(**data, Past_internships=past_internships)
+
+    # ---------- database: read and write the resumes table (one resume per user) ----------
+    # db is the Database object from Database.open()
+
+    def save(self, db, user_id):
+        """Save this as the user's resume. Overwrites the one they had before"""
+        try:
+            with db.transaction():
+                db.execute(
+                    """INSERT INTO resumes (user_id, resume_json) VALUES (?, ?)
+                       ON CONFLICT(user_id) DO UPDATE SET
+                           resume_json = excluded.resume_json,
+                           updated_at = datetime('now')""",
+                    (user_id, self.to_json()),
+                )
+        except sqlite3.IntegrityError as error:
+            raise ValueError(f"No user with user_id {user_id}") from error
+
+    @classmethod
+    def load(cls, db, user_id):
+        """The user's resume, or None if they haven't saved one yet"""
+        row = db.fetch_one("SELECT resume_json FROM resumes WHERE user_id = ?", (user_id,))
+        return cls.from_json(row["resume_json"]) if row else None
 
 
 Student_Resume = StudentResume
