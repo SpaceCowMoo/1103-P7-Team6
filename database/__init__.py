@@ -1,6 +1,6 @@
-# database package: everything that stores data in SQLite.
-# The rest of the app only needs:  from database import DataManager
+# database package: the SQLite connection and table definitions.
+# The rest of the app only needs:  from database import Database
 
-from .data_manager import DataManager
+from .connection import Database
 
-__all__ = ["DataManager"]
+__all__ = ["Database"]

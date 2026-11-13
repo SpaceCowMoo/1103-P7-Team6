@@ -10,7 +10,7 @@ import sys
 
 from dotenv import load_dotenv
 
-from .data_manager import DataManager
+from .connection import Database
 
 
 def main():
@@ -20,12 +20,12 @@ def main():
 
     print(f"Database: {db_path}")
     print(f"CSV:      {csv_path}")
-    dm = DataManager.open(db_path, csv_path)
+    db = Database.open(db_path, csv_path)
     try:
-        for table, count in dm.table_counts().items():
+        for table, count in db.table_counts().items():
             print(f"  {table:<12} {count} rows")
     finally:
-        dm.close()
+        db.close()
 
 
 if __name__ == "__main__":

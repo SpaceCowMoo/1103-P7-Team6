@@ -1,12 +1,15 @@
-# Simple tests for the database package. Each test uses a fresh in-memory database.
-# Run from the project folder:  python -m unittest discover -s tests
+# Simple tests for the database. Each test uses a fresh in-memory database,
+# so data/internlink.db is never touched.
+# Run from the project folder:  python -m unittest discover -s tests -v
 
 import unittest
 
-from database import DataManager
+from database import Database
 from Flags_class import Flags
+from Internship_Class import Internship
 from listing_Class import Listing
-from run_models import RunResult
+from run_models import RemovedInternship, RunResult, RunSnapshot
+from Student_Profile_Class import StudentProfile
 from Student_Resume_Class import StudentResume
 
 INTERNSHIP = {
@@ -19,43 +22,69 @@ INTERNSHIP = {
 
 class DatabaseTest(unittest.TestCase):
     def setUp(self):
-        self.dm = DataManager.open(":memory:")
+        self.db = Database.open(":memory:")
 
     def tearDown(self):
-        self.dm.close()
+        self.db.close()
+
+    def make_results(self):
+        """5 RunResult for 5 new internships, rank 1 has one flag"""
+        results = []
+        for rank in range(1, 6):
+            job = Internship.create(self.db, INTERNSHIP)
+            flags = [Flags("Test flag", True)] if rank == 1 else []
+            results.append(RunResult(rank, 90.0 - rank, Listing(job, flags)))
+        return results
 
     def test_tables_are_created(self):
-        self.assertEqual(set(self.dm.table_counts()), {"internships", "users", "resumes", "runs"})
+        self.assertEqual(set(self.db.table_counts()), {"internships", "users", "resumes", "runs"})
 
     def test_internship_crud(self):
-        job_id = self.dm.internships.create(INTERNSHIP)
-        self.assertEqual(self.dm.internships.get(job_id).get_job_title(), "Data Intern")
+        job = Internship.create(self.db, INTERNSHIP)
+        self.assertEqual(Internship.get(self.db, job.get_job_id()).get_job_title(), "Data Intern")
 
-        self.dm.internships.update(job_id, {"monthly_allowance": 1200})
-        self.assertEqual(self.dm.internships.get(job_id).get_monthly_allowance(), 1200)
+        self.assertTrue(job.update(self.db, {"monthly_allowance": 1200}))
+        self.assertEqual(job.get_monthly_allowance(), 1200)
+        self.assertEqual(len(Internship.list_all(self.db, limit=-1, work_mode="Remote")), 1)
 
-        self.assertTrue(self.dm.internships.delete(job_id))
-        self.assertIsNone(self.dm.internships.get(job_id))
+        self.assertTrue(job.delete(self.db))
+        self.assertIsNone(Internship.get(self.db, job.get_job_id()))
 
-    def test_user_resume_and_run(self):
-        user = self.dm.users.create("joe_tan", name="Joe", age=21, student_id="S123")
+    def test_user_and_resume(self):
+        user = StudentProfile.create(self.db, "joe_tan", name="Joe", age=21, student_id="S123")
         user_id = user.get_login_details().get_user_id()
-        self.assertEqual(self.dm.users.get_by_username("joe_tan").get_name(), "Joe")
+        self.assertEqual(StudentProfile.get_by_username(self.db, "JOE_TAN").get_name(), "Joe")
+        with self.assertRaises(ValueError):
+            StudentProfile.create(self.db, "joe_tan")  # username taken
 
-        self.dm.resumes.save(user_id, StudentResume(Skills=["Excel"]))
-        self.assertEqual(self.dm.resumes.get(user_id).get_Skills(), ["Excel"])
+        self.assertIsNone(StudentResume.load(self.db, user_id))
+        StudentResume(Skills=["Excel"]).save(self.db, user_id)
+        StudentResume(Skills=["Excel", "Python"]).save(self.db, user_id)  # overwrites
+        self.assertEqual(StudentResume.load(self.db, user_id).get_Skills(), ["Excel", "Python"])
 
-        job_ids = [self.dm.internships.create(INTERNSHIP) for _ in range(5)]
-        results = [
-            RunResult(rank, 90.0 - rank, Listing(self.dm.internships.get(job_id), [Flags("Test flag", True)]))
-            for rank, job_id in enumerate(job_ids, start=1)
-        ]
-        run_id = self.dm.runs.save(user_id, self.dm.resumes.get(user_id), results, ["Learn SQL."])
+    def test_run_history(self):
+        user_id = StudentProfile.create(self.db, "joe_tan").get_login_details().get_user_id()
+        run = RunSnapshot.create(self.db, user_id, StudentResume(Skills=["Excel"]),
+                                 self.make_results(), ["Learn SQL."])
 
-        run = self.dm.runs.get(run_id, user_id)
         self.assertEqual(run.get_feedback(), ["Learn SQL."])
-        self.assertEqual(run.get_results()[0].get_score(), 89.0)
-        self.assertEqual(len(self.dm.runs.list_for_user(user_id)), 1)
+        self.assertEqual(run.get_resume().get_Skills(), ["Excel"])
+        top = run.get_results()[0]
+        self.assertEqual(top.get_score(), 89.0)
+        self.assertEqual(top.get_listing().get_Flags()[0].get_flag_name(), "Test flag")
+        self.assertEqual(len(RunSnapshot.list_for_user(self.db, user_id)), 1)
+
+        # Another user can't see it
+        other_id = StudentProfile.create(self.db, "amy").get_login_details().get_user_id()
+        self.assertIsNone(RunSnapshot.get(self.db, run.get_run_id(), other_id))
+
+        # A deleted internship shows as "Internship removed"
+        top.get_listing().get_internship().delete(self.db)
+        again = RunSnapshot.get(self.db, run.get_run_id(), user_id)
+        self.assertIsInstance(again.get_results()[0].get_listing().get_internship(), RemovedInternship)
+
+        self.assertTrue(run.delete(self.db))
+        self.assertEqual(RunSnapshot.list_for_user(self.db, user_id), [])
 
 
 if __name__ == "__main__":
