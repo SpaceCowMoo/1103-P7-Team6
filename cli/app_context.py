@@ -4,6 +4,8 @@
 
 class AppContext:
 
+    # First 3 is for DataManager, ConsoleDisplay adn InputHandler
+    # The last 2 will be used for login features 
     def __init__(self, data, display, input_handler, auth=None, current_user = None):
         self.data = data
         self.display = display

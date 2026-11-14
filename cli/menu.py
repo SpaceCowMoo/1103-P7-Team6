@@ -12,17 +12,17 @@ class Menu(Screen):
         self._options.append(MenuOption(label,action))
 
     def display(self):
-        display = self._context.display
+        display = self._display
         display.heading(self._title)
         display.numbered_list([option.get_label() for option in self._options])
-        display.line()
+        
         
     def run(self):
         self._running = True                        
         while self._running:
             self.display()
             count = len(self._options)
-            choice = self._context.input_handler.ask_int(f"Choose an option (1-{count}):", 1, count)
+            choice = self._input.ask_int(f"Choose an option (1-{count}):", 1, count)
             option = self._options[choice - 1]      
             option.run()
 

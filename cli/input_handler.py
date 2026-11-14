@@ -8,7 +8,7 @@ class InputHandler:
 
     def ask(self, message):
         """Show a separator, then the question. Return what the user typed."""
-        self.__display.line()
+        self.__display.divider()
         return input(f"{message}\n> ")
 
     # Menu interface for password
@@ -18,7 +18,7 @@ class InputHandler:
 
     # Menu interface for selecting a single option
     def ask_int(self, message, low=None, high=None):
-        
+        """Keep asking until the user types a number. Returns the number."""
         while True:
             text = self.ask(message).strip()       
 

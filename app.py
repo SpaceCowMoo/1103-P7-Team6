@@ -5,11 +5,17 @@ import time
 from dotenv import load_dotenv
 load_dotenv()
 
-import io_manager
+import io_manager            # imported first: models.student_resume needs it loaded (circular import)
 import data_manager
 import logic_manager
-import io_manager_under_refactoring as io_manager_refactored
-import database as database
+
+from data_manager import DataManager
+from logic.auth_service import AuthService
+from cli.console_display import ConsoleDisplay
+from cli.input_handler import InputHandler
+from cli.app_context import AppContext
+from cli.login_menu import LoginMenu
+from cli.main_menu import MainMenu
 
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
@@ -148,29 +154,23 @@ def demo(database_connection):
 
 # Main app excution
 def main():
-    database_connection = setup_database()
-    if database_connection is None:
-        return
-    #demo(database_connection)
+    # 1. Check the .env settings and the CSV before anything else
+    missing = [name for name, value in (("INTERNSHIP_DATA", INTERNSHIP_DATA), ("INTERNSHIP_DB", DB_PATH)) if not value]
+    if missing:
+        sys.exit(f"Please set {', '.join(missing)} in your .env file")
+    if not os.path.exists(INTERNSHIP_DATA):
+        sys.exit(f"Missing internship data: {INTERNSHIP_DATA}")
 
-
-
+    # 2. Create everything ONCE, then hand over to the screens
+    data = DataManager.open(DB_PATH, INTERNSHIP_DATA) 
     try:
-        db = database.Database.open(DB_PATH)   # adds users/resumes/runs tables to that file
-        try:
-            io_manager_refactored.main(db, database_connection)
-        finally:
-            db.close()
+        display = ConsoleDisplay()
+        context = AppContext(data, display, InputHandler(display), auth=AuthService(data))
+
+        LoginMenu(context).run()          
+        if context.is_logged_in():
+            MainMenu(context).run()
     finally:
-        database_connection.close()
-
-    #loopmain = True
-    #while loopmain:
-        #io_manager_refactored.main(db,conn)
-        #student_profile = io_manager.get_student_profile_json()
-        #menutype_numerica = io_manager.menu_numeric(student_profile)
-        #student_profile,loopmain =io_manager.menu_function_call_general(student_profile,menutype_numerica,database_connection)
-
-    #database_connection.close()
+        data.close()                      # always close, even if something crashed
 
 if __name__ == "__main__": main()

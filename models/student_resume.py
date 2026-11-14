@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from past_internship import PastInternship
 
 import textwrap
 from zoneinfo import ZoneInfo

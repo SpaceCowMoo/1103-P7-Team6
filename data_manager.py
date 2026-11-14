@@ -154,8 +154,9 @@ class DataManager:
     # The user's id is in the login details: user.get_login_details().get_user_id()
 
     def create_user(self, username, name=None, age=None, student_id=None,
-                    user_role="student") -> StudentProfile:
-        """Save a new user and return it. Raises ValueError if the username is blank or taken"""
+                    user_role="student", password_hash=None) -> StudentProfile:
+        """Save a new user and return it. Raises ValueError if the username is blank or taken.
+        password_hash is StudentLoginDetails.hash_password(password), never the password itself"""
         username = username.strip()
         if not username:
             raise ValueError("Username cannot be blank")
@@ -163,6 +164,7 @@ class DataManager:
             with self.__db.transaction():
                 user_id = self.__db.insert("users", {
                     "username": username,
+                    "password_hash": password_hash,
                     "user_role": user_role,
                     "name": name,
                     "age": age,
