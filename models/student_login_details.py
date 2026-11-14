@@ -35,13 +35,6 @@ class StudentLoginDetails:
         if password is not None:
             self.__password = password
 
-    def login_username_verification(self,username):
-        login_details = self.__username
-        if username == login_details.get_username():
-            return True 
-        else:
-            return False
+    
 
-    def login_password_verification(self,password):
-        login_details = self.__password
-        return login_details.get_password() == password
+Student_login_details = StudentLoginDetails

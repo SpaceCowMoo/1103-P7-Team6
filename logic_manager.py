@@ -13,7 +13,7 @@ import data_manager
 
 #functions
 
-# DB NOTE (Johann): find_matches is the one function io_manager calls for menu option 5.
+# DB NOTE (Johann): find_matches is the one function io_manager calls for menu option 6.
 # It runs the whole flow: read internships from DB -> AI -> save_ai_result -> DB.
 def find_matches(conn, student_profile):
     #Run the whole AI flow and save the result. Returns the new match_id
