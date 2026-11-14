@@ -1,6 +1,9 @@
 import Student_Resume_Class as resume
 import Student_Login_detail as login
 import listing_Class as listing
+import io_manager as io_manager
+import Student_Resume_Class
+
 
 
 class StudentProfile:
@@ -43,6 +46,7 @@ class StudentProfile:
             "Student_Resume": [resume_item.fetch_Student_Resume_details() for resume_item in self.__Student_Resume],
             "login_details": self.__login_details.fetch_login_details() if self.__login_details is not None else None,
         }
+
 
     def add_Student_Resume(self, new_resume: resume.StudentResume):
         self.__Student_Resume.append(new_resume)

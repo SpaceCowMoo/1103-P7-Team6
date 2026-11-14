@@ -56,6 +56,10 @@ def menuDisplayType(typeofmenu,studentprofile={}):
         print("=" * consoleWidth_60)
 
     match typeofmenu:
+
+        case "Login":
+            print("Welcome to Intern Link. Please log in to continue.")
+
         case "Starting":
             print_heading("INTERN LINK")
             print("Welcome to Intern Link.")
