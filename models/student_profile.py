@@ -1,10 +1,9 @@
 import sqlite3
 
-import Student_Resume_Class as resume
-import Student_Login_detail as login
-import listing_Class as listing
+import models.student_resume as resume
+import models.student_login_details as login
+import models.listing as listing
 import io_manager as io_manager
-import Student_Resume_Class
 
 
 
@@ -125,5 +124,3 @@ class StudentProfile:
         return cls(name=row["name"], age=row["age"], student_id=row["student_id"],
                    login_details=login_details)
 
-
-Student_Profile = StudentProfile

@@ -45,5 +45,3 @@ class StudentLoginDetails:
     def login_password_verification(self,password):
         login_details = self.__password
         return login_details.get_password() == password
-
-Student_login_details = StudentLoginDetails

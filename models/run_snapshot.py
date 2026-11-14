@@ -1,66 +1,19 @@
-# run_models.py
-# Classes for one saved run of the matching tool (the search history).
-#
-#   RunSnapshot        one run: when it ran, a copy of the resume at that moment,
-#                      the top 5 results and the AI feedback
-#   RunResult          one ranked job inside a run: rank, score and the Listing
-#   RemovedInternship  stands in for an internship deleted after the run was saved,
-#                      so display code can call the same getters without None checks
+# RunSnapshot: one saved run of the matching tool (the search history):
+# when it ran, a copy of the resume at that moment, the top 5 results and the AI feedback.
+# Each result is a RunResult (models/run_result.py); a job deleted after the run was saved
+# comes back as RemovedInternship (models/removed_internship.py).
 
 import json
 import sqlite3
 
-from Flags_class import Flags
-from Internship_Class import Internship
-from listing_Class import Listing
-from Student_Resume_Class import StudentResume
+from models.flags import Flags
+from models.internship import Internship
+from models.listing import Listing
+from models.removed_internship import RemovedInternship
+from models.run_result import RunResult
+from models.student_resume import StudentResume
 
 RESULTS_PER_RUN = 5
-
-
-class RemovedInternship(Internship):
-    """An Internship that no longer exists in the database. Only the job_id is known"""
-
-    def __init__(self, job_id: int):
-        super().__init__(
-            job_id=job_id,
-            company_name="",
-            company_type="",
-            industry="",
-            job_title="Internship removed",
-            relevant_course="",
-            monthly_allowance=0,
-            work_mode="",
-            duration_months=0,
-            required_skills="",
-            location_district="",
-            job_description="This internship was deleted after the run was saved.",
-        )
-
-
-class RunResult:
-    """One ranked job in a run. rank 1 is the best match"""
-
-    def __init__(self, rank: int, score: float, listing: Listing):
-        self.__rank = rank
-        self.__score = score
-        self.__listing = listing
-
-    def get_rank(self):
-        return self.__rank
-
-    def get_score(self):
-        return self.__score
-
-    def get_listing(self):
-        return self.__listing
-
-    def fetch_run_result_details(self):
-        return {
-            "rank": self.__rank,
-            "score": self.__score,
-            "listing": self.__listing.fetch_listing_details(),
-        }
 
 
 class RunSnapshot:

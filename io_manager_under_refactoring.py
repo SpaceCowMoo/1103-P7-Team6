@@ -1,8 +1,8 @@
 #general function for io manager
 from asyncio import log
 
-from Student_Login_detail import Student_login_details
-from Student_Profile_Class import StudentProfile
+from models.student_login_details import StudentLoginDetails
+from models.student_profile import StudentProfile
 
 consoleWidth_60 = 60
 consoleWidth_55 = 55
@@ -29,7 +29,7 @@ def print_heading(title):
 
 #Temporary function for student login and profile creation
 def load_login_details(username , password , user_id , user_role):
-    login_details = Student_login_details(user_id, user_role, username, password)
+    login_details = StudentLoginDetails(user_id, user_role, username, password)
     return login_details
 
 def loaded_temporary_login_details():

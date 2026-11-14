@@ -180,5 +180,3 @@ def _editable_fields(data):
     """Keep only internship columns the user may set (job_id is made by SQLite)"""
     return {k: v for k, v in data.items() if k in INTERNSHIP_COLUMNS and k != "job_id"}
 
-
-internship = Internship

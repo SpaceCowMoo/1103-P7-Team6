@@ -36,5 +36,3 @@ class PastInternship:
         }
 
    
-
-Past_internship = PastInternship

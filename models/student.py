@@ -1,5 +1,5 @@
 
-from Student_Profile_Class import StudentProfile
+from models.student_profile import StudentProfile
 
 
 class Student:
@@ -16,6 +16,3 @@ class Student:
 
     def add_student_profile(self, new_profile: StudentProfile):
         self.__student_profile.append(new_profile)
-
-
-Student_Profile = StudentProfile

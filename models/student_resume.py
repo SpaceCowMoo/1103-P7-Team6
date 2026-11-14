@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 import textwrap
 from zoneinfo import ZoneInfo
-from Past_internship_done_class import PastInternship
+from models.past_internship import PastInternship
 import io_manager as io_manager
 
 courseCount = 0
@@ -885,4 +885,3 @@ class StudentResume:
             )
             student_resume.add_past_internship(past_experience)
             return student_resume
-Student_Resume = StudentResume

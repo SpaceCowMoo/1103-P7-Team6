@@ -17,7 +17,3 @@ class Flags:
             "flag_name": self.__flag_name,
             "flag_value": self.__flag_value,
         }
-
-
-Flag = Flags
-flags = Flags
