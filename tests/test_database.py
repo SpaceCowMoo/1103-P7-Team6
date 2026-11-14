@@ -4,13 +4,18 @@
 
 import unittest
 
-from database import Database
-from Flags_class import Flags
-from Internship_Class import Internship
-from listing_Class import Listing
-from run_models import RemovedInternship, RunResult, RunSnapshot
-from Student_Profile_Class import StudentProfile
-from Student_Resume_Class import StudentResume
+import data_manager
+from data_manager import DataManager
+from models.flags import Flags
+from models.internship import Internship
+from models.listing import Listing
+from models.past_internship import PastInternship
+from models.removed_internship import RemovedInternship
+from models.run_result import RunResult
+from models.run_snapshot import RunSnapshot
+from models.student_profile import StudentProfile
+from models.student_resume import StudentResume
+from storage.database import Database
 
 INTERNSHIP = {
     "company_name": "Test Co", "company_type": "Start-ups", "industry": "Tech",

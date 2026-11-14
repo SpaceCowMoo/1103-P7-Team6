@@ -1,7 +1,13 @@
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from past_internship import PastInternship
+
+import textwrap
+from zoneinfo import ZoneInfo
 from models.past_internship import PastInternship
+import io_manager as io_manager
+
 
 courseCount = 0
 
@@ -145,6 +151,7 @@ class StudentResume:
                 },
                 replace=True,
             )
-            student_resume.add_past_internship(past_experience)
-            return student_resume
+
+    
+
 Student_Resume = StudentResume

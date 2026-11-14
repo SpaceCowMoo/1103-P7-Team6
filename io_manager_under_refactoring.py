@@ -13,10 +13,10 @@ import data_manager
 import logic_manager  
 from asyncio import log
 
-from Student_Login_detail import Student_login_details
-from Student_Profile_Class import StudentProfile
-from Student_Resume_Class import StudentResume
-from Past_internship_done_class import PastInternship
+from models.student_login_details import StudentLoginDetails
+from models.student_profile import StudentProfile
+from models.student_resume import StudentResume
+from models.past_internship import PastInternship
 
 consoleWidth_60 = 60
 consoleWidth_55 = 55

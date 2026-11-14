@@ -39,9 +39,7 @@ from models.run_snapshot import RESULTS_PER_RUN, RunSnapshot
 from models.student_login_details import StudentLoginDetails
 from storage.database import TABLES, Database
 
-# StudentResume imports io_manager, and io_manager imports this file, so importing
-# StudentResume / StudentProfile here at the top would make an import loop.
-# They are imported inside the methods that build them instead (_user_from_row, _resume_from_json).
+# Import these models locally in row conversion methods to keep model dependencies lazy.
 if TYPE_CHECKING:
     from models.student_profile import StudentProfile
     from models.student_resume import StudentResume
@@ -265,7 +263,7 @@ class DataManager:
 
     def _user_from_row(self, row) -> StudentProfile:
         """One users row -> StudentProfile with its StudentLoginDetails and resume"""
-        from models.student_profile import StudentProfile  # see the note at the top of this file
+        from models.student_profile import StudentProfile
 
         login_details = StudentLoginDetails(
             user_id=row["user_id"],
@@ -305,7 +303,7 @@ class DataManager:
     def _resume_from_json(text: str) -> StudentResume:
         """JSON text from the resume_json column -> StudentResume with its PastInternship list.
         The keys are the ones StudentResume.fetch_Student_Resume_details() writes"""
-        from models.student_resume import StudentResume  # see the note at the top of this file
+        from models.student_resume import StudentResume
 
         data = json.loads(text)
         past_internships = [PastInternship(**item) for item in data.pop("Past_internships", [])]

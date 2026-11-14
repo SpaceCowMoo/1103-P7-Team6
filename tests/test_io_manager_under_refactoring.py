@@ -5,10 +5,10 @@ from unittest.mock import patch
 
 import data_manager
 import io_manager_under_refactoring as io_manager
-from database import Database
-from Past_internship_done_class import PastInternship
-from Student_Profile_Class import StudentProfile
-from Student_Resume_Class import StudentResume
+from models.past_internship import PastInternship
+from models.student_profile import StudentProfile
+from models.student_resume import StudentResume
+from storage.database import Database
 
 
 class LoginFlowTest(unittest.TestCase):
