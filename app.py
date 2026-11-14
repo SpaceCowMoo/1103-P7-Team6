@@ -8,6 +8,9 @@ load_dotenv()
 import io_manager
 import data_manager
 import logic_manager
+import io_manager_under_refactoring as io_manager_refactored
+import database as database
+
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
 DB_PATH = os.getenv("INTERNSHIP_DB")
@@ -150,12 +153,24 @@ def main():
         return
     #demo(database_connection)
 
-    loopmain = True
-    while loopmain:
-        student_profile = io_manager.get_student_profile_json()
-        menutype_numerica = io_manager.menu_numeric(student_profile)
-        student_profile,loopmain =io_manager.menu_function_call_general(student_profile,menutype_numerica,database_connection)
 
-    database_connection.close()
+
+    try:
+        db = database.Database.open(DB_PATH)   # adds users/resumes/runs tables to that file
+        try:
+            io_manager_refactored.main(db, database_connection)
+        finally:
+            db.close()
+    finally:
+        database_connection.close()
+
+    #loopmain = True
+    #while loopmain:
+        #io_manager_refactored.main(db,conn)
+        #student_profile = io_manager.get_student_profile_json()
+        #menutype_numerica = io_manager.menu_numeric(student_profile)
+        #student_profile,loopmain =io_manager.menu_function_call_general(student_profile,menutype_numerica,database_connection)
+
+    #database_connection.close()
 
 if __name__ == "__main__": main()

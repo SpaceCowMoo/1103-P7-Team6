@@ -1,0 +1,13 @@
+{
+    "U001":{
+      "User_role":"Student",
+      "Username":"Test_user",
+      "Password":"Test_pass"  
+    },
+    "U002":{
+      "User_role":"Admin",
+      "Username":"Test_user1",
+      "Password":"Test_pass2"  
+
+    }
+}

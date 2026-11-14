@@ -48,7 +48,7 @@ def main():
 
     # ---------- resume (StudentResume, one per user) ----------
     resume = StudentResume(
-        Courses=["ICT (Software Engineering)"], Year_of_Study=2, Skills=["Python", "SQL"],
+        Courses="ICT (Software Engineering)", Year_of_Study=2, Skills=["Python", "SQL"],
         Minimum_monthly_salary=1500.0, Preferred_location=["East"],
         preferred_work_arrangement=["Hybrid"],
         Past_internships=[PastInternship("School", "IT intern", "Set up laptops", 3,

@@ -4,10 +4,12 @@
 
 import unittest
 
+import data_manager
 from database import Database
 from Flags_class import Flags
 from Internship_Class import Internship
 from listing_Class import Listing
+from Past_internship_done_class import PastInternship
 from run_models import RemovedInternship, RunResult, RunSnapshot
 from Student_Profile_Class import StudentProfile
 from Student_Resume_Class import StudentResume
@@ -39,6 +41,23 @@ class DatabaseTest(unittest.TestCase):
     def test_tables_are_created(self):
         self.assertEqual(set(self.db.table_counts()), {"internships", "users", "resumes", "runs"})
 
+    def test_internship_columns_match_data_manager_schema(self):
+        database_columns = [
+            row["name"] for row in self.db.fetch_all("PRAGMA table_info(internships)")
+        ]
+        conn = data_manager.get_conn(":memory:")
+        try:
+            data_manager.init_db(conn)
+            data_manager_columns = [
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(internships)").fetchall()
+            ]
+        finally:
+            conn.close()
+
+        self.assertEqual(database_columns, data_manager.INTERNSHIP_COLUMNS)
+        self.assertEqual(data_manager_columns, data_manager.INTERNSHIP_COLUMNS)
+
     def test_internship_crud(self):
         job = Internship.create(self.db, INTERNSHIP)
         self.assertEqual(Internship.get(self.db, job.get_job_id()).get_job_title(), "Data Intern")
@@ -61,6 +80,40 @@ class DatabaseTest(unittest.TestCase):
         StudentResume(Skills=["Excel"]).save(self.db, user_id)
         StudentResume(Skills=["Excel", "Python"]).save(self.db, user_id)  # overwrites
         self.assertEqual(StudentResume.load(self.db, user_id).get_Skills(), ["Excel", "Python"])
+
+    def test_resume_json_round_trip_preserves_all_fields(self):
+        user_id = StudentProfile.create(self.db, "resume_user").get_login_details().get_user_id()
+        resume = StudentResume(
+            Courses="Computer Science",
+            Year_of_Study=2,
+            Duration_of_internship=4,
+            available_internship_date="01/01/2025 - 30/04/2025",
+            Skills=["Python", "SQL"],
+            Preferred_role=["Developer"],
+            Minimum_monthly_salary=1200.0,
+            Preferred_location=["East"],
+            preferred_work_arrangement=["Hybrid"],
+            industry_interest=["Technology"],
+            company_preference=["MNC"],
+            Past_internships=[
+                PastInternship(
+                    "Test Co",
+                    "Developer",
+                    "Built an internal tool",
+                    3,
+                    "01/01/2024",
+                    "31/03/2024",
+                )
+            ],
+        )
+
+        resume.save(self.db, user_id)
+        loaded_resume = StudentResume.load(self.db, user_id)
+
+        self.assertEqual(
+            loaded_resume.fetch_Student_Resume_details(),
+            resume.fetch_Student_Resume_details(),
+        )
 
     def test_run_history(self):
         user_id = StudentProfile.create(self.db, "joe_tan").get_login_details().get_user_id()

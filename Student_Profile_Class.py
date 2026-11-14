@@ -3,8 +3,6 @@ import sqlite3
 import Student_Resume_Class as resume
 import Student_Login_detail as login
 import listing_Class as listing
-import io_manager as io_manager
-import Student_Resume_Class
 
 
 
@@ -49,9 +47,19 @@ class StudentProfile:
             "login_details": self.__login_details.fetch_login_details() if self.__login_details is not None else None,
         }
 
+    def fetch_Student_Profile_details_for_user(self):
+            return {
+                "name": self.__name,
+                "age": self.__age,
+                "student_id": self.__student_id,
+                "Student_Resume": [resume_item.fetch_Student_Resume_details() for resume_item in self.__Student_Resume],
+            }
+
 
     def add_Student_Resume(self, new_resume: resume.StudentResume):
         self.__Student_Resume.append(new_resume)
+
+
 
     def get_listings(self):
         return self.__listings
@@ -124,6 +132,5 @@ class StudentProfile:
         )
         return cls(name=row["name"], age=row["age"], student_id=row["student_id"],
                    login_details=login_details)
-
 
 Student_Profile = StudentProfile

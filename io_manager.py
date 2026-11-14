@@ -10,6 +10,8 @@ from zoneinfo import ZoneInfo
 import data_manager
 import logic_manager   # logic_manager.find_matches runs the AI and saves
 import Student_class as Student
+import Student_Profile_Class as Student_Profile
+import Student_Resume_Class as student_resume
 
 STUDENT_PROFILE_JSON = Path(
     os.getenv(
@@ -746,27 +748,24 @@ def validate_job_string_input(job_string, variable_name):
     return job_string.strip()
 
 def validate_past_experience(job_period_past):
-    
-    today_date = datetime.combine(datetime.today(), datetime.min.time())
-    formated_today = today_date.strftime("%d/%m/%Y")
-
     while True:
         try:
             start_text, end_text = job_period_past.split("-", maxsplit=1)
             start_date = datetime.strptime(start_text.strip(), "%d/%m/%Y")
             end_date = datetime.strptime(end_text.strip(), "%d/%m/%Y")
+            today = datetime.today().date()
             if start_date > end_date:
                 print("Start date is a date after end date")
-            elif start_date > today_date or end_date > today_date:
-                print(f"Please set a date before {formated_today}")
+            elif start_date.date() > today or end_date.date() > today:
+                print(f"Please set dates on or before {today:%d/%m/%Y}")
             else:
-                break
+                diff = relativedelta(end_date, start_date)
+                duration = (diff.years * 12) + diff.months
+                return job_period_past.strip(), duration
         except ValueError:
             pass
         print("Enter the experience dates as DD/MM/YYYY - DD/MM/YYYY.")
         job_period_past = prompt_input("Enter the period worked (DD/MM/YYYY - DD/MM/YYYY):")
-            
-    return job_period_past.strip()
 
 def arrange_pass_experiences(experiences):
     return dict(
@@ -787,6 +786,9 @@ def looping_past_experience(pass_experience_input):
         response = prompt_input("Enter 'Y' to add past experience or 'N' to skip:").strip().lower()
 
     while response == "y":
+        company_name = validate_job_string_input(
+            prompt_input("Enter your company name:"), "company name"
+        )
         job_title = validate_job_string_input(
             prompt_input("Enter your job title:"), "job title"
         )
@@ -796,14 +798,17 @@ def looping_past_experience(pass_experience_input):
                 prompt_input("Enter a different job title:"), "job title"
             )
         dateofhiring = prompt_input("Enter the period worked (DD/MM/YYYY - DD/MM/YYYY):")
-        dateofhiring = validate_past_experience(dateofhiring)
+        dateofhiring, duration = validate_past_experience(dateofhiring)
         jobdiscription = prompt_input("Enter a short job description:")
         jobdiscription = validate_job_string_input(
             jobdiscription, "job description"
         )
 
         experiences[job_title] = {
+            "company_name": company_name,
+            "job_title": job_title,
             "Date": dateofhiring,
+            "Duration": duration,
             "Job_Decription": jobdiscription,
         }
         response = prompt_input("Do you have another past experience? (Y/N):").strip().lower()
@@ -811,6 +816,50 @@ def looping_past_experience(pass_experience_input):
             response = prompt_input("Enter 'Y' to add another or 'N' to finish:").strip().lower()
 
     return arrange_pass_experiences(experiences)
+
+
+def convert_past_experience_to_internships(past_experience):
+    if not isinstance(past_experience, dict):
+        raise TypeError("past_experience must be a dictionary.")
+
+    internships = {}
+    for job_title, details in past_experience.items():
+        if not isinstance(details, dict):
+            raise ValueError(f"Past experience for {job_title!r} must be a dictionary.")
+
+        company_name = details.get("company_name")
+        role = details.get("job_title", job_title)
+        date_range = details.get("Date")
+        description = details.get("Job_Description", details.get("Job_Decription"))
+        if not all((company_name, role, date_range, description)):
+            raise ValueError(f"Past experience for {job_title!r} is missing required details.")
+
+        try:
+            start_text, end_text = date_range.split("-", maxsplit=1)
+            start_date = datetime.strptime(start_text.strip(), "%d/%m/%Y")
+            end_date = datetime.strptime(end_text.strip(), "%d/%m/%Y")
+            if start_date > end_date:
+                raise ValueError("The start date must be on or before the end date.")
+            stored_duration = details.get("Duration")
+            if stored_duration is None:
+                difference = relativedelta(end_date, start_date)
+                duration = (difference.years * 12) + difference.months
+            else:
+                duration = int(stored_duration)
+        except (AttributeError, TypeError, ValueError) as error:
+            raise ValueError(
+                f"Past experience for {job_title!r} has invalid dates or duration."
+            ) from error
+
+        internships[job_title] = student_resume.PastInternship(
+            company_name.strip(),
+            role.strip(),
+            description.strip(),
+            duration,
+            start_date.strftime("%d/%m/%Y"),
+            end_date.strftime("%d/%m/%Y"),
+        )
+    return internships
 
 
 def Get_User_Input():
@@ -889,24 +938,23 @@ def Get_User_Input():
             prompt_input("Do you have past work experience? (Y/N):")
         )
 
-        user_input = {
-            "student_profile":{
-                "course_of_study":courseOfStudy,
-                "year_of_study":userYear,
-                "duration":Total_month,
-                "available_internship_dates":(
-                    f"{starting_date:%d/%m/%Y} - {ending_date:%d/%m/%Y}"
-                ),
-                "skills":Skills,
-                "preferred_roles":preferedroles,
-                "minimum_monthly_salary":Minimummonthsalary,
-                "preferred_work_arrangement":preferred_work_arrangement,
-                "preferred_location":preferedlocation,
-                "industry_interest":Industry_interest,
-                "company_preference":Company_preference,
-                "past_experience":past_experience,
-            }
-        }
+        past_internships = convert_past_experience_to_internships(past_experience)
+        user_input = student_resume.StudentResume(
+            Courses=courseOfStudy,
+            Year_of_Study=int(userYear),
+            Duration_of_internship=Total_month,
+            available_internship_date=(
+                f"{starting_date:%d/%m/%Y} - {ending_date:%d/%m/%Y}"
+            ),
+            Skills=Skills,
+            Preferred_role=preferedroles,
+            Minimum_monthly_salary=float(Minimummonthsalary),
+            Preferred_location=preferedlocation,
+            preferred_work_arrangement=preferred_work_arrangement,
+            industry_interest=Industry_interest,
+            company_preference=Company_preference,
+            Past_internships=list(past_internships.values()),
+        )
         return user_input
 
 # loading json file
@@ -989,11 +1037,48 @@ def menuprinter(student_profile):
         menuDisplayType("SecondTime")
         return "1002"
 
+
+def _student_resume_to_profile(resume):
+    details = resume.fetch_Student_Resume_details()
+    past_experience = {}
+    for internship in details["Past_internships"]:
+        role = internship["role"]
+        company = internship["company_name"]
+        key = role
+        suffix = 2
+        while key in past_experience:
+            key = f"{role} ({company} {suffix})"
+            suffix += 1
+        past_experience[key] = {
+            "company_name": company,
+            "Date": (
+                f"{internship['start_date']} - {internship['end_date']}"
+            ),
+            "Duration": internship["duration"],
+            "Job_Decription": internship["description"],
+        }
+
+    return {
+        "course_of_study": details["Courses"],
+        "year_of_study": str(details["Year_of_Study"]),
+        "duration": details["Duration_of_internship"],
+        "available_internship_dates": details["available_internship_date"],
+        "skills": details["Skills"],
+        "preferred_roles": details["Preferred_role"],
+        "minimum_monthly_salary": details["Minimum_monthly_salary"],
+        "preferred_work_arrangement": details["preferred_work_arrangement"],
+        "preferred_location": details["Preferred_location"],
+        "industry_interest": details["industry_interest"],
+        "company_preference": details["company_preference"],
+        "past_experience": past_experience,
+    }
+
+
 def menu_function_caller_first_time():
-    user_input = Get_User_Input()
-    add_student_profile_json(user_input)
-    student_profile = get_student_profile_json()
-    return student_profile
+    resume = Get_User_Input()
+    student_profile = {"student_profile": _student_resume_to_profile(resume)}
+    add_student_profile_json(student_profile)
+    return get_student_profile_json()
 
 def validater_chooser_spilt(update_chooser):
     return [choice.strip() for choice in update_chooser.split(",")]
