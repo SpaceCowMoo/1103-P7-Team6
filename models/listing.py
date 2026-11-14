@@ -1,6 +1,6 @@
 
-from Internship_Class import Internship
-from Flags_class import Flags
+from models.internship import Internship
+from models.flags import Flags
 
 
 class Listing:
@@ -26,7 +26,5 @@ class Listing:
     def remove_flag(self, flag_name: str):
         self.__Flags = [flag for flag in self.__Flags if flag.get_flag_name() != flag_name]
 
-
-internship = Internship
 
     

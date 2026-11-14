@@ -95,7 +95,7 @@ def print_heading(title):
 
 #function for student login and profile creation
 def load_login_details(username , password , user_id , user_role):
-    login_details = Student_login_details(user_id, user_role, username, password)
+    login_details = StudentLoginDetails(user_id, user_role, username, password)
     return login_details
 
 def loaded_temporary_login_details():

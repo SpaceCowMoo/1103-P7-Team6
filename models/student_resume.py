@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from Past_internship_done_class import PastInternship
+from models.past_internship import PastInternship
 
 courseCount = 0
 
@@ -145,7 +145,6 @@ class StudentResume:
                 },
                 replace=True,
             )
-
-    
-
+            student_resume.add_past_internship(past_experience)
+            return student_resume
 Student_Resume = StudentResume

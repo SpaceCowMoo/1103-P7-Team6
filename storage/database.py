@@ -1,19 +1,14 @@
-# database/connection.py
-# Database: owns the SQLite connection and the table definitions.
-# The classes that get stored (Internship, StudentProfile, StudentResume, RunSnapshot)
-# each have their own get/create/save/delete methods and are given this object as `db`.
+# storage/database.py
+# Database: owns the SQLite connection, the table definitions (schema) and transactions.
+# It knows nothing about the model classes. Only DataManager (data_manager.py) uses it:
 #
-#   db = Database.open(DB_PATH, INTERNSHIP_DATA)   # once at startup
-#   ...
-#   db.close()                                      # once at the end
+#   data = DataManager.open(DB_PATH, INTERNSHIP_DATA)   # opens a Database inside
 #
-# No migrations: if you change SCHEMA_SQL, delete the .db file and start the app again.
+# No migrations: if you change SCHEMA_SQL, delete the .db file in data/ and start the app again.
 # The tables are created again and internships are reloaded from the CSV.
 
 import sqlite3
 from contextlib import contextmanager
-
-from Internship_Class import Internship
 
 SCHEMA_SQL = """
     CREATE TABLE IF NOT EXISTS internships (
@@ -46,7 +41,7 @@ SCHEMA_SQL = """
     );
 
     -- The user's current resume (one per user), overwritten when they edit it.
-    -- resume_json is StudentResume.to_json()
+    -- resume_json is StudentResume.fetch_Student_Resume_details() saved as JSON by DataManager
     CREATE TABLE IF NOT EXISTS resumes (
         user_id      INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
         resume_json  TEXT NOT NULL,
@@ -98,14 +93,12 @@ class Database:
         self.__connection.execute("PRAGMA foreign_keys = ON")  # SQLite has this off by default
 
     @classmethod
-    def open(cls, db_path: str, csv_path: str | None = None) -> "Database":
-        """Open the database, create missing tables, and load the CSV if internships is empty.
+    def open(cls, db_path: str) -> "Database":
+        """Open the database and create any missing tables.
         db_path=":memory:" gives a throwaway database (good for tests)"""
         db = cls(db_path)
         try:
             db.create_schema()
-            if csv_path is not None and db.is_empty("internships"):
-                Internship.load_csv(db, csv_path)  # only the first time, so CRUD changes are kept
         except Exception:
             db.close()
             raise
@@ -115,7 +108,7 @@ class Database:
         """Create the tables if they don't exist yet. Safe to call every startup"""
         self.__connection.executescript(SCHEMA_SQL)
 
-    # ---------- helpers used by the stored classes ----------
+    # ---------- helpers used by DataManager ----------
 
     def execute(self, sql: str, params=()):
         """Run one SQL statement with ? parameters. Returns the cursor"""

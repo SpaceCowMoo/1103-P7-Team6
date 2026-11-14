@@ -9,9 +9,7 @@ from zoneinfo import ZoneInfo
 
 import data_manager
 import logic_manager   # logic_manager.find_matches runs the AI and saves
-import Student_class as Student
-import Student_Profile_Class as Student_Profile
-import Student_Resume_Class as student_resume
+import models.student as Student
 
 STUDENT_PROFILE_JSON = Path(
     os.getenv(
