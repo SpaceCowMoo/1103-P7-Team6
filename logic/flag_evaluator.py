@@ -14,50 +14,34 @@ class FlagEvaluator:
     "Rochor": "Central", "Tanglin": "Central", "Toa Payoh": "Central",
 }
 
-    def __init__(self, conn):
-        self.conn = conn
-        self.data_manager = DataManager(conn)
+    def __init__(self, data):
+        self.data = data
+        self.data_manager = DataManager(data)
 
     def get_job_by_id(self, job_id):
         # Retrieve job listing data from db using job_id
-        return self.data_manager.get_internship(self.conn, job_id)
+        return self.data_manager.get_internship(self.data, job_id)
 
-    def salary_flag(self, user_profile: dict, job_id: int):
-        user_salary = float(user_profile["student_profile"]["minimum_monthly_salary"])
-        if not user_salary:
-            return False
-        
-        listing_data = self.get_job_by_id(self.conn, job_id)
-        if listing_data["monthly_allowance"] < (user_salary - 200):
-            #If the user provided a minimum expected monthly salary and a listing's stated salary is below that by more than $200
-            return True
-        else:
-            return False
+    def salary_flag(self, resume, internship):
+        minimum = resume.get_Minimum_monthly_salary()
+        internship_salary = internship.get_monthly_allowance()
+        return bool(minimum) and internship_salary < minimum - 200
 
-    def work_arrangement_flag(self, user_profile: dict, job_id: int):
-        user_work_arrangement = user_profile["student_profile"]["preferred_work_arrangement"]
-        if not user_work_arrangement or "No Preference" in user_work_arrangement:
+    def work_arrangement_flag(self, resume, internship):
+        work_arrangement = resume.get_preferred_work_arrangement()
+        internship_work_arrangement = internship.get_work_mode()
+        if not work_arrangement:
             return False
+        return internship_work_arrangement not in work_arrangement
         
-        listing_data = self.get_job_by_id(self.conn, job_id)
-        if listing_data["work_mode"] not in user_work_arrangement:
-            #if work_mode of job listing does not match users preference, raise flag
-            return True
-        else:
+    def location_flag(self, resume, internship):
+        location = resume.get_Preferred_location()
+        internship_location = internship.get_location_district()
+        # Convert job location to region
+        region = self.DISTRICT_REGION.get(internship_location)
+        if not location or region is None:
             return False
-
-    def location_flag(self, user_profile: dict, job_id: int):
-        user_location = user_profile["student_profile"]["preferred_location"]
-        if not user_location:
-            return False
-        
-        listing_data = self.get_job_by_id(self.conn, job_id)
-        region = self.DISTRICT_REGION.get(listing_data["location_district"])
-        if region is not None and region not in user_location:   # unknown district: don't flag
-            #if location does not match, raise flag
-            return True
-        else:
-            return False
+        return region not in location
 
     def evaluate_flags(self, user_profile: dict, job_id: int):
         flags = []

@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 import data_manager
 import logic_manager   # logic_manager.find_matches runs the AI and saves
-import models.student as Student
+
 
 STUDENT_PROFILE_JSON = Path(
     os.getenv(
@@ -40,12 +40,6 @@ INTERNSHIP_FILTER_FIELDS = {
 def prompt_input(message):
     print("\n" + "-" * consoleWidth_60)
     return input(f"{message.strip()}\n> ")
-
-def display_message(*values, sep=" ", end="\n"):
-    print(*values, sep=sep, end=end)
-
-def display_error(message):
-    print(f"Error: {message}")
 
 #Menu output styles
 def menuDisplayType(typeofmenu,studentprofile={}):
@@ -1480,41 +1474,3 @@ def find_internship_matches(conn, studentprofile):
     print(f"Saved as match {match_id}. You can view it again with option 2.")
     display_run_details(conn, data_manager.get_match(conn, match_id),"Recommandation Run Result")
     return match_id
-
-def inputmenucaller_1002(functionnumber,conn,studentprofile={}):
-    if functionnumber == 1:
-        student_profile = update_user_menu(studentprofile)
-        return True,student_profile
-    elif functionnumber == 2:
-        view_past_listing(conn)
-        return True,studentprofile
-    elif functionnumber == 3:
-        deleteListing(conn)
-        return True,studentprofile
-    elif functionnumber == 4:
-        search_internship(conn)
-        return True,studentprofile
-    elif functionnumber == 5:
-        find_internship_matches(conn, studentprofile)
-        return True,studentprofile
-    elif functionnumber == 6:
-        add_student_profile_json(studentprofile)
-        print("Have a good day. Thanks!")
-        return False,studentprofile
-
-def menu_caller_loop_1102(student_profile,conn):
-    continues = True
-    while continues:
-        menutypenumerical = menuprinter(student_profile)
-        functionnumber = inputlooper(prompt_input("Choose an option (1-6):"))
-        continues,student_profile = inputmenucaller_1002(int(functionnumber),conn,student_profile)
-    return student_profile,continues
-
-def menu_function_call_general(student_profile,menutypenumerical,conn):
-    if menutypenumerical == "1001":
-        student_profile = menu_function_caller_first_time()
-        menutypenumerical = menuprinter(student_profile)
-        return student_profile,True
-    if menutypenumerical == "1002":
-        student_profile,continues = menu_caller_loop_1102(student_profile,conn)
-        return student_profile,continues

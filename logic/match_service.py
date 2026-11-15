@@ -1,55 +1,58 @@
 # MatchService class that retrieves intership data and AI results
 # Also handles the scoring of each individual internship and applies flags
 # Finally it ranks and saves the results to the database
-from ai_manager import AIManager
+import ai_manager
 from data_manager import DataManager
 from logic.match_scorer import MatchScorer
 from logic.flag_evaluator import FlagEvaluator
+from models.flags import Flags
+from models.listing import Listing
+from models.run_result import RunResult
+from models.run_snapshot import RESULTS_PER_RUN
 
 class MatchService:
-    def __init__(self, conn):
-        self.conn = conn
-        self.ai_manager = AIManager()
-        self.data_manager = DataManager(conn)
-
+    def __init__(self, data):
+        # data = the DataManager from AppContext                      
+        self.data = data
         self.scorer = MatchScorer()
-        self.flag_evaluator = FlagEvaluator(conn)
+        self.flag_evaluator = FlagEvaluator(data)
 
-    def find_matches(self, student_profile):
-        internships = self.data_manager.list_internships(limit = -1)
-        ai_input = self.ai_manager.get_ai_input(student_profile["student_profile"])
-        client = self.ai_manager.configure_gemini()
-        ai_result = self.ai_manager.run_ai_pipeline(client, ai_input, internships)
+    def find_matches(self, user_id, resume):
+        """Ask the AI, score + flag + rank, save. Returns the saved RunSnapshot."""
+        profile = self.__to_ai_profile(resume)
+        internships = [i.fetch_internship_details() for i in self.data.list_internships(limit=-1)]
+        client = ai_manager.configure_gemini()
+        ai_result = ai_manager.run_ai_pipeline(client, profile, internships)
 
         # Continue with scoring, flags and saving
-        return self.save_results(student_profile, ai_result)
+        results = self.__rank(resume, ai_result["selected_internships"]["internships"])
+        return self.data.save_run(user_id, resume, results, ai_result["overall_feedback"]["points"])
 
-    def save_results(self, student_profile, ai_result):
-        results = []
-        internships = ai_result["selected_internships"]["internships"]
-        for internship in internships:
-            #calculate individual match score
-            current_score = self.scorer.calculate_score(internship)
-            #raise flags and apply deductions
-            flags, deduction = self.flag_evaluator.evaluate_flags(student_profile, internship)
-            final_score = current_score - deduction    #final score calculated after applying flag penalty points
-    
-            results.append({"job_id": internship["job_id"], 
-                            "score": final_score, 
-                            "flags": flags})
-        
-            # sort score in descending order
-            results.sort(key=lambda result: result["score"], reverse=True)
-            # keep only top 5 results
-            results = results[:5]
-        
-            job_ids = [result["job_id"] for result in results]
-            scores = [result["score"] for result in results]
-            flags = [result["flags"] for result in results]
-            # DB NOTE:  save_match(conn, profile, job_ids, scores, flags, overall_feedback)
-            #   job_ids  [12, 4, 30, 7, 2]                    5 ints, best first
-            #   scores   [82.3, 70.0, 51.2, 35.0, 20.0]       5 numbers, same order
-            #   flags    [["Salary below ..."], [], ...]      5 lists of text, same order
-            #   overall_feedback is saved exactly as the AI gave it ({"points": [...]})
-            # Read it back with data_manager.get_match(conn, match_id)
-            return self.data_manager.save_match(conn, student_profile, job_ids, scores, flags, ai_result["overall_feedback"])
+    def __rank(self, resume, ai_scores_list):
+        scored = []
+        for ai_scores in ai_scores_list:
+            internship = self.data.get_internship(ai_scores["job_id"])
+            flag_names, deduction = self.flag_evaluator.evaluate_flags(resume, internship)
+            score = self.scorer.calculate_score(ai_scores) - deduction
+            scored.append((score, Listing(internship, [Flags(name, True) for name in flag_names])))
+
+        scored.sort(key=lambda pair: pair[0], reverse=True)      # OUTSIDE the loop
+        return [RunResult(rank, score, listing)
+                for rank, (score, listing) in enumerate(scored[:RESULTS_PER_RUN], start=1)]
+
+    @staticmethod
+    def __to_ai_profile(resume):
+        """The AI was written for the old dict keys, so translate once, here."""
+        d = resume.fetch_Student_Resume_details()
+        return {
+            "course_of_study": d["Courses"], "year_of_study": d["Year_of_Study"],
+            "internship_duration": d["Duration_of_internship"],
+            "available_internship_dates": d["available_internship_date"],
+            "skills": d["Skills"], "preferred_roles": d["Preferred_role"],
+            "minimum_monthly_salary": d["Minimum_monthly_salary"],
+            "preferred_work_arrangement": d["preferred_work_arrangement"],
+            "preferred_location": d["Preferred_location"],
+            "industry_interests": d["industry_interest"],
+            "company_preference": d["company_preference"],
+            "past_experience": d["Past_internships"],
+        }

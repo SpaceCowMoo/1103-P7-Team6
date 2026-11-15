@@ -5,8 +5,6 @@ from dateutil.relativedelta import relativedelta
 import textwrap
 from zoneinfo import ZoneInfo
 from models.past_internship import PastInternship
-import io_manager as io_manager
-
 
 courseCount = 0
 
