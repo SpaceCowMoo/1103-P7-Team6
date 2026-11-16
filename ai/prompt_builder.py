@@ -1,16 +1,16 @@
 import json
 
+EXPECTED_AI_OUTPUT = {
+    "job_id": None,
+    "SkillsMatch": None,
+    "RoleMatch": None,
+    "IndustryInterestMatch": None,
+    "ExperienceMatch": None,
+    "CompanyPreferenceMatch": None
+}
+
 EXPECTED_SHORTLIST_OUTPUT = {
-    "selected_internships": [
-        {
-            "job_id": 1,
-            "SkillsMatch": 80,
-            "RoleMatch": 80,
-            "IndustryInterestMatch": 80,
-            "ExperienceMatch": 80,
-            "CompanyPreferenceMatch": 80
-        }
-    ]
+    "selected_internships": [EXPECTED_AI_OUTPUT]
 }
 
 class AIPromptBuilder:
