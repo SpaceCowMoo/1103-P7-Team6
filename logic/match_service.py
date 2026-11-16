@@ -2,7 +2,6 @@
 # Also handles the scoring of each individual internship and applies flags
 # Finally it ranks and saves the results to the database
 import ai_manager
-from data_manager import DataManager
 from logic.match_scorer import MatchScorer
 from logic.flag_evaluator import FlagEvaluator
 from models.flags import Flags
@@ -15,7 +14,7 @@ class MatchService:
         # data = the DataManager from AppContext                      
         self._data = data
         self._scorer = MatchScorer()
-        self._flag_evaluator = FlagEvaluator(data)
+        self._flag_evaluator = FlagEvaluator()
 
     def find_matches(self, user_id, resume):
         """Ask the AI, score + flag + rank, save. Returns the saved RunSnapshot."""

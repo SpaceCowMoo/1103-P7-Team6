@@ -1,6 +1,6 @@
 # flag evaluator contains rules that will trigger and raise flags
 # 3 points are deducted from individual match scores for each flag raised
-from data_manager import DataManager
+# It only checks a StudentResume against an Internship; MatchService fetches the Internship.
 
 class FlagEvaluator:
 
@@ -13,14 +13,6 @@ class FlagEvaluator:
     "Bishan": "Central", "Kallang": "Central", "Novena": "Central", "Orchard": "Central",
     "Rochor": "Central", "Tanglin": "Central", "Toa Payoh": "Central",
 }
-
-    def __init__(self, data):
-        self._data = data
-        self._data_manager = DataManager(data)
-
-    def get_job_by_id(self, job_id):
-        # Retrieve job listing data from db using job_id
-        return self._data_manager.get_internship(self._data, job_id)
 
     def salary_flag(self, resume, internship):
         minimum = resume.get_Minimum_monthly_salary()
@@ -43,19 +35,21 @@ class FlagEvaluator:
             return False
         return region not in location
 
-    def evaluate_flags(self, user_profile: dict, job_id: int):
+    def evaluate_flags(self, resume, internship):
+        """resume is a StudentResume, internship is an Internship.
+        Returns (list of flag names, points to deduct)"""
         flags = []
         point_deduction = 0
 
-        if self.salary_flag(user_profile, job_id):
+        if self.salary_flag(resume, internship):
             flags.append("Salary below expected minimum by >$200")
             point_deduction += 3
 
-        if self.work_arrangement_flag(user_profile, job_id):
+        if self.work_arrangement_flag(resume, internship):
             flags.append("Work arrangement does not meet user's preference")
             point_deduction += 3
 
-        if self.location_flag(user_profile, job_id):
+        if self.location_flag(resume, internship):
             flags.append("Location does not meet user's preference")
             point_deduction += 3
 

@@ -1,12 +1,5 @@
-import json
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-
-import textwrap
-from zoneinfo import ZoneInfo
 from models.past_internship import PastInternship
 
-courseCount = 0
 
 class StudentResume:
     def __init__(
@@ -115,40 +108,7 @@ class StudentResume:
         if Past_internships is not None:
             self.__past_internships = Past_internships
 
+    # Reading and saving resumes is done by DataManager (data_manager.py), not here.
 
-    def to_json(self):
-        return json.dumps(self.fetch_Student_Resume_details())
-
-    @classmethod
-    def from_json(cls, resume_json):
-        details = json.loads(resume_json)
-        if not isinstance(details, dict):
-            raise ValueError("Resume JSON must contain an object.")
-        details["Past_internships"] = [
-            PastInternship(**item)
-            for item in details.get("Past_internships", [])
-        ]
-        return cls(**details)
-
-    @classmethod
-    def load(cls, db, user_id):
-        row = db.fetch_one(
-            "SELECT resume_json FROM resumes WHERE user_id = ?",
-            (user_id,),
-        )
-        return cls.from_json(row["resume_json"]) if row else None
-
-    def save(self, db, user_id):
-        with db.transaction():
-            db.insert(
-                "resumes",
-                {
-                    "user_id": user_id,
-                    "resume_json": self.to_json(),
-                },
-                replace=True,
-            )
-
-    
 
 Student_Resume = StudentResume

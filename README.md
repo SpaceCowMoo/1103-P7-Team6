@@ -56,3 +56,27 @@ docker build -t internlink-test .
 ```bash
 docker run --rm internlink-test python test_script.py
 ```
+
+## Database
+
+All stored data is read and written by the `DataManager` class in `data_manager.py`. The SQLite connection, table definitions and transactions are in `storage/database.py`. The data files live in `data/`: `internships.csv` and the SQLite file `internlink.db`.
+
+Create or open the database and show the row count of every table (uses `INTERNSHIP_DB` and `INTERNSHIP_DATA` from `.env`, or pass the paths):
+
+```bash
+python data_manager.py data/internlink.db data/internships.csv
+```
+
+There are no migrations. If you change `SCHEMA_SQL` in `storage/database.py`, delete the `.db` file and run the command again. The tables are recreated and the internships are reloaded from the CSV. Users, resumes and runs are lost.
+
+Run the database tests:
+
+```bash
+python -m unittest discover -s tests
+```
+
+See `database_example.py` for how to call every `DataManager` method. Running it creates a fresh `data/example.db`, uses every method once and prints OK or FAIL for each step. It never touches `data/internlink.db`:
+
+```bash
+python database_example.py
+```
