@@ -2,11 +2,8 @@
 # Handles Gemini API communication, prompt construction,
 # response parsing, JSON validation and AI-generated feedback.
 import json
-import os
-from dotenv import load_dotenv
-from google import genai
-from google.genai import errors
 import data_manager
+from ai.gemini_client import GeminiClient
 
 # Expected fields and structure for each AI-assessed internship
 # Scores range from 0-100, or None if a criterion cannot be assessed
@@ -28,60 +25,14 @@ EXPECTED_SHORTLIST_OUTPUT = {
 
 # Load the API key from .env and initialise the Gemini client
 def configure_gemini():
-    load_dotenv(override=True)
-
-    api_key = os.getenv("GEMINI_API_KEY")
-
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY is missing from .env")
-
-    try:
-        client = genai.Client(api_key=api_key)
-    except Exception as e:
-        raise RuntimeError(
-            f"Failed to initialise Gemini client: {e}"
-        ) from e
-
+    client = GeminiClient()
+    client.connect()
     return client
 
 # Send a prompt to Gemini and request a JSON response
 # Raise an error if the API fails or returns an empty response
 def call_gemini(client, prompt):
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.5-flash-lite",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json"
-            }
-        )
-
-    except errors.APIError as e:
-        if getattr(e, "code", None) == 429:
-            raise RuntimeError(
-                "Gemini API rate limit or quota exceeded. Please try again later."
-            ) from e
-
-        raise RuntimeError(
-            f"Gemini API request failed: {e}"
-        ) from e
-
-    except (ConnectionError, TimeoutError) as e:
-        raise RuntimeError(
-            f"Unable to connect to Gemini: {e}"
-        ) from e
-
-    try:
-        response_text = response.text
-    except (ValueError, AttributeError) as e:
-        raise RuntimeError(
-            f"Unable to read Gemini response: {e}"
-        ) from e
-
-    if not isinstance(response_text, str) or not response_text.strip():
-        raise RuntimeError("Gemini returned an empty response")
-
-    return response_text
+    return client.generate(prompt)
 
 # Convert Gemini's text response into a Python dictionary
 # Remove Markdown formatting if present and reject invalid JSON
