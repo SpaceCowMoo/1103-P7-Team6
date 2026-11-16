@@ -28,7 +28,6 @@ EXPECTED_SHORTLIST_OUTPUT = {
     ]
 }
 
-
 class AIManager:
 
     def __init__(self, client=None):
@@ -64,6 +63,135 @@ class AIManager:
         return self._prompt_builder.build_skill_gap_prompt(
             student_profile, shortlisted_internships
         )
+
+    def select_shortlisted_internships(self, student_profile, internships):
+        if len(internships) < 5:
+            raise ValueError(
+                "At least five eligible internships are required"
+            )
+
+        prompt = self.build_shortlist_prompt(
+            student_profile, internships
+        )
+
+        max_attempts = 3
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = self.generate_response(prompt)
+                parsed = self.parse_response(response)
+
+                return self.validate_shortlist(parsed, internships)
+
+            except ValueError as e:
+                if attempt == max_attempts:
+                    raise RuntimeError(
+                        "Gemini failed to return a valid internship shortlist"
+                    ) from e
+
+        raise RuntimeError("Internship shortlisting failed")
+
+    def generate_skill_gap_feedback(
+        self, student_profile, shortlisted_internships
+    ):
+        prompt = self.build_skill_gap_prompt(
+            student_profile, shortlisted_internships
+        )
+
+        max_attempts = 3
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = self.generate_response(prompt)
+                result = self.parse_response(response)
+
+                if not isinstance(result, dict):
+                    raise ValueError("Feedback response must be a dictionary")
+
+                if set(result.keys()) != {"overall_feedback"}:
+                    raise ValueError("Unexpected feedback response fields")
+
+                feedback = result["overall_feedback"]
+
+                if not isinstance(feedback, dict):
+                    raise ValueError(
+                        "overall_feedback must be a dictionary"
+                    )
+
+                if set(feedback.keys()) != {"points"}:
+                    raise ValueError(
+                        "Feedback must contain only 'points'"
+                    )
+
+                points = feedback["points"]
+
+                if not isinstance(points, list) or not 3 <= len(points) <= 5:
+                    raise ValueError(
+                        "Feedback must contain 3 to 5 points"
+                    )
+
+                if not all(
+                    isinstance(point, str) and point.strip()
+                    for point in points
+                ):
+                    raise ValueError(
+                        "Every feedback point must be non-empty text"
+                    )
+
+                return feedback
+
+            except ValueError as error:
+                if attempt == max_attempts:
+                    raise RuntimeError(
+                        "Gemini failed to return valid skill-gap feedback"
+                    ) from error
+
+        raise RuntimeError("Skill-gap feedback generation failed")
+
+    def run_ai_pipeline(self, student_profile, internships):
+        # Step 1: Filter internships by duration
+        eligible_internships = filter_by_duration(
+            student_profile,
+            internships
+        )
+
+        # Step 2: Let AI shortlist internships and generate match scores
+        selected_scores = self.select_shortlisted_internships(
+            student_profile,
+            eligible_internships
+        )
+
+        # Step 3: Match selected job IDs to full internship records
+        internship_lookup = {
+            internship["job_id"]: internship
+            for internship in eligible_internships
+        }
+
+        shortlisted_internships = []
+
+        for scores in selected_scores:
+            job_id = scores["job_id"]
+
+            internship = internship_lookup[job_id].copy()
+
+            # Combine internship details with AI scores
+            internship.update(scores)
+
+            shortlisted_internships.append(internship)
+
+        # Step 4: Generate skill-gap feedback
+        feedback = self.generate_skill_gap_feedback(
+            student_profile,
+            shortlisted_internships
+        )
+
+        # Step 5: Return only job IDs and AI match scores
+        return {
+            "selected_internships": {
+                "internships": selected_scores
+            },
+            "overall_feedback": feedback
+        }
 
 
 # Load the API key from .env and initialise the Gemini client
