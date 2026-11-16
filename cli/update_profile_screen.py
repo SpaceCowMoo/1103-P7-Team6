@@ -1,10 +1,10 @@
 # Show the user's resume, let them pick fields (e.g. "2, 5", or 12 for all), ask for the
 # new values and save. 
 
-import io_manager                                   
 from cli.screen import Screen
 from models.past_internship import PastInternship
 from models.student_resume import StudentResume
+from datetime import datetime
 
 
 class UpdateProfileScreen(Screen):
@@ -89,74 +89,75 @@ class UpdateProfileScreen(Screen):
         return value
 
     # ---- one method per field: each returns {update_Student_Resume parameter: new value} ----
+    # Asking + re-asking goes through self._input; the rules come from self._validator (InputValidator).
 
-    # The validators are still functions in io_manager (they ask and re-ask by themselves).
     def __ask_course(self):
-        io_manager.menuDisplayType("CourseDisplay")
-        course = io_manager.course_of_study_input(self._input.ask("Enter your course of study (1-45):"))
-        return {"Courses": course}
+        courses = self._validator.COURSES
+        self._display.numbered_list(courses)
+        number = self._input.ask_int(f"Enter your course of study (1-{len(courses)}):", 1, len(courses))
+        return {"Courses": courses[number - 1]}
 
     def __ask_year(self):
-        year = io_manager.validate_Year_of_Study(self._input.ask("Enter your year of study (1-6):"))
-        return {"Year_of_Study": int(year)}        # the validator returns text like "2"
+        year = self._input.ask_valid("Enter your year of study (1-6):", self._validator.parse_year)
+        return {"Year_of_Study": year}
 
     def __ask_dates(self):
-        start, end, months = io_manager.internship_duration_checker(
-            self._input.ask("Enter your available internship dates (DD/MM/YYYY - DD/MM/YYYY):"))
-        return {"Duration_of_internship": months,
-                "available_internship_date": f"{start:%d/%m/%Y} - {end:%d/%m/%Y}"}
+        start, end, months = self._input.ask_valid(
+            "Enter your available internship dates (DD/MM/YYYY - DD/MM/YYYY):",
+            self._validator.parse_internship_period)
+        return {"Duration_of_internship": months, "available_internship_date": f"{start} - {end}"}
 
     def __ask_skills(self):
-        skills = io_manager.continuousloopskills(self._input.ask("Enter a skill (or 'exit' to finish):"))
+        skills = self._input.ask_list("[MANDATORY] Enter a skill (or 'exit' to finish):", "Skill",
+                                      warn=self._validator.warn_text)
         return {"Skills": skills}
 
     def __ask_roles(self):
-        roles = io_manager.continoous_Preferred_role(
-            self._input.ask("Enter a preferred role (or 'exit' to finish):"))
+        roles = self._input.ask_list("Enter a preferred role (or 'exit' to finish):", "Role",
+                                     required=False, warn=self._validator.warn_text)
         return {"Preferred_role": roles}
 
     def __ask_salary(self):
-        salary = io_manager.minimum_monthly_salary_checker(
-            self._input.ask("Enter your expected monthly salary (or 'exit' to skip):"))
-        return {"Minimum_monthly_salary": float(salary)}     # the validator returns text like "1500.00"
+        salary = self._input.ask_valid("Enter your expected monthly salary (or 'exit' to skip):",
+                                       self._validator.parse_salary)
+        return {"Minimum_monthly_salary": salary}
 
     def __ask_work_arrangement(self):
-        io_manager.menuDisplayType("PreferredWorkArrangement")
-        arrangement = io_manager.preferred_work_location_looper(
-            self._input.ask("Choose a work arrangement (1-3, or 'exit' to choose all):"))
-        return {"preferred_work_arrangement": arrangement}
+        arrangements = self._input.ask_choices(
+            "Choose work arrangements, e.g. 1, 2 (or 'exit' for no preference):",
+            self._validator.WORK_ARRANGEMENTS)
+        return {"preferred_work_arrangement": arrangements}
 
     def __ask_location(self):
-        io_manager.menuDisplayType("LocationDisplay")
-        locations = io_manager.preferredlocation_listadder(
-            self._input.ask("Choose a preferred location (1-5, or 'exit' to choose all):"))
+        locations = self._input.ask_choices(
+            "Choose preferred locations, e.g. 1, 5 (or 'exit' for all):", self._validator.LOCATIONS)
         return {"Preferred_location": locations}
 
     def __ask_industry(self):
-        industries = io_manager.industrial_input_list_adder(
-            self._input.ask("Enter an industry interest (or 'exit' to skip):"))
+        industries = self._input.ask_list("Enter an industry interest (or 'exit' to skip):", "Industry",
+                                          required=False)
         return {"industry_interest": industries}
 
     def __ask_company(self):
-        io_manager.menuDisplayType("CompanyPreference")
-        preferences = io_manager.company_preference_looper(
-            self._input.ask("Choose a company preference (1-5, or 'exit' to choose all):"))
+        preferences = self._input.ask_choices(
+            "Choose company preferences, e.g. 2, 3 (or 'exit' for all):", self._validator.COMPANY_PREFERENCES)
         return {"company_preference": preferences}
 
     def __ask_experience(self):
-        # io_manager returns the OLD format: {job_title: {"company_name", "job_title", "Date", "Duration",
-        # "Job_Decription"}}. StudentResume wants a list of PastInternship objects, so convert each one.
-        experiences = io_manager.looping_past_experience(
-            self._input.ask("Do you have past work experience? (Y/N):"))
         past_internships = []
-        for job in experiences.values():
-            start_text, end_text = (part.strip() for part in job["Date"].split("-", maxsplit=1))
-            past_internships.append(PastInternship(
-                company_name=job["company_name"],
-                role=job["job_title"],
-                description=job["Job_Decription"],
-                duration=job["Duration"],
-                start_date=start_text,
-                end_date=end_text,
-            ))
+        adding = self._input.ask_yes_no("Do you have past work experience? (Y/N):")
+        while adding:
+            past_internships.append(self.__ask_one_experience())
+            adding = self._input.ask_yes_no("Do you have another past experience? (Y/N):")
+        past_internships.sort(key=lambda job: datetime.strptime(job.get_start_date(), "%d/%m/%Y"))
         return {"Past_internships": past_internships}
+
+    def __ask_one_experience(self):
+        """One filled-in PastInternship. Every question goes through InputHandler."""
+        company = self._input.ask_valid("Enter your company name:", self._validator.required_text)
+        role = self._input.ask_valid("Enter your job title:", self._validator.required_text)
+        start, end, months = self._input.ask_valid(
+            "Enter the period worked (DD/MM/YYYY - DD/MM/YYYY):", self._validator.parse_past_period)
+        description = self._input.ask_valid("Enter a short job description:", self._validator.required_text)
+        return PastInternship(company_name=company, role=role, description=description,
+                              duration=months, start_date=start, end_date=end)

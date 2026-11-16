@@ -7,11 +7,10 @@ load_dotenv()
 
 from data_manager import DataManager
 from logic.auth_service import AuthService
-from cli.console_display import ConsoleDisplay
-from cli.input_handler import InputHandler
 from cli.app_context import AppContext
 from cli.login_menu import LoginMenu
 from cli.main_menu import MainMenu
+from io_manager import IOManager
 
 
 INTERNSHIP_DATA = os.getenv("INTERNSHIP_DATA")
@@ -30,8 +29,8 @@ def main():
     # 2. Create everything ONCE, then hand over to the screens
     data = DataManager.open(DB_PATH, INTERNSHIP_DATA) 
     try:
-        display = ConsoleDisplay()
-        context = AppContext(data, display, InputHandler(display), auth=AuthService(data))
+        io = IOManager()
+        context = AppContext(data, io, auth=AuthService(data))
 
         LoginMenu(context).run()          
         if context.is_logged_in():

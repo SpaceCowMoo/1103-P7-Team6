@@ -63,5 +63,50 @@ class InputHandler:
                 return list(dict.fromkeys(numbers)) 
 
             self.__display.error(f"Enter numbers from {low} to {high}, separated by commas.")
-        
+
+    def ask_list(self, message, field_name, required=True, warn=None):
+        """Keep asking until 'exit'. Returns a list without duplicates.
+        warn: optional function text -> warning or None; a warning asks the user to confirm."""
+        values = []
+        while True:
+            text = self.ask(message).strip()
+
+            if text.casefold() == "exit":
+                if values or not required:
+                    return values
+                self.__display.error(f"Please enter at least one {field_name.lower()}.")
+                continue
+
+            if not text:
+                self.__display.error("Please enter a value.")
+                continue
+
+            if warn is not None:
+                warning = warn(text)
+                if warning and not self.ask_yes_no(f"{warning} Is this correct? (Y/N):"):
+                    continue
+
+            if any(existing.casefold() == text.casefold() for existing in values):
+                self.__display.error(f"{field_name} already added; duplicates are not allowed.")
+                continue
+
+            values.append(text)
+            message = f"Enter another {field_name.lower()} (or 'exit' to finish):"
+
+    def ask_choices(self, message, choices):
+        """Keep asking until 'exit'. Choices are pre-defined"""
+        self.__display.numbered_list(choices)
+        numbers = self.ask_number_list(message, 1, len(choices))
+        if numbers is None:
+            return list(choices)
+        return [choices[number - 1] for number in numbers]
+
+    def ask_valid(self, message, convert):
+        """Keep asking until convert(text) succeeds. convert returns the value, or raises ValueError(reason)."""
+        while True:
+            text = self.ask(message).strip()
+            try:
+                return convert(text)
+            except ValueError as error:
+                self.__display.error(str(error))
             

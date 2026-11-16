@@ -4,12 +4,11 @@
 
 class AppContext:
 
-    # First 3 is for DataManager, ConsoleDisplay adn InputHandler
-    # The last 2 will be used for login features 
-    def __init__(self, data, display, input_handler, auth=None, current_user = None):
+    # data = DataManager, io = IOManager (owns ConsoleDisplay, InputHandler and InputValidator)
+    # The last 2 will be used for login features
+    def __init__(self, data, io, auth=None, current_user = None):
         self.data = data
-        self.display = display
-        self.input_handler = input_handler
+        self.io = io
         self.auth = auth
         self.current_user = current_user
 
@@ -17,4 +16,3 @@ class AppContext:
         if self.current_user == None:
             return False
         return True
-

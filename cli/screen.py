@@ -27,14 +27,19 @@ class Screen(ABC):
                 break
 
     # Read Only
-    # We want app_context to be set up once. 
+    # We want app_context to be set up once.
+    # Used @property here as I dont want to have a long connection to context
     @property
     def _display(self):
-        return self._context.display
+        return self._context.io.display
 
     @property
     def _input(self):
-        return self._context.input_handler
+        return self._context.io.input
+
+    @property
+    def _validator(self):
+        return self._context.io.validator
 
     @property
     def _data(self):

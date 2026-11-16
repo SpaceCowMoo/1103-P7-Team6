@@ -13,6 +13,7 @@ class PastRunsMenu(Menu):
         self.add_option("View by run ID", self.view_by_id)
         self.add_option("Back", self.stop)
 
+    # Shows latest ai 5 reccomendation
     def view_latest(self):
         runs = self._data.list_runs(self._user_id)
         if not runs:
@@ -20,6 +21,7 @@ class PastRunsMenu(Menu):
             return
         self._show_run(runs[0])
 
+    # Shows all history of best recomendation
     def view_all(self):
         runs = self._data.list_runs(self._user_id)
         self._page_through(runs, self._display.run_summary)   
