@@ -5,8 +5,10 @@ import json
 import data_manager
 from ai.gemini_client import GeminiClient
 from ai.response_validator import AIResponseValidator
+from ai.prompt_builder import AIPromptBuilder
 
 validator = AIResponseValidator()
+prompt_builder = AIPromptBuilder()
 
 # Expected fields and structure for each AI-assessed internship
 # Scores range from 0-100, or None if a criterion cannot be assessed
@@ -106,181 +108,10 @@ def filter_by_duration(student_profile, internships):
 # Instruct Gemini to shortlist 5-10 internships and score five matching criteria
 # Final ranking, weighted scores and preference flags are handled by Logic Manager
 def build_shortlist_prompt(student_profile, internships):
-
-    prompt = f"""
-You are the AI internship matching engine for InternLink.
-
-Your task is to analyse ALL the internship listings and
-select between FIVE and TEN suitable internships for this student.
-
-STUDENT PROFILE:
-{json.dumps(student_profile, indent=2)}
-
-AVAILABLE INTERNSHIPS:
-{json.dumps(internships, indent=2)}
-
-MATCHING CRITERIA:
-
-1. SkillsMatch:
-Compare student skills with required_skills and job_description.
-Consider transferable skills and closely related technologies.
-Return null only when the required skills cannot be assessed.
-
-2. RoleMatch:
-Compare preferred_roles with job_title and job_description.
-Consider the actual job responsibilities.
-Return null when the student has no preferred role or
-the internship role cannot be assessed.
-
-3. IndustryInterestMatch:
-Compare industry_interests with the internship's industry.
-
-- Give 90-100 for direct industry alignment.
-- Give 70-89 for strongly related industries.
-- Give 40-69 for partially related industries.
-- Give 1-39 for weak industry alignment.
-- Give 0 only for a complete mismatch.
-- Assess the internship's industry separately from its job role.
-- A technology-related job in a non-technology industry
-  should not automatically receive a perfect industry score.
-- Consider meaningful industry relationships, but
-  distinguish direct matches from related industries.
-- Do not give every internship the same score merely
-  because its responsibilities involve technology.
-- Return null if the student's industry preference
-  or the internship industry is missing.
-
-4. ExperienceMatch:
-Compare past_experience with job_description.
-Consider directly relevant and transferable experience.
-Return null when past_experience is missing or empty.
-Do not penalise students for missing optional experience.
-
-5. CompanyPreferenceMatch:
-Compare company_preference with company_type.
-An exact company type match receives 100.
-Return null only when the preference or company type
-is missing, empty or unknown.
-Do not guess company type from the company name alone.
-
-SELECTION INSTRUCTIONS:
-
-- Analyse all internships provided in the dataset.
-- Select between FIVE and TEN DISTINCT internships.
-- Aim to select TEN suitable internships when enough exist.
-- The Logic Manager will select and rank the final five.
-- Consider the student's course of study and year of study
-  when assessing internship suitability.
-- Course suitability must be determined semantically using
-  relevant_course, job_title and job_description.
-- Consider the student's available internship duration.
-- Do not select internships that exceed the student's
-  available duration.
-- Interpret preferred_roles as free text.
-- Match preferred roles based on job responsibilities and
-  meaning, not exact job title keywords.
-- Interpret industry_interests as free text.
-- Consider related industries and relevant job responsibilities.
-- Analyse the full past_experience dictionary, including
-  its free-text job description.
-- Consider relevant and transferable work experience.
-- Consider salary, preferred work arrangement and location
-  when selecting suitable internships.
-- Treat these three fields as preferences, not scoring criteria.
-- Prefer internships that satisfy more student preferences
-  when their overall suitability is otherwise comparable.
-- Do not automatically exclude internships that differ from
-  optional preferences.
-- Do not invent qualifications, skills or job requirements.
-- Treat missing optional preferences as neutral.
-- Do not calculate weighted overall scores.
-- Do not assign final rankings.
-- Do not apply salary, location or work arrangement flags.
-- Return only job IDs from the supplied dataset.
-
-SELECTION PRIORITY:
-
-- Prioritise course relevance, academic-level suitability,
-  demonstrated skills and preferred roles.
-- Consider industry interests, experience and company
-  preferences when comparing otherwise suitable internships.
-- Do not prioritise an internship merely because it offers
-  a higher monthly allowance.
-- Do not select an internship with substantially unsuitable
-  responsibilities solely to fill the shortlist.
-
-ACADEMIC LEVEL SUITABILITY:
-
-- Assess whether each internship is realistic for the student's
-  current year of study, course and demonstrated abilities.
-- Use the internship's job_title, required_skills,
-  relevant_course and job_description to assess suitability.
-- A Year 1 student should generally be considered for
-  entry-level internships with appropriate learning opportunities.
-- Do not assume a student possesses advanced technical knowledge
-  simply because they are studying a related course.
-- Treat positions requiring substantial system architecture,
-  technical leadership or advanced specialist expertise
-  as less suitable unless the student demonstrates the
-  necessary skills and relevant experience.
-- Do not reject an internship solely because its job title
-  sounds advanced. Evaluate the actual responsibilities.
-- Consider relevant projects, skills and past experience
-  as evidence that a student can handle more advanced work.
-- Prefer internships where the student has a reasonable
-  foundation to perform the work and learn the missing skills.
-- Do not invent entry requirements that are not present
-  in the internship listing.
-
-SCORING INSTRUCTIONS:
-
-- Assess all five matching criteria independently.
-- Give each assessable criterion an integer from 0 to 100.
-- 90-100: Excellent alignment.
-- 70-89: Strong alignment.
-- 40-69: Moderate alignment.
-- 1-39: Weak alignment.
-- 0: No meaningful alignment.
-- null: Insufficient information or missing optional preference.
-- Consider partial matches and transferable skills.
-- Do not treat missing optional preferences as zero.
-- Salary, work arrangement and location are handled
-  separately by the Logic Manager.
-- Do not generate scores or flags for these fields.
-- Do not provide individual internship explanations.
-
-IMPORTANT SCORING PRINCIPLES:
-
-- Use 0 only for a confirmed complete mismatch.
-- Use null when there is insufficient information.
-- Missing optional preferences must result in null,
-  not 0.
-- Do not give high scores merely because two fields
-  share a broad or generic keyword.
-- Scores should reflect actual alignment.
-- Scores do not need to be multiples of 5 or 10.
-- Use only the supplied student and internship data.
-- Do not calculate an overall match score.
-- Do not rank internships.
-- Do not apply business rules or flags.
-
-JSON RESPONSE INSTRUCTIONS:
-
-Return ONLY a valid JSON object with this structure:
-
-{json.dumps(EXPECTED_SHORTLIST_OUTPUT, indent=2)}
-
-- selected_internships must contain between 5 and 10 objects.
-- Select 10 when at least 10 suitable internships are available.
-- Each object must contain exactly the six fields shown.
-- Return the original job_id unchanged.
-- All scores must be integers from 0 to 100 or null.
-- Do not include extra fields.
-- Do not include Markdown code fences.
-- Do not include text outside the JSON object.
-"""
-
-    return prompt
+    return prompt_builder.build_shortlist_prompt(
+        student_profile,
+        internships
+    )
 
 # Validate the shortlist returned by Gemini
 # Ensure there are 5-10 unique internships with valid IDs and scores
@@ -317,63 +148,10 @@ def select_shortlisted_internships(client, student_profile, internships):
 # Build a prompt to identify skill gaps across the shortlisted internships
 # Request personalised, actionable recommendations based on the student's profile
 def build_skill_gap_prompt(student_profile, shortlisted_internships):
-    return f"""
-You are an AI internship career advisor.
-
-Analyse the student's profile and the shortlisted internships.
-
-STUDENT PROFILE:
-{json.dumps(student_profile, indent=2)}
-
-SHORTLISTED INTERNSHIPS:
-{json.dumps(shortlisted_internships, indent=2)}
-
-TASK:
-Generate personalised skill-gap feedback for the student.
-
-
-INSTRUCTIONS:
-
-- Return 3 to 5 personalised, actionable feedback points.
-- Each point must identify a relevant skill gap and
-  recommend a specific action to address it.
-- Compare the student's existing skills with the required_skills
-  and job_description of the shortlisted internships.
-- Prioritise skills that appear across multiple shortlisted
-  internships, especially those relevant to preferred roles.
-- Consider the student's course, year of study,
-  existing skills and past experience.
-- Build upon the student's existing knowledge rather
-  than recommending only unrelated advanced technologies.
-- Suggest practical learning activities such as small projects,
-  exercises, tutorials or portfolio development.
-- Recommend activities realistic for the student's current
-  academic level.
-- Where appropriate, explain how the activity helps prepare
-  the student for the shortlisted internship responsibilities.
-- Do not claim that the student lacks a skill if it is
-  already demonstrated in their profile.
-- Do not assume that the student has unlisted skills.
-- Do not invent internship requirements.
-- Avoid generic advice such as "improve your skills"
-  or "gain more experience".
-- Avoid repeating the same recommendation.
-- Each point should be one concise, actionable sentence.
-- Do not calculate match scores or rank internships.
-
-OUTPUT FORMAT:
-Return only valid JSON:
-
-{{
-    "overall_feedback": {{
-        "points": [
-            "First actionable recommendation.",
-            "Second actionable recommendation.",
-            "Third actionable recommendation."
-        ]
-    }}
-}}
-"""
+    return prompt_builder.build_skill_gap_prompt(
+        student_profile,
+        shortlisted_internships
+    )
 
 # Generate and validate personalised skill-gap feedback using Gemini
 # Ensure the response contains 3-5 non-empty feedback points
