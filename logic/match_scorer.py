@@ -2,7 +2,7 @@
 
 class MatchScorer:
     def __init__(self):
-        self.weightage = {
+        self._weightage = {
             "SkillsMatch": 0.3, 
             "RoleMatch": 0.3, 
             "IndustryInterestMatch": 0.2, 
@@ -14,7 +14,7 @@ class MatchScorer:
         overall_match_score = 0
         total_weight = 0
 
-        for key, weight in self.weightage.items():
+        for key, weight in self._weightage.items():
             value = ai_output.get(key)
 
             if value is not None:

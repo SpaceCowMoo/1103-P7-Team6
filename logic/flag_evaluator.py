@@ -15,12 +15,12 @@ class FlagEvaluator:
 }
 
     def __init__(self, data):
-        self.data = data
-        self.data_manager = DataManager(data)
+        self._data = data
+        self._data_manager = DataManager(data)
 
     def get_job_by_id(self, job_id):
         # Retrieve job listing data from db using job_id
-        return self.data_manager.get_internship(self.data, job_id)
+        return self._data_manager.get_internship(self._data, job_id)
 
     def salary_flag(self, resume, internship):
         minimum = resume.get_Minimum_monthly_salary()

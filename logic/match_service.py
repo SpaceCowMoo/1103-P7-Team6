@@ -13,27 +13,27 @@ from models.run_snapshot import RESULTS_PER_RUN
 class MatchService:
     def __init__(self, data):
         # data = the DataManager from AppContext                      
-        self.data = data
-        self.scorer = MatchScorer()
-        self.flag_evaluator = FlagEvaluator(data)
+        self._data = data
+        self._scorer = MatchScorer()
+        self._flag_evaluator = FlagEvaluator(data)
 
     def find_matches(self, user_id, resume):
         """Ask the AI, score + flag + rank, save. Returns the saved RunSnapshot."""
         profile = self.__to_ai_profile(resume)
-        internships = [i.fetch_internship_details() for i in self.data.list_internships(limit=-1)]
+        internships = [i.fetch_internship_details() for i in self._data.list_internships(limit=-1)]
         client = ai_manager.configure_gemini()
         ai_result = ai_manager.run_ai_pipeline(client, profile, internships)
 
         # Continue with scoring, flags and saving
         results = self.__rank(resume, ai_result["selected_internships"]["internships"])
-        return self.data.save_run(user_id, resume, results, ai_result["overall_feedback"]["points"])
+        return self._data.save_run(user_id, resume, results, ai_result["overall_feedback"]["points"])
 
     def __rank(self, resume, ai_scores_list):
         scored = []
         for ai_scores in ai_scores_list:
-            internship = self.data.get_internship(ai_scores["job_id"])
-            flag_names, deduction = self.flag_evaluator.evaluate_flags(resume, internship)
-            score = self.scorer.calculate_score(ai_scores) - deduction
+            internship = self._data.get_internship(ai_scores["job_id"])
+            flag_names, deduction = self._flag_evaluator.evaluate_flags(resume, internship)
+            score = self._scorer.calculate_score(ai_scores) - deduction
             scored.append((score, Listing(internship, [Flags(name, True) for name in flag_names])))
 
         scored.sort(key=lambda pair: pair[0], reverse=True)      # OUTSIDE the loop
