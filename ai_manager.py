@@ -4,11 +4,18 @@
 from ai.gemini_client import GeminiClient
 from ai.response_validator import AIResponseValidator
 from ai.prompt_builder import AIPromptBuilder
+from ai.ai_client import AIClient
 
 class AIManager:
 
     def __init__(self, client=None):
-        self._client = client if client is not None else GeminiClient()
+        if client is None:
+            client = GeminiClient()
+
+        if not isinstance(client, AIClient):
+            raise TypeError("client must implement AIClient")
+
+        self._client = client
         self._validator = AIResponseValidator()
         self._prompt_builder = AIPromptBuilder()
 

@@ -3,9 +3,9 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import errors
+from ai.ai_client import AIClient
 
-
-class GeminiClient:
+class GeminiClient(AIClient):
     def __init__(self, model="gemini-3.5-flash-lite"):
         self._model = model
         self._client = None
