@@ -105,40 +105,7 @@ class AIManager:
                 response = self.generate_response(prompt)
                 result = self.parse_response(response)
 
-                if not isinstance(result, dict):
-                    raise ValueError("Feedback response must be a dictionary")
-
-                if set(result.keys()) != {"overall_feedback"}:
-                    raise ValueError("Unexpected feedback response fields")
-
-                feedback = result["overall_feedback"]
-
-                if not isinstance(feedback, dict):
-                    raise ValueError(
-                        "overall_feedback must be a dictionary"
-                    )
-
-                if set(feedback.keys()) != {"points"}:
-                    raise ValueError(
-                        "Feedback must contain only 'points'"
-                    )
-
-                points = feedback["points"]
-
-                if not isinstance(points, list) or not 3 <= len(points) <= 5:
-                    raise ValueError(
-                        "Feedback must contain 3 to 5 points"
-                    )
-
-                if not all(
-                    isinstance(point, str) and point.strip()
-                    for point in points
-                ):
-                    raise ValueError(
-                        "Every feedback point must be non-empty text"
-                    )
-
-                return feedback
+                return self._validator.validate_feedback_response(result)
 
             except ValueError as error:
                 if attempt == max_attempts:
