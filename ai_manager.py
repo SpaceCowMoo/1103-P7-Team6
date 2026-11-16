@@ -28,6 +28,44 @@ EXPECTED_SHORTLIST_OUTPUT = {
     ]
 }
 
+
+class AIManager:
+
+    def __init__(self, client=None):
+        self._client = client if client is not None else GeminiClient()
+        self._validator = AIResponseValidator()
+        self._prompt_builder = AIPromptBuilder()
+
+    def connect(self):
+        self._client.connect()
+
+    def generate_response(self, prompt):
+        return self._client.generate(prompt)
+
+    def parse_response(self, response_text):
+        return self._validator.parse_gemini_response(response_text)
+
+    def validate_response(self, result, job_id):
+        return self._validator.validate_gemini_response(
+            result, job_id
+        )
+
+    def validate_shortlist(self, result, internships):
+        return self._validator.validate_shortlist_response(
+            result, internships
+        )
+
+    def build_shortlist_prompt(self, student_profile, internships):
+        return self._prompt_builder.build_shortlist_prompt(
+            student_profile, internships
+        )
+
+    def build_skill_gap_prompt(self, student_profile, shortlisted_internships):
+        return self._prompt_builder.build_skill_gap_prompt(
+            student_profile, shortlisted_internships
+        )
+
+
 # Load the API key from .env and initialise the Gemini client
 def configure_gemini():
     client = GeminiClient()
