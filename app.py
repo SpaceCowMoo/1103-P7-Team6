@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from data_manager import DataManager
+from ai_manager import AIManager
 from logic.auth_service import AuthService
 from cli.app_context import AppContext
 from cli.login_menu import LoginMenu
@@ -30,7 +31,8 @@ def main():
     data = DataManager.open(DB_PATH, INTERNSHIP_DATA) 
     try:
         io = IOManager()
-        context = AppContext(data, io, auth=AuthService(data))
+        ai = AIManager()
+        context = AppContext(data, io, ai, auth=AuthService(data))
 
         LoginMenu(context).run()          
         if context.is_logged_in():

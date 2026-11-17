@@ -108,7 +108,7 @@ class UpdateProfileScreen(Screen):
         return {"Duration_of_internship": months, "available_internship_date": f"{start} - {end}"}
 
     def __ask_skills(self):
-        skills = self._input.ask_list("[MANDATORY] Enter a skill (or 'exit' to finish):", "Skill",
+        skills = self._input.ask_list("[MANDATORY] Enter a skill:", "Skill",
                                       warn=self._validator.warn_text)
         return {"Skills": skills}
 

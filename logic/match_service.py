@@ -1,7 +1,6 @@
 # MatchService class that retrieves intership data and AI results
 # Also handles the scoring of each individual internship and applies flags
 # Finally it ranks and saves the results to the database
-import ai_manager
 from logic.match_scorer import MatchScorer
 from logic.flag_evaluator import FlagEvaluator
 from models.flags import Flags
@@ -10,18 +9,19 @@ from models.run_result import RunResult
 from models.run_snapshot import RESULTS_PER_RUN
 
 class MatchService:
-    def __init__(self, data):
+    def __init__(self, data, ai_manager):
         # data = the DataManager from AppContext                      
         self._data = data
         self._scorer = MatchScorer()
         self._flag_evaluator = FlagEvaluator()
+        self._ai_manager = ai_manager
 
     def find_matches(self, user_id, resume):
         """Ask the AI, score + flag + rank, save. Returns the saved RunSnapshot."""
         profile = self.__to_ai_profile(resume)
         internships = [i.fetch_internship_details() for i in self._data.list_internships(limit=-1)]
-        client = ai_manager.configure_gemini()
-        ai_result = ai_manager.run_ai_pipeline(client, profile, internships)
+        self._ai_manager.connect()
+        ai_result = self._ai_manager.run_ai_pipeline(profile, internships)
 
         # Continue with scoring, flags and saving
         results = self.__rank(resume, ai_result["selected_internships"]["internships"])

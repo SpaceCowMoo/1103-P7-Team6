@@ -6,7 +6,7 @@ from cli.internship_search import InternshipSearch
 from cli.past_runs_menu import PastRunsMenu
 from cli.delete_history_screen import DeleteHistoryScreen
 from cli.update_profile_screen import UpdateProfileScreen
-
+from logic.match_service import MatchService
 
 class MainMenu(Menu):
 
@@ -42,11 +42,7 @@ class MainMenu(Menu):
 
         self._display.message("Finding your top 5 internships. This can take a minute...")
         try:
-            # Imported here, not at the top: until MatchService is finished, importing it fails,
-            # and that should only break this one option, not the whole main menu.
-            from logic.match_service import MatchService
-            # Agreed interface: MatchService(data).find_matches(user_id, resume) -> RunSnapshot
-            run = MatchService(self._data).find_matches(self._user_id, resume)
+            run = MatchService(self._data, self._context.ai).find_matches(self._user_id, resume)
         except Exception as error:
             # e.g. MatchService not finished yet, no GEMINI_API_KEY, no internet, bad AI answer
             self._display.error(f"Could not find matches: {error}")

@@ -6,11 +6,12 @@ class AppContext:
 
     # data = DataManager, io = IOManager (owns ConsoleDisplay, InputHandler and InputValidator)
     # The last 2 will be used for login features
-    def __init__(self, data, io, auth=None, current_user = None):
+    def __init__(self, data, io, ai, auth=None, current_user = None):
         self.data = data
         self.io = io
         self.auth = auth
         self.current_user = current_user
+        self.ai = ai
 
     def is_logged_in(self):
         if self.current_user == None:
