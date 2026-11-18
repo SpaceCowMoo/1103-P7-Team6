@@ -43,18 +43,28 @@ docker run --rm -it -v "$(pwd)/data:/app/internlink/data" internlink
 
 ## Running Tests
 
-To run the test script, use the following Docker commands:
-
-1. **Build the test image:**
+The tests run inside the same `internlink` image built in the Installation section. If you haven't built it yet:
 
 ```bash
-docker build -t internlink-test .
+docker build -t internlink .
 ```
 
-2. **Run the test script:**
+1. **Run the logic test script:**
 
 ```bash
-docker run --rm internlink-test python test_script.py
+docker run --rm internlink python test_script.py
+```
+
+2. **Run the AI manager tests** (uses a mock AI client, so no Gemini API calls are made):
+
+```bash
+docker run --rm internlink python -m unittest test_ai_manager_oop -v
+```
+
+3. **Run the database and IO manager tests** (everything in `tests/`):
+
+```bash
+docker run --rm internlink python -m unittest discover -s tests -v
 ```
 
 ## Database
@@ -79,4 +89,14 @@ See `database_example.py` for how to call every `DataManager` method. Running it
 
 ```bash
 python database_example.py
+```
+
+## Note on `.env`
+
+The project has no `.dockerignore` yet, so `COPY . .` in the `Dockerfile` copies your local `.env` (including `GEMINI_API_KEY`) into the Docker image. `.env` is listed in `.gitignore`, so it is not committed to the repository, but anyone with the built image can read the key. Do not push or share the image until this is fixed.
+
+**TODO:** Add a `.dockerignore` file that excludes `.env`, and pass the variables at runtime instead:
+
+```bash
+docker run --rm -it --env-file .env -v "${PWD}/data:/app/internlink/data" internlink
 ```
