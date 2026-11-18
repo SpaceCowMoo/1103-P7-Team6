@@ -15,25 +15,51 @@ class FlagEvaluator:
 }
 
     def salary_flag(self, resume, internship):
-        minimum = resume.get_Minimum_monthly_salary()
-        internship_salary = internship.get_monthly_allowance()
-        return bool(minimum) and internship_salary < minimum - 200
+        try:
+            minimum = resume.get_Minimum_monthly_salary()
+            internship_salary = internship.get_monthly_allowance()
 
-    def work_arrangement_flag(self, resume, internship):
-        work_arrangement = resume.get_preferred_work_arrangement()
-        internship_work_arrangement = internship.get_work_mode()
-        if not work_arrangement:
+            if minimum is None or internship_salary is None:
+                return False
+
+            return float(internship_salary) < float(minimum) - 200
+
+        except (AttributeError, TypeError, ValueError) as e:
+            print(f"Error evaluating salary flag: {e}")
             return False
-        return internship_work_arrangement not in work_arrangement
+        
+    def work_arrangement_flag(self, resume, internship):
+        try:
+            work_arrangement = resume.get_preferred_work_arrangement()
+            internship_work_arrangement = internship.get_work_mode()
+
+            if not work_arrangement or not internship_work_arrangement:
+                return False
+
+            return internship_work_arrangement not in work_arrangement
+
+        except (AttributeError, TypeError) as e:
+            print(f"Error evaluating work arrangement flag: {e}")
+            return False
         
     def location_flag(self, resume, internship):
-        location = resume.get_Preferred_location()
-        internship_location = internship.get_location_district()
-        # Convert job location to region
-        region = self.DISTRICT_REGION.get(internship_location)
-        if not location or region is None:
+        try:
+            location = resume.get_Preferred_location()
+            internship_location = internship.get_location_district()
+
+            if not location or not internship_location:
+                return False
+
+            region = self.DISTRICT_REGION.get(internship_location)
+
+            if region is None:
+                return False
+
+            return region not in location
+
+        except (AttributeError, TypeError) as e:
+            print(f"Error evaluating location flag: {e}")
             return False
-        return region not in location
 
     def evaluate_flags(self, resume, internship):
         """resume is a StudentResume, internship is an Internship.
